@@ -34,3 +34,7 @@ You do not need to install the Praxis IDE - either run it in the browser, or dow
 Contributions are very welcome - in fact, version 0.1.0 has been developed with the goal of attracting other interested parties in mind. This is too big to be a feasible single-developer project.
 
 This is a reason that creating developer documentation has a high priority.
+
+Not only coders need apply - I would love to hear what ideas others have about Praxis; possible feature, how things could work/ look, integrations, etc. 
+
+PS: I am kind of new to both GitHub and the Javascript world - I am aware it is very likely that there are better ways of doing things, and suggestions are very welcome :)
