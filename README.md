@@ -8,7 +8,7 @@ Praxis uses Tau-Prolog to allow you to run/ test models in the browser.
 ## Current state
 Version 0.1.0 is available to run here, in your browser: https://toblotron.com/praxis/0.1.0/
 
-###You can
+### You can
 * **Create models**, and store them locally on your on machine.
 * **Draw rules** (using shapes representing different Prolog statements)
 * **Edit tabular** data in Excel-like pages.
