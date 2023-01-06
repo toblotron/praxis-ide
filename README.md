@@ -5,6 +5,8 @@ Server component will be added as optional feature in the future (for example, a
 
 Praxis uses Tau-Prolog to allow you to run/ test models in the browser.
 
+Released under the MIT license.
+
 ## Current state
 Version 0.1.0 is available to run here, in your browser: https://toblotron.com/praxis/0.1.0/
 
