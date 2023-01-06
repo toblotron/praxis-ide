@@ -1,11 +1,34 @@
-## praxis-ide
-An online IDE for visual programming in Prolog
-# What is it?
-Prolog is a language that is very well suited for making logical rule-systems.
-The Praxis IDE allows you to:
-* Draw logical rules by dragging out shape
+# About
+Praxis is/ strives to become, an online IDE for visual programming in Prolog. It is (currently) a 100% in-browser application, meaning that there is no component running on any server. -You can just download the repo and run it from your local file system, without any build-steps or other preparations.
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://toblotron.com/blog/wp-content/uploads/2022/06/mod1_16_ancestor_orconn-1.png">
-  <source media="(prefers-color-scheme: light)" srcset="https://toblotron.com/blog/wp-content/uploads/2022/06/mod1_16_ancestor_orconn-1.png">
-</picture>
+Server component will be added as optional feature in the future (for example, allow users to log in and store their models online, for easy sharing and integration/ publishing), but I will strive to maintain the advantage of having a system that is useful also without any specific server running.
+
+Praxis uses Tau-Prolog to allow you to run/ test models in the browser.
+
+## Current state
+Version 0.1.0 is available to run here, in your browser: https://toblotron.com/praxis/0.1.0/
+
+###You can
+* **Create models**, and store them locally on your on machine.
+* **Draw rules** (using shapes representing different Prolog statements)
+* **Edit tabular** data in Excel-like pages.
+* **Run / ask** questions to your model, directly in the browser.
+* **import libraries** (WIP) from URL's, and use the (Tau-Prolog) code therein. 
+
+## Goals for next version (0.2.0)
+* **Introduction of pratt-parser**, and generation of an intermediate Abstract Syntax Tree before code generation, allowing better control over parsing and generation of error-messages.
+* **Handling schema-defined types**, (editing, importing from schema, using specialized shapes to process structured data) allowing handy integration of your logic models through (for example) a REST-service interface. 
+* **Creating developer documentation**, for easier understanding of what the system is and how the different parts work together. Documentation is kind of a thing of mine, so I am ambitious about this.
+
+## Praxis website
+Praxis is hosted on https://toblotron.com/praxis/0.1.0/ - right now it contains only the web-app and a blog (https://toblotron.com/blog/) where interesting developments are sometimes announced.
+
+## Installation
+
+You do not need to install the Praxis IDE - either run it in the browser, or download this repo and run it from you local machine. It's that simple.
+
+## Contributions
+
+Contributions are very welcome - in fact, version 0.1.0 has been developed with the goal of attracting other interested parties in mind. This is too big to be a feasible single-developer project.
+
+This is a reason that creating developer documentation has a high priority.
