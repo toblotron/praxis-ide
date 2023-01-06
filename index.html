@@ -1,0 +1,304 @@
+<html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
+<head>
+<title>Praxis IDE for Prolog [v0.1.0]</title>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="viewport" content="width=device-width, minimum-scale=1.0" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+
+<link type="text/css" rel="stylesheet" href="./css/example.css" />
+
+<!-- tabs styling, etc.-->
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="./lib/jquery.browser.js"></script>
+<script src="./lib/jquery.layout.js"></script>
+
+<!-- fancytree -->
+<link href="./lib/fancytree_dist/skin-win8/ui.fancytree.min.css" type="text/css" rel="stylesheet" />
+<script src="./lib/jquery.fancytree-all.min.js" type="text/javascript"></script>
+
+<!-- contextMenu -->    
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery-contextmenu/2.2.3/jquery.contextMenu.min.css" />
+<script src="./lib/jquery.contextMenu.min.js"></script>
+<script src="./lib/jquery.fancytree.contextMenu.js"></script>
+
+<!-- slickgrid -->
+<link type="text/css" rel="stylesheet" href="./css/slickgrid.css" />
+<script type="text/javascript" src="./lib/slickgrid/jquery.event.drag-2.3.0.js"></script>
+<script type="text/javascript" src="./lib/slickgrid/slick.core.js"></script>
+<script type="text/javascript" src="./lib/slickgrid/slick.formatters.js"></script>
+<script type="text/javascript" src="./lib/slickgrid/slick.grid.js"></script>
+<script type="text/javascript" src="./lib/slickgrid/slick.editors.js"></script>
+<script type="text/javascript" src="./lib/slickgrid/slick.interactions.js"></script>
+
+<!-- jexcel -->
+<script src="./lib/jspreadsheet/jexcel.js"></script>
+<link rel="stylesheet" href="./lib/jspreadsheet/jexcel.css" type="text/css" />
+ 
+<script src="https://jsuites.net/v4/jsuites.js"></script>
+<link rel="stylesheet" href="https://jsuites.net/v4/jsuites.css" type="text/css" />
+
+
+<script src="./lib/fabric.min.js"></script>
+
+<script src="./lib/Class.exec.js"></script>
+
+<script src="./app/Shapes/FormulaShape.js"></script>
+<script src="./app/Shapes/RuleShape.js"></script>
+<script src="./app/Shapes/FindallShape.js"></script>
+<script src="./app/Shapes/GroupShape.js"></script>
+<script src="./app/Shapes/LogicShape.js"></script>
+<script src="./app/Shapes/TableShape.js"></script>
+<script src="./app/Shapes/DcgShape.js"></script>
+<script src="./app/Shapes/DcgTerminalShape.js"></script>
+<script src="./app/Shapes/CommentShape.js"></script>
+<script src="./app/Shapes/PrologText.js"></script>
+<script src="./app/Shapes/StraightConnector.js"></script>
+<script src="./app/Shapes/Port.js"></script>
+<script src="./app/Shapes/DraggablePort.js"></script>
+
+<script src="./app/Application.js"></script>
+<script src="./app/TreeMenu.js"></script>
+<script src="./app/BottomBar.js"></script>
+<script src="./app/TableView.js"></script>
+<script src="./app/FolderPanel.js"></script>
+<script src="./app/TablePanel.js"></script>
+<script src="./app/DrawingPanel.js"></script>
+<script src="./app/ShapePalette.js"></script>
+<script src="./app/ProjectSettings.js"></script>
+<script src="./app/Store.js"></script>
+<script src="./app/View.js"></script>
+<script src="./app/PrologBuilder.js"></script>
+<script src="./app/Lexer.js"></script>
+<script src="./app/PrattParser.js"></script>
+<script src="./app/Expressions.js"></script>
+
+<script src="./lib/tau-prolog.0.3.4.js"></script>
+<!--<script src="./app/my_module.js"></script>-->
+
+<!-- codemirror -->
+<script src="lib/codemirror/lib/codemirror.js"></script>
+<link rel="stylesheet" href="lib/codemirror/lib/codemirror.css">
+<link rel="stylesheet" href="lib/codemirror/theme/tau.css">
+<link rel="stylesheet" href="lib/codemirror/theme/tauout.css">
+<link rel="stylesheet" href="lib/codemirror/addon/scroll/simplescrollbars.css">
+<!--script src="codemirror/mode/javascript/javascript.js"></script-->
+<script src="lib/codemirror/addon/mode/simple.js"></script>
+<!--<script src="codemirror/addon/scroll/simplescrollbars.js"></script>-->
+<script src="lib/codemirror/mode/prolog/prolog.js"></script>
+<script src="lib/codemirror/addon/placeholder/placeholder.js"></script>
+
+<script type="text/javascript">
+    var canv = null;   
+    
+    $(document).ready(function () {
+
+        app = new praxis.Application();
+        
+        $('body').layout({
+            applyDemoStyles:true,
+            center__onresize: function () {
+                //alert('only when center layout is redrawn') 
+                app.canvasFillCenterPane();
+            }
+            
+        });        
+
+       /* $(function () {
+            $("#southpanel").resizable({
+                minHeight: 100
+            });
+        });
+        */
+        // fit canvas to start-size of central pane
+        app.canvasFillCenterPane();
+
+		ruleDefSetupOnModelLoad();
+
+        app.enterSettings();//.enterPage(app.view,0);
+
+
+
+/*
+        var text = new fabric.Text("Sharp enough for ya?!",{fontSize:12, fill: 'white', objectCaching: false,fontFamily:'arial'});
+        app.view.canvas.add(text);
+        text.left = 100;
+        text.top = 100;  
+*/
+        // arguments = "?example=try_dcg"
+        var arguments = window.location.search;
+        if(arguments != undefined){
+            arguments = arguments.substring(1); // remove "?"
+            var exampleModelName = null;
+
+            var items = arguments.split("&");
+            items.forEach(item => {
+                var parts = item.split("=");
+                if(parts[0].trim() == "exampleModel")
+                    exampleModelName = parts[1].trim();
+            });
+            
+            if(exampleModelName != null){
+                var url = "https://raw.githubusercontent.com/toblotron/Trafo/master/Prolog/" + exampleModelName + ".json";
+                $.ajax({url: url, async: true, success: function(result){
+                
+                    console.log("Started loading example model");
+
+                    var model = JSON.parse(result);
+          
+                    app.setModel(model);
+
+                }});
+
+            }
+        }
+
+
+        
+        var img = fabric.Image.fromURL("./gfx/darkGrid.png", function (oImg) {
+            var canvas = app.view.canvas;
+            canvas.backgroundColor = new fabric.Pattern({source: oImg._element});
+            console.log("loaded image");
+            app.view.backgroundPattern = canvas.backgroundColor;
+            canvas.renderAll();
+         }, null, { crossOrigin: 'Anonymous' }); 
+
+    });
+
+    function dragStart(event) {
+        event.dataTransfer.setData("Text", event.currentTarget.id);
+    };
+    
+</script>
+
+</head>
+<body>
+    <!--<div id="canvas_container" style="width: 1000; height: 1000; display: block; overflow: scroll;">
+        <canvas id="c" width="1400" height="1400" ></canvas>
+    </div>-->
+    <div class="ui-layout-center"  id="centerPane" style="padding: 0px; margin:0px; background-color: #676472;">
+        <div id="canvaswrapper" tabindex="1000">
+            <canvas id="c" style="padding: 0px; margin:0px;" ></canvas>
+        </div>
+        <div id="tableView"></div>
+        <div id="projectSettings"></div> <!-- generate project settings page to this -->
+    </div>
+    <div class="ui-layout-north" height="30">
+        <div  id="topbar">
+        <table class="topbar" width="100%" style="margin:0px">
+            <tr>
+                <td width="auto">
+            <div id="selectionPath">
+                Selection Path
+            </div>
+        </td>
+        <td width="auto" style="text-align-last: end;">
+            <div>
+                <!--Download <img id='saveButton' src="./gfx/download.png">-->
+                <button id="uploadProxyButton">UPLOAD</button>
+                <button id="saveButton">DOWNLOAD</button>
+            </div>
+        </td>
+        </tr>  
+        </table>
+    </div>
+    </div>
+    <div id="southpanel" class="ui-layout-south" style ="height: 0px;overflow:hidden !Important;">
+        <div id="bottomBar" tabindex="-1" style="height:100%">
+            <div id="bottomtabs" style="font-size: 11px;height:calc(100% - 7px)">
+                <ul>
+                  <li><a id="bottomtab-2" tabindex="-1" class="small_tab" href="#bottomtabs-2">Test</a></li>
+                  <li><a id="bottomtab-3" tabindex="-1" class="small_tab" href="#bottomtabs-3">Errors</a></li>
+                  <li><a id="bottomtab-1" tabindex="-1" class="small_tab" href="#bottomtabs-1">Files</a></li>
+                </ul>
+                <div id="bottomtabs-1" tabindex="-1" style="font-size:11px; min-height:100%; height:calc(100% - 15px); padding: 0px 0px 0px 5em">
+                    <table style="margin-left:25px; font-size:11px">
+                        <tr>
+                            <th colspan="2">Sourcecode</th>
+                        </tr>
+                        <tr>    
+                            <!--<td>Download</td><td><img id='saveButton' src="./gfx/download.png"></td>-->
+                            <td>Download</td><td><img id='downloadCodeButton' src="./gfx/download.png"></td>
+                        </tr>
+                        <tr>
+                            <!--<td>Upload</td><td><img id='uploadProxyButton' src="./gfx/upload.png"></td>-->
+                            <td>Download module</td><td><img id='downloadModuleButton' src="./gfx/download.png"></td>
+                        </tr>
+
+                    </table>
+                    <!--
+                    <button ><img src="./gfx/upload.png">Upload project</button>
+                    <button id='saveButton'>Download project</button><br>
+                    Name<input id='modelName' style='width:200px' type='text' value='Model' />
+                    <button id='downloadCodeButton'>Download sourcecode</button>
+                    -->
+                    <input style='width:0px; visibility: hidden;' id='fileField' type='file' />
+
+                </div>
+                <div id="bottomtabs-2"  tabindex="-1" style="font-size:11px; min-height:100%; height:calc(100% - 5px); padding: 0px 0px 0px 5em">
+                    <table style=" font-size:11px; height:calc(100%);width:-webkit-fill-available;">
+                        <tr>
+                            <td style="height: auto; width:400px;padding-left:25px; min-width:30%; vertical-align: top;">
+                                <div style="background-color: #676472; padding:3px">
+                                    <button id='queryButton'  class="action_button" z-index="999" tabindex="101">Query</button>
+                                    <button id='nextButton' class="action_button" z-index="999"  tabindex="102">Next</button>
+                                    <button id='resetButton' class="action_button" z-index="999"  tabindex="103">Reset</button>
+                                    
+                                    <label style='color: #000000;'>Execution limit</label>
+                                    <input id='executionLimit' tabindex="-1" type='text' value='500'/> 
+                                </div>
+                                <div id='queryField' tabindex="100" onfocus="app.bottombar.setQueryFieldFocus()"></div>
+                                <div id="executionTimer" style="color:white; font-style: italic;"></div>
+                            </td>
+                            <!--<td style="width: 100%; height:100%; vertical-align: top;">
+                                <div id="codeKeeper" style="display:grid; height:calc(100% - 5px);">
+                                    <textarea id='codeConsole' style='height:100%; width:100%; min-height:90px; overflow:auto'></textarea>
+                                </div>
+                            </td>-->
+                            <td style="width:-webkit-fill-available; height:100%; vertical-align: top;">
+                                <div id="output" style="height:calc(100% - 10px); overflow:auto;">
+                                </div>
+                            </td>
+                        </tr>
+                        </table>
+                        <br><br>
+                    </table>
+                </div>
+                <div id="bottomtabs-3" tabindex="-1" style="font-size:11px; height:100px; padding: 0px 0px 0px 7em">
+                    <div id="MyOtherTable" style="margin-left:25px; width:calc(100% -25px)"></div>
+                </div>
+              </div>
+            
+            
+        </div>    
+    </div>
+    <div class="ui-layout-east">
+        
+        <div id="treeKeeper">
+      
+        </div>
+        <div id="palette">           
+            <div class="palette_node_element" id="FormulaShape" ondragstart="dragStart(event)" draggable="true"><img width="40px" src="./gfx/shape_formula.png" /><br>Formula</div>
+            <div class="palette_node_element" id="GroupShape" ondragstart="dragStart(event)" draggable="true"><img width="40px" src="./gfx/shape_group.png" /><br>Group</div>
+            <div class="palette_node_element" id="RuleShape" ondragstart="dragStart(event)" draggable="true"><img width="40px" src="./gfx/shape_rule.png" /><br>Predicate</div>
+            <div class="palette_node_element" id="FindallShape" ondragstart="dragStart(event)" draggable="true"><img width="40px" src="./gfx/shape_findall.png" /><br>Findall</div>
+            <div class="palette_node_element" id="TableShape" ondragstart="dragStart(event)" draggable="true"><img width="40px" src="./gfx/shape_table.png" /><br>Table</div>
+            <div class="palette_node_element" id="DcgShape" ondragstart="dragStart(event)" draggable="true"><img width="40px" src="./gfx/shape_dcgrule.png" /><br>Grammar</div>
+            <div class="palette_node_element" id="LogicShape" ondragstart="dragStart(event)" draggable="true"><img width="40px" src="./gfx/shape_logic.png" /><br>Connector</div>
+            <div class="palette_node_element" id="DcgTerminalShape" ondragstart="dragStart(event)" draggable="true"><img width="40px" src="./gfx/shape_dcgterminal.png" /><br>Terminal</div>
+            <div class="palette_node_element" id="CommentShape" ondragstart="dragStart(event)" draggable="true"><img width="40px" src="./gfx/shape_comment.png" /><br>Comment</div>
+       
+        </div>
+        <div id="tablePanel"></div>
+        <div id="folderPanel"></div>
+        <div id="drawingPanel"></div>
+        <div id="properties">
+
+        </div>
+        
+    </div>
+    <!--<div class="ui-layout-west">West</div>-->
+</body>
+</html>

@@ -1,0 +1,146 @@
+@import "configuration.less";
+
+
+* {
+-webkit-box-sizing: border-box;
+   -moz-box-sizing: border-box;
+        box-sizing: border-box;
+}
+
+body {
+    overflow: hidden;
+    font-family: 'Lato', sans-serif !important;
+    font-weight: 300;
+    padding: 0px;
+    margin: 0px;
+    border: 0px;
+    background-color: #f9f9f9;
+    color: #212121;
+    -webkit-font-smoothing: antialiased;
+    overflow: hidden;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+}
+
+#canvas {
+    padding: 0px;
+    margin: 0px;
+    border: 0px;
+    position: absolute;
+    top: @toolbarHeight;
+    right: @propertiesWidth;
+    left: 290px;
+    bottom: 0px;
+    overflow: scroll;
+    background-color: transparent;
+}
+
+#toolbar {
+    position: absolute;
+    margin: 0px;
+    padding-top: 10px;
+    padding-left: 20px;
+    top: 0px;
+    left: 160px;
+    height: @toolbarHeight;
+    right: 0px;
+    overflow: hidden;
+    z-index: 1000;
+    background-color: #3f51b5;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.26);
+}
+
+#toolbar_hint {
+    position: absolute;
+    top: 19px;
+    height: @toolbarHeight;
+    right: 40px;
+    color: white;
+    opacity:0.5;
+}
+
+#toolbar_hint a{
+    color: white;
+}
+#propertyPane {
+    border-right: 1px solid #e0e0e0;
+    bottom: 0;
+    background: #fff;
+    color: #333;
+    display: block;
+    font-family: 'RobotoDraft', sans-serif;
+    position: fixed;
+    right: 0px;
+    top: @toolbarHeight;
+    width: @propertiesWidth;
+    z-index: 4;
+}
+
+#propertyHeader{
+	color: #3f51b5;
+    font-size: 24px;
+    font-weight: 400;
+    line-height: 32px;
+    overflow: hidden;
+    padding: 10px;
+    font-family: "RobotoDraft",sans-serif;
+    margin: 0;
+    margin-bottom: 30px;
+    text-rendering: optimizelegibility;
+}
+
+#logo {
+    display: block;
+    margin: auto;
+    padding: 12px 24px 10px 24px;
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: @toolbarHeight;
+    width: 160px;
+    font-size: 30px;
+    font-weight: 100;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.26);
+    z-index: 1000;
+    
+}
+
+.panel{
+	border-left: 5px solid #3f51b5;
+	padding-left:15px;
+	margin-bottom:30px;
+}
+
+.panel-heading{
+    font-size: 15px;
+    line-height: 32px;
+    color: #212121;
+    font-family: "RobotoDraft",sans-serif;
+    font-weight: bold;
+    margin: 0;
+    text-rendering: optimizelegibility;
+}
+
+input.form-control{
+  border: 1px solid gray;
+    border-radius: 6px;
+    height: 30px;
+    margin-left: 10px;
+    margin-top: 5px;
+    padding-left: 5px;
+}
+
+
+.gray:active {
+    border: 1px solid #c6c6c4;
+    color: #222;
+    -webkit-box-shadow: inset 0 0 2px 4px #f1f1f1, 0 1px 0 0 #eeeeee;
+    -moz-box-shadow: inset 0 0 2px 4px #f1f1f1, 0 1px 0 0 #eeeeee;
+    box-shadow: inset 0 0 2px 4px #f1f1f1, 0 1px 0 0 #eeeeee;
+}
+
+.disabled {
+    cursor: default !important;
+    color: #888 !important;
+    opacity: 0.8;
+}
