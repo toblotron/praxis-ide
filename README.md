@@ -5,6 +5,8 @@ Server component will be added as optional feature in the future (for example, a
 
 Praxis uses Tau-Prolog to allow you to run/ test models in the browser.
 
+![An image of a Praxis example](https://github.com/toblotron/Trafo/blob/master/familybanner.png?raw=true)
+
 Released under the MIT license.
 
 ## Current state
