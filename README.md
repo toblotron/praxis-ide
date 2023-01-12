@@ -8,6 +8,61 @@ Praxis uses Tau-Prolog to allow you to run/ test models in the browser.
 ![An image of a Praxis example](https://github.com/toblotron/Trafo/blob/master/familybanner.png?raw=true)
 
 Released under the MIT license.
+<details><summary><b>Brief instructions for using the IDE</b></summary
+
+A Praxis "model" is the same as the entire project - it's what we will load, save and edit with the Praxis IDE.
+
+<h6>General about the UI</h6>
+
+* Add/ delete/ rename project pages/ tables/ folders by right-clicking a node in the tree-menu, and selecting the appropriate action
+* Reorder nodes in the tree-menu by drag-and-drop
+* Click any item in the tree-menu to view and edit it.
+* Load and Save models to your local machine, with the Upload and Download buttons on the top right
+* You can hide/show the different panels that make up the UI, by clicking on their (darker) mid-bar, or by using Ctrl-ArrowButtons.
+
+<h6>Model creation and Settings</h6>
+
+* Create a new model by loading/ reloading the page - you will arrive at the "Settings" page
+* Give the model a name in the Name box (will decide file-name)
+* Under "Standard Tau-Prolog libraries", mark the ones you want to use
+* When on another page, reach this "Settings"-page by clicking the project name-node in the tree-menu
+
+<h6>Editing drawings</h6>
+
+* Create a new drawing-page by right-clicking its desired location in the tree-menu, and selecting "Add rules page" (the select the page in the tree, if not already done)
+* Drag shapes from the palette, and edit their contents in the side-panel
+* Click empty space to deselect shape, and view palette
+* Connect shapes by dragging from their bottom, to the top of the shape you want to be evaluated afterwards
+* Toggle connection function between "AND THEN" and "OR ELSE" by right-clicking them
+* Delete shapes and connections by marking them and pressing Delete
+* Mark one/several shapes and copy/ paste them, with Ctrl-C and Ctrl-V
+* Pan by moving the mouse with RMB (Right Mouse Button) pressed
+* Zoom by rolling the mouse-wheel with RMB pressed
+
+<h6>Executing rules</h6
+
+* Select the Test-tab in the bottom panel
+* Enter a query and press Query, in order to execute that query. A query must end with a "." (full stop)
+* Press Next to see if there is more than one possible result
+* Press Reset to compile/ recompile your code from the model - <b>OTHERWISE</b> you will not get your updated code from changes in the model(!)
+* Set Execution limit to decide how many levels of calls you want to allow (limits the risk of endless recursions)
+
+<h6>Editing tables</h6>
+
+* Create a new table by right-clicking its desired location in the tree-menu, and selecting "Add data table" (the select the table in the tree, if not already done)
+* Give the table a better name than the default-generated one, in the side panel (best if this is a Prolog Atom - starts with lowercase letter, containing only alphanumeric characters or "_" (underscore))
+* Decide what number of columns you want, with the [+] and [-] buttons
+* Decide data-type for each column, and give them good names
+* Add new row by adding something in the lowermost row, and pressing Return
+* Try the "copy/ paste from Excel" feature :)
+* If you change the number of columns in a table that you are using in a drawing, you must go to the table-referring shape, select it and press Ok to get the new (correct) number of columns.
+
+<h6>Files</h6>
+
+* Load and Save models to your local machine, with the Upload and Download buttons on the top right
+* Download Prolog code / Tau-Prolog js-package generated from your model, by going to the Files-tab in the bottom panel, and clicking "Download" (Prolog code) or "Download module" (Tau-Prolog js-package)
+
+</details>
 
 ## Current state
 Version 0.1.0 is available to run here, in your browser: https://toblotron.com/praxis/0.1.0/
