@@ -146,17 +146,23 @@ praxis.TreeMenu = Class.extend({
                     {
                         if(action == "add_folder")
                         {
-                            var newNode = {title:"New Folder", type:'folder',folder:true, children:[]}
-                            node.addChildren(newNode);
+                            var newNodeData = {title:"New Folder", type:'folder',folder:true, children:[]}
+                            node.addChildren(newNodeData);
                         }
                         if(action == "add_page")
                         {
                             var newPage = app.treemenu.addNewRulePage();
                             var newId = "page" + newPage.id;
-                            var newNode = {title:newPage.name, type:'rules', id: newId, page:newPage.id,icon: "tree_drawing"}
-                            node.addChildren(newNode);
+                            var newNodeData = {title:newPage.name, type:'rules', id: newId, page:newPage.id,icon: "tree_drawing"}
+                            var newNode = node.addChildren(newNodeData);
                             node.setExpanded();
+
+                            // select the new page in the menu-tree
+                            app.treemenu.selectFromMessage({resourceType:'rules',resourceId:newPage.id});
                             
+                            // go edit it in the drawing page
+                            app.enterPage(null, newPage.id, newNode);
+
                             /*
                             var $myTree = $("#tree").fancytree();
                             // Get the DynaTree object instance
@@ -174,8 +180,14 @@ praxis.TreeMenu = Class.extend({
                         else if(action == "add_table")
                         {
                             var newPage = app.treemenu.addNewDataTable();
-                            var newNode = {title:newPage.name + " /"+ newPage.columns.length, type:'table', page:newPage.id,icon: "tree_table"}
-                            node.addChildren(newNode);
+                            var newNodeData = {title:newPage.name + " /"+ newPage.columns.length, type:'table', page:newPage.id,icon: "tree_table"}
+                            var newNode = node.addChildren(newNodeData);
+
+                            // select the new page in the menu-tree
+                            app.treemenu.selectFromMessage({resourceType:'table',resourceId:newPage.id});
+                            
+                            // go edit it in the drawing page
+                            app.enterTable(newPage.id, newNode);
                         }
                         /*else if(action == "add_struct")
                         {
@@ -302,7 +314,7 @@ praxis.TreeMenu = Class.extend({
 
         var newPage = {
             id: newId,
-            name:"Page nr" + newId,
+            name:"Page # " + newId,
             shapes:[],
             connections:[],
             latestViewport:{x:0,y:0}
