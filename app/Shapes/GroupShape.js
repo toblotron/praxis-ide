@@ -118,7 +118,7 @@ var GroupShape = fabric.util.createClass(fabric.Group, {
                 height: shapeData.height,
                 stroke : 'black',
                 strokeWidth : 1,
-                fill: '#000000',
+                fill: '#00a8f0',
                 opacity: 0.2,
                 rx: 5,
                 ry: 5
