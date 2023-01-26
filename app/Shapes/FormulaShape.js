@@ -277,11 +277,11 @@ var FormulaShape = fabric.util.createClass(fabric.Group, {
                 };
             }
             
-            // testa att pratt-parsa högra delen! :O
-            var tokens = Lexer.GetTokens(userData.data.rows[0].right);
-            tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
-            var parser = new PrologParser(tokens);
-            var res = parser.parseThis();
+            // experimental parsing-code
+            //var tokens = Lexer.GetTokens(userData.data.rows[0].right);
+            //tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
+            // var parser = new PrologParser(tokens);
+            // var res = parser.parseThis();
 
             app.view.updateShapeContents(userData);
             app.view.canvas.renderAll();
