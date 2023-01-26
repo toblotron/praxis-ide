@@ -1454,12 +1454,16 @@ praxis.View = Class.extend({
     showMessageTarget:function(message){
         // go to the correct page
         var pageId = message.resourceId;
-        var page = app.getRulePage(pageId);
-        this.setPageModel(page);
+        
         // mark the correct connection/shape
         if(message.targetType == "shape")
         {
             var id = message.targetId;
+
+            // var page = app.getRulePage(pageId);
+            var treeNode = app.treemenu.getTreeNode('rules', pageId);
+            app.enterPage(pageId, treeNode);
+
             // find shape
             var shapeFigure = this.shapes.find(s=>s.id == id);
             this.canvas.setActiveObject(shapeFigure);

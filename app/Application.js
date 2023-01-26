@@ -266,7 +266,7 @@ praxis.Application = Class.extend({
 
 
 // start showing this drawing-page
-enterPage:function(view, nr, treeNode){
+enterPage:function(nr, treeNode){
   
   $("#properties").html(""); // clear possible shape-panels
 
@@ -316,7 +316,7 @@ enterPage:function(view, nr, treeNode){
   SwitchingPages = false;
   
 
-  app.drawingPanel.showPanel(page, treeNode);
+  app.drawingPanel.showPanel(page);
 
   //for(var i=0;i<50;i++)
   //    view.add( new draw2d.shape.pert.Activity(),80+i*3,130+i*3);
@@ -325,6 +325,7 @@ enterPage:function(view, nr, treeNode){
 
   console.log("Page drawing time " + end + " milliseconds");
   // Show selected path in topbar
+
   this.updateHeading(treeNode);
 },
 
