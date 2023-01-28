@@ -19,7 +19,7 @@ praxis.DrawingPanel = Class.extend({
         this.elem.style.display = "block";
     },
 
-    showPanel: function(drawingData, treeNode){
+    showPanel: function(drawingData){
         
         this.elem.style.display = "block";
         this.html.html("");
@@ -38,7 +38,8 @@ praxis.DrawingPanel = Class.extend({
         $("#drawing_ok_button").on("click", function(){
             
             drawingData.name=$("#drawing_name").val();
-           
+            var treeNode = app.treemenu.getTreeNode('rules', drawingData.id);
+
             treeNode.setTitle(drawingData.name);
             app.updateHeading(treeNode);
         });

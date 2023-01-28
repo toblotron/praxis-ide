@@ -34,7 +34,7 @@ praxis.TreeMenu = Class.extend({
                 if(data.node.data.page != undefined && app.treemenu.suspendSelection == null){
                     app.treemenu.deselectAll();
                     if(data.node.data.type == 'rules'){
-                        app.enterPage(app.view, data.node.data.page, data.node);
+                        app.enterPage(data.node.data.page);
                     }
                     else if(data.node.data.type == 'table'){
                         app.enterTable(data.node.data.page, data.node);
@@ -161,7 +161,7 @@ praxis.TreeMenu = Class.extend({
                             app.treemenu.selectFromMessage({resourceType:'rules',resourceId:newPage.id});
                             
                             // go edit it in the drawing page
-                            app.enterPage(null, newPage.id, newNode);
+                            app.enterPage(newPage.id, newNode);
 
                             /*
                             var $myTree = $("#tree").fancytree();
@@ -444,6 +444,13 @@ deselectAll:function(){
         n.setSelected(false);
         n.setActive(false);
     }
+},
+
+getTreeNode(resourceType, resourceId){
+    var tree = $("#tree").fancytree("getRootNode");
+    var treeNode = tree.children[0]; // never check rootnode
+    var node = this.findNode(treeNode.children, resourceType, resourceId);
+    return node;
 },
 
 findNode(nodes, resourceType, resourceId){
