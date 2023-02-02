@@ -54,7 +54,6 @@ A Praxis "model" is the same as the entire project - it's what we will load, sav
 * Decide what number of columns you want, with the [+] and [-] buttons
 * Decide data-type for each column, and give them good names
 * Add new row by adding something in the lowermost row, and pressing Return
-* Try the "copy/ paste from Excel" feature :)
 * If you change the number of columns in a table that you are using in a drawing, you must go to the table-referring shape, select it and press Ok to get the new (correct) number of columns.
 
 <h6>Files</h6>
