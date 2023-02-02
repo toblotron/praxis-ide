@@ -82,8 +82,8 @@
 <script src="lib/codemirror/lib/codemirror.js"></script>
 <link rel="stylesheet" href="lib/codemirror/lib/codemirror.css">
 <link rel="stylesheet" href="lib/codemirror/theme/tau.css">
-<link rel="stylesheet" href="lib/codemirror/theme/tauout.css">
-<link rel="stylesheet" href="lib/codemirror/addon/scroll/simplescrollbars.css">
+<!--<link rel="stylesheet" href="lib/codemirror/theme/tauout.css">-->
+<!--<link rel="stylesheet" href="lib/codemirror/addon/scroll/simplescrollbars.css">-->
 <!--script src="codemirror/mode/javascript/javascript.js"></script-->
 <script src="lib/codemirror/addon/mode/simple.js"></script>
 <!--<script src="codemirror/addon/scroll/simplescrollbars.js"></script>-->
@@ -279,6 +279,8 @@
         <div id="treeKeeper">
       
         </div>
+        <input style='width:0px; visibility: hidden;' id='importCSVFile' type='file' />
+        
         <div id="palette">           
             <div class="palette_node_element" id="FormulaShape" ondragstart="dragStart(event)" draggable="true"><img width="40px" src="./gfx/shape_formula.png" /><br>Formula</div>
             <div class="palette_node_element" id="GroupShape" ondragstart="dragStart(event)" draggable="true"><img width="40px" src="./gfx/shape_group.png" /><br>Group</div>

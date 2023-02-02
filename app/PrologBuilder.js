@@ -29,10 +29,23 @@ var pb = {
                             cell = "''";
                         else
                             // cell = "'" + JSON.stringify(cell) + "'";
-                            cell = "'" + cell.replaceAll("'", "\'") + "'";
+                            cell = "'" + cell.replaceAll(/'/g, "\\\'") + "'";
                     case "bool":
                         break;
                     case "int":
+                        // do validation
+                        if(parseInt(cell) == NaN){
+                            app.bottombar.submitMessage({
+                                classification: "error",
+                                occasion:"compilation",
+                                title:"Data format error", 
+                                description:"This value is not an integer, which it is specified to be in the column definition.", // detailed description
+                                resourceType:"table", // "rules", "table"...
+                                resourceId:pc.table.id, // index of resource
+                                targetType: "cell", // "shape", "connection", "cell" /...
+                                targetId: shape.id // index of target entity
+                            });
+                        } 
                         break;
                     case "float":
                         break;

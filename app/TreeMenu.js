@@ -8,7 +8,49 @@ praxis.TreeMenu = Class.extend({
 		
         this.rebuildTree(canvas_element_id);
 
+        // handle import of CSV file
+        this.fileSelector = document.getElementById('importCSVFile');
+		this.fileSelector.addEventListener('change', $.proxy(this.handleCSVFileSelect,this));
+
 	},
+
+    handleCSVFileSelect:function(event) {
+        var fileReader = new FileReader();
+        fileReader.onload = function(event) {
+		    var table = app.importCSV(event.target.result);
+        
+            var newPage = app.treemenu.addNewDataTable(table);
+
+            // try to get the name from the filehandler
+            var filename = app.treemenu.fileSelector.value;
+            var lastBackslash = filename.lastIndexOf("\\");
+            var lastFullstop = filename.lastIndexOf(".");
+            filename = filename.substring(lastBackslash+1,lastFullstop);
+
+            if(filename != undefined)
+                newPage.name = filename;
+
+            var newNodeData = {title:newPage.name + " /"+ newPage.columns.length, type:'table', page:newPage.id,icon: "tree_table"}
+            
+            //var tree = $("#tree").fancytree("getTree");
+            //var selNodes = tree.getSelectedNodes();
+
+            // get currently selected node
+            var node = $('#tree').fancytree('getTree').activeNode;
+
+            var newNode = node.addChildren(newNodeData);
+
+            // select the new page in the menu-tree
+            app.treemenu.selectFromMessage({resourceType:'table',resourceId:newPage.id});
+            
+            // go edit it in the drawing page
+            app.enterTable(newPage.id, newNode);
+
+            app.treemenu.copyStructureFromTree(); // needed because this event turns out differently from normal adding of page/table
+        }
+        var file = event.target.files[0];
+        fileReader.readAsText(file);
+	  },
 
     // removes any present tree-menu, and rebuilds it from Model-structure
     rebuildTree:function(canvas_element_id){
@@ -110,6 +152,7 @@ praxis.TreeMenu = Class.extend({
                           return {
                             'add_page': {'name': 'Add rules page', 'icon': 'add'},
                             'add_table': {'name': 'Add data table', 'icon': 'addtable'},
+                            'import_csv': {'name': 'Import CSV table', 'icon': 'addtable'},
                             //'add_struct': {'name': 'Add struct', 'icon': 'addstruct'}, - feature paused
                             'add_folder': {'name': 'Add folder', 'icon': 'folder'},
                             'delete': {'name': 'Delete', 'icon': 'delete'}
@@ -120,6 +163,7 @@ praxis.TreeMenu = Class.extend({
                             return {
                                 'add_page': {'name': 'Add rules page', 'icon': 'add'},
                                 'add_table': {'name': 'Add data table', 'icon': 'addtable'},
+                                'import_csv': {'name': 'Import CSV table', 'icon': 'addtable'},
                                 //'add_struct': {'name': 'Add struct', 'icon': 'addstruct'}, - feature paused
                                 'add_folder': {'name': 'Add folder', 'icon': 'folder'}
                             }
@@ -128,6 +172,7 @@ praxis.TreeMenu = Class.extend({
                             return {
                                 'add_page': {'name': 'Add rules page', 'icon': 'add'},
                                 'add_table': {'name': 'Add data table', 'icon': 'addtable'},
+                                'import_csv': {'name': 'Import CSV table', 'icon': 'addtable'},
                                 //'add_struct': {'name': 'Add struct', 'icon': 'addstruct'}, - feature paused
                                 'add_folder': {'name': 'Add folder', 'icon': 'folder'},
                                 'delete': {'name': 'Delete', 'icon': 'delete'}
@@ -188,6 +233,11 @@ praxis.TreeMenu = Class.extend({
                             
                             // go edit it in the drawing page
                             app.enterTable(newPage.id, newNode);
+                        }
+                        else if(action == "import_csv")
+                        {
+                            // start file-explorer for csv files
+                            this.importCSVFile.click();
                         }
                         /*else if(action == "add_struct")
                         {
@@ -327,7 +377,7 @@ praxis.TreeMenu = Class.extend({
 
     
 // returns id nr
-addNewDataTable:function(){
+addNewDataTable:function(table){
     var newId = -1; // create with id from 0 and upwards
     for(var page of Model.dataTables) {
         if(page.id > newId)
@@ -345,6 +395,11 @@ addNewDataTable:function(){
         datarows:[
         ]
     };
+
+    if(table != undefined){
+        newPage.columns = table.columns;
+        newPage.datarows = table.datarows;
+    }   
 
     Model.dataTables.push(newPage);
 
