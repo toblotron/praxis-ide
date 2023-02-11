@@ -86,7 +86,7 @@ Version 0.1.0 is available to run here, in your browser: https://toblotron.com/p
 * **Creating developer documentation**, for easier understanding of what the system is and how the different parts work together. Documentation is kind of a thing of mine, so I am ambitious about this.
 
 ## Praxis website
-Praxis is hosted on https://toblotron.com/praxis/0.1.0/ - right now it contains only the web-app and a blog (https://toblotron.com/blog/) where interesting developments are sometimes announced.
+Praxis is hosted on https://toblotron.com/praxis/ - it contains a [resource overview page](https://toblotron.com/praxis/), [the web-app](https://toblotron.com/praxis/0.1.0/) and a [blog](https://toblotron.com/blog/) where interesting developments are sometimes announced.
 
 ## Installation
 
