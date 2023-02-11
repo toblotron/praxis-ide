@@ -8,6 +8,13 @@ Praxis uses Tau-Prolog to allow you to run/ test models in the browser.
 ![An image of a Praxis example](https://github.com/toblotron/Trafo/blob/master/familybanner.png?raw=true)
 
 Released under the MIT license.
+
+<h6>Online Tutorials</h6>
+
+* [Praxis 101: Bonus calculation rule](https://scribehow.com/shared/Praxis_101_Bonus_calculation_rule__PTACcEAQQfiE-CbNRD9lxQ)
+* [General Fizzbuzz](https://scribehow.com/shared/General_fizzbuzz_in_Praxis__4TkSwFEnRiyDpShV4va-pQ)
+
+
 <details><summary><b>Brief instructions for using the IDE</b></summary
 
 A Praxis "model" is the same as the entire project - it's what we will load, save and edit with the Praxis IDE.
