@@ -8,6 +8,13 @@ Praxis uses Tau-Prolog to allow you to run/ test models in the browser.
 ![An image of a Praxis example](https://github.com/toblotron/Trafo/blob/master/familybanner.png?raw=true)
 
 Released under the MIT license.
+
+<h6>Online Tutorials</h6>
+
+* [Praxis 101: Bonus calculation rule](https://scribehow.com/shared/Praxis_101_Bonus_calculation_rule__PTACcEAQQfiE-CbNRD9lxQ)
+* [General Fizzbuzz](https://scribehow.com/shared/General_fizzbuzz_in_Praxis__4TkSwFEnRiyDpShV4va-pQ)
+
+
 <details><summary><b>Brief instructions for using the IDE</b></summary
 
 A Praxis "model" is the same as the entire project - it's what we will load, save and edit with the Praxis IDE.
@@ -54,7 +61,6 @@ A Praxis "model" is the same as the entire project - it's what we will load, sav
 * Decide what number of columns you want, with the [+] and [-] buttons
 * Decide data-type for each column, and give them good names
 * Add new row by adding something in the lowermost row, and pressing Return
-* Try the "copy/ paste from Excel" feature :)
 * If you change the number of columns in a table that you are using in a drawing, you must go to the table-referring shape, select it and press Ok to get the new (correct) number of columns.
 
 <h6>Files</h6>
@@ -80,7 +86,7 @@ Version 0.1.0 is available to run here, in your browser: https://toblotron.com/p
 * **Creating developer documentation**, for easier understanding of what the system is and how the different parts work together. Documentation is kind of a thing of mine, so I am ambitious about this.
 
 ## Praxis website
-Praxis is hosted on https://toblotron.com/praxis/0.1.0/ - right now it contains only the web-app and a blog (https://toblotron.com/blog/) where interesting developments are sometimes announced.
+Praxis is hosted on https://toblotron.com/praxis/ - it contains a [resource overview page](https://toblotron.com/praxis/), [the web-app](https://toblotron.com/praxis/0.1.0/) and a [blog](https://toblotron.com/blog/) where interesting developments are sometimes announced.
 
 ## Installation
 
