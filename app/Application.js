@@ -337,6 +337,105 @@ getRulePage:function(nr){
 getDataTable:function(nr){
     res = Model.dataTables.find(p=>p.id == nr);
     return res;
+},
+
+// very stupid - just assumes "," is used as separator, and no "," are in cells :P
+// TODO: after parsing a line, check that the number of cells is correct, otherwise do more careful parsing
+// also: try different delimiters, in sequence, if "," doesn't seem to work
+importCSV:function(text){
+    var table = {columns: [], datarows:[]};
+    
+    var lines = text.split("\n");
+    var headings = this.parseCSVLine(lines[0],',');//.split(",");
+
+    var colnum = headings.length;
+
+    // define the columns
+    for(i=0; i < headings.length; i++){
+        var column = {id:"c"+i, name: headings[i], field:"c"+i, content:"atom"};
+        table.columns.push(column);
+    }
+    
+    // get the data (will have to change in the future: store values as simple string-array, or.. at least smaller - might want to store things like user-selected cell-coloring)
+    for(i=1; i<lines.length; i++){
+        var line = this.parseCSVLine(lines[i],',');
+        if(line.length == colnum){
+            // var data = line.split(",");
+            var row = {};
+            for(c=0; c < line.length; c++){
+                row["c"+c] = line[c];
+            }
+            table.datarows.push(row);
+        }
+    }
+    
+    return table;
+},
+
+parseCSVLine:function(lineText, separatorChar){
+    var state = 0;  // before cell value started
+    var i = 0;
+    var length = lineText.length;
+    var from = 0;
+
+    var line = [];
+
+    while(i < length){
+        var c = lineText[i];
+        switch(state){
+            case 0: // before cell value
+                if(c == "\"")
+                {
+                    from = i+1;
+                    state = 1; // parsing snuffed
+                }
+                else if(c == ",")
+                {
+                    line.push("");
+                }
+                else
+                {
+                    from = i;
+                    state = 2; // parsing unsnuffed
+                }
+                break;
+            case 1:
+                // inside snuffed string - look for "" (escaped snuff) or " (exit snuffed string)
+                if(c == "\"")
+                {
+                    if(i+1 < length && lineText[i+1] == "\""){
+                        // it was a "".. pass it by
+                        i++;
+                    } else {
+                        // otherwise it was an exit-snuff, and we can finish the cell
+                        var cell = lineText.substring(from,i);
+                        cell = cell.replace('""','"');
+                        line.push(cell);
+                        i++;
+                        from = i+1;
+                        state = 0;
+                    }
+                }
+                break;
+            case 2: 
+                // inside unsnuffed string - look for separator or line end
+                if(c == ',')
+                {
+                    // cell value ends
+                    line.push(lineText.substring(from, i));
+                    from = i+1;
+                    state = 0;
+                }
+
+                break;
+        }
+        i++;
+    }
+
+    // take the last, unsnuffed cell value
+    line.push(lineText.substring(from,i));
+
+    return line;
 }
 
 });
