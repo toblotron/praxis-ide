@@ -278,10 +278,10 @@ var FormulaShape = fabric.util.createClass(fabric.Group, {
             }
             
             // experimental parsing-code
-            var tokens = Lexer.GetTokens(userData.data.rows[0].right);
-            tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
-            var parser = new PrologParser(tokens);
-            var res = parser.parseThis();
+            //var tokens = Lexer.GetTokens(userData.data.rows[0].right);
+            //tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
+            //var parser = new PrologParser(tokens);
+            //var res = parser.parseThis();
 
             app.view.updateShapeContents(userData);
             app.view.canvas.renderAll();
