@@ -10,6 +10,11 @@ class PrattParser {
     registerPrefixParselet(tokenType, prefixParselet) {
       this.mPrefixParselets.set(tokenType, prefixParselet);
     }
+
+    // for numeric prefix operators
+    registerPrefixOperatorParselet(operatorName, precedence, isNumeric) {
+      this.mPrefixParselets.set(operatorName, new PrefixOperatorParselet(precedence,isNumeric));
+    }
     
     registerInfixParselet(operatorName, infixParselet) {
       this.mInfixParselets.set(operatorName, infixParselet);
@@ -21,8 +26,14 @@ class PrattParser {
 
     parseExpression(iPrecedence) {
       var token = this.consume();
-      var prefixParselet = this.mPrefixParselets.get(token.type);
-      
+      var prefixParselet = null;
+      if(token.type.name == "Operator")
+        // for operators (prefix) we have them registered by operator name
+        prefixParselet = this.mPrefixParselets.get(token.value);
+      else
+        // others are registered by token type name
+        prefixParselet = this.mPrefixParselets.get(token.type.name);
+
       if (prefixParselet == null) throw new ParseException("Could not parse \"" +
           token.value + "\".");
       
@@ -109,9 +120,12 @@ class PrattParser {
         // Register all of the parselets for the grammar.
     
         // Register the ones that need special parselets.
-        this.registerPrefixParselet(TokenType.Integer, new IntegerParselet());
-        this.registerPrefixParselet(TokenType.Float, new FloatParselet());
-        this.registerPrefixParselet(TokenType.Atom, new AtomParselet());
+        this.registerPrefixParselet(TokenType.Integer.name, new IntegerParselet());
+        this.registerPrefixParselet(TokenType.Float.name, new FloatParselet());
+        this.registerPrefixParselet(TokenType.Atom.name, new AtomParselet());
+        this.registerPrefixParselet(TokenType.Variable.name, new VariableParselet());
+        
+        this.registerPrefixOperatorParselet("-", 500, true);
 
         this.registerPrefixParselet(TokenType.BeginList, new ListParselet());
 

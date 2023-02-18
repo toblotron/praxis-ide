@@ -1,3 +1,43 @@
+
+// instance follows parsing of entire rule, both for parsing of shapes as well as for parsing of text(?)
+class RuleParsingContext {
+  constructor(page, headShape ) {
+    // datamodel of the current drawing page
+    this.page = page;
+    // the parsed expression 
+    this.headShape = headShape;
+    // Keep information about all the variables we encounter in the rule
+    this.variables = new Map(); // key: string, value: info about variable
+    // Keep track of indentation level, for rendering code
+    this.indentation = 0;
+    // Sometimes we will want to create intermediate variables with unique names
+    // this is for making sure those variables have unique names
+    this.idCounter = 0; 
+  }
+}
+
+// primarily made from rule-head-shapes, because there we may want to keep track of "library"
+class RuleExpression {
+  constructor(library, name, args, body) {
+    this.library = library;
+    this.name = name;
+    this.args = args;
+    this.body = body;
+  }
+
+  print(res) {
+    var r = 
+      "\n" + this.name;
+    if(this.args.length > 0)
+      r += "(" + this.args.join(", ") + ")";
+
+    if(this.body != undefined && this.body.length > 0){
+      r += ":-\n" + this.body.join(",\n");
+    }
+    res.concat(r);
+  }
+}
+
 class IntegerExpression {
   constructor(name) {
     this.name = name;
@@ -9,6 +49,16 @@ class IntegerExpression {
 }
 
 class AtomExpression {
+  constructor(name) {
+    this.name = name;
+  }
+  
+  print(res) {
+    res.concat(this.name);
+  }
+}
+
+class VariableExpression {
   constructor(name) {
     this.name = name;
   }
@@ -49,7 +99,7 @@ class TermExpression {
   }
 }
 
-  /**
+/**
  * A binary arithmetic expression like "a + b" or "c ^ d".
  */
 class OperatorExpression {
@@ -66,6 +116,18 @@ class OperatorExpression {
     }
   }
 
+  // unary expressin like "-", "/+", etc 
+  class PrefixExpression {
+    constructor(operatorToken, rightExpression) {
+      this.mOperator = operatorToken;
+      this.mRight = rightExpression;
+    }
+    
+    print(res) {
+      res.concat(" " + this.mOperator.value + " ");
+      this.mRight.print(res);
+    }
+  }
 
   // PARSELETS ///////////////////////////////////////////////////
 
@@ -75,6 +137,12 @@ class OperatorExpression {
       return new IntegerExpression(token.value);
     }
   }
+
+  class VariableParselet {
+    parse(parser, token) {
+     return new VariableExpression(token.value);
+   }
+ }
 
   class AtomParselet {
     parse(parser, token) {
@@ -159,3 +227,16 @@ class BinaryOperatorParselet {
       return this.mPrecedence;
     }
   }
+
+class PrefixOperatorParselet{
+    constructor(iPrecedence, isNumeric){
+      this.mPrecedence = iPrecedence;
+      this.mIsNumeric = isNumeric;
+    }
+
+    parse(parser, token) {
+      var rightExpression = parser.parseExpression(this.mPrecedence);
+      return new PrefixExpression(token, rightExpression);
+
+    }
+}

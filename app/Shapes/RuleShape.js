@@ -335,7 +335,7 @@ var RuleShape = fabric.util.createClass(fabric.Group, {
         tableString += '</tbody></table>';
         view.append(tableString);
         view.append(
-        //'			<button id="cancel_button">Cancel</button>'+
+        '			<button id="cancel_button">parse</button>'+
         '			<button id="ok_button" tabIndex="1050">Ok</button>'+
         '			<button id="minus_button" tabIndex="1051">-</button>'+
         '			<button id="plus_button" tabIndex="1052">+</button>'+
@@ -503,6 +503,8 @@ var RuleShape = fabric.util.createClass(fabric.Group, {
 
         $("#cancel_button").on("click", function(){
             var userData = app.view.getShapeModel(figure.id).data;
+            var expressionTree = ShapeParsing.parseRuleHead(figure.id, app.view.pageModel);
+            var i = 0;
         });
 
         $("#plus_button").on("click", function(){
@@ -752,6 +754,46 @@ var RuleShape = fabric.util.createClass(fabric.Group, {
         } else {
             // ignore what's there?
         }
+    },
+
+    // create AST node for the rule-heads, based on shapeData and RuleParsingContext, which contains everything else needed
+    parseAsHead:function(shapeData, drawingPage){
+        var rpc = new RuleParsingContext(drawingPage, shapeData);
+        var data = shapeData.data;
+        // parse the rule-shape itself - produce a RuleExpression
+        var library = data.libraryName;
+        var name = data.ruleName;
+        var args = [];
+        if(data.arguments.length > 0)
+            data.arguments.forEach(element => {
+                var tokens = Lexer.GetTokens(element);
+                tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
+                var parser = new PrologParser(tokens);
+                var res = parser.parseThis();
+                args.push(res);
+            });
+        var body = ShapeParsing.parseAllBelow(shapeData, rpc);
+        return new RuleExpression(library,name,args,body);
+    },
+    parseToExpression:function(shapeData, rpc){
+        var data = shapeData.data;
+        var library = data.libraryName;
+        var name = data.ruleName;
+        // first, parse all the prolog-texts in the arguments
+        var argumentExpressions = [];
+        data.arguments.forEach(a=>{
+            // experimental parsing-code - later, make it so we don't have to create a new parser for each argument :) 
+            // - store a parser in rpc
+            var tokens = Lexer.GetTokens(a);
+            tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
+            var parser = new PrologParser(tokens);
+            var res = parser.parseThis();
+            argumentExpressions.push(res);
+        });
+
+        // build and return a RuleExpression
+        var body = ShapeParsing.parseAllBelow(shapeData, rpc);
+        return new RuleExpression(library,name,argumentExpressions,body);
     }
 
     });
