@@ -38,6 +38,28 @@ class RuleExpression {
   }
 }
 
+// may not be necessary to keep "Formula" structure - might just as well just have a bunch OperatorExpressions, but keep it like this for now
+// (the "formula" structure probably doesn't add anything of value, but for the sake of overview we keep it around for now)
+class FormulaExpression {
+  constructor(expressionRows, body) {
+    this.expressionRows = expressionRows;
+    this.body = body;
+  }
+
+  // oh my, this will not work - at all.. :)
+  print(res) {
+    var r = 
+      "\n" + this.name;
+    if(this.args.length > 0)
+      r += "(" + this.args.join(", ") + ")";
+
+    if(this.body != undefined && this.body.length > 0){
+      r += ":-\n" + this.body.join(",\n");
+    }
+    res.concat(r);
+  }
+}
+
 class IntegerExpression {
   constructor(name) {
     this.name = name;

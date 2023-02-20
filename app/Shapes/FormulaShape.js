@@ -330,4 +330,39 @@ var FormulaShape = fabric.util.createClass(fabric.Group, {
     getRightHtml: function(rowNr, value){
         return '<input id="right_' + rowNr + '" tabIndex="' + (1003 + (rowNr*3)) + '" type="text" value="'+ htmlPrologEncode(value) +'"/>';
     },
+
+    parseToExpression:function(shapeData, rpc){
+        var data = shapeData.data;
+        
+        // first, parse all the prolog-texts in the arguments
+        var expressionRows = [];
+        data.rows.forEach(r=>{
+            var row = this.parseRowToExpression(r, rpc);
+            expressionRows.push(row);
+        });
+
+        // build and return a RuleExpression
+        var body = ShapeParsing.parseAllBelow(shapeData, rpc);
+        return new FormulaExpression(expressionRows,body);
+    },
+    parseRowToExpression:function(row, rpc){
+        
+        var tokens = Lexer.GetTokens(row.left);
+        tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
+        var parser = new PrologParser(tokens);
+        var leftExpression = parser.parseThis();
+        
+        tokens = Lexer.GetTokens(row.op);
+        // there should only be One token, here - but we're not checking that yet
+        var opToken = tokens[0];
+
+        tokens = Lexer.GetTokens(row.right);
+        tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
+        var parser = new PrologParser(tokens);
+        var rightExpression = parser.parseThis();
+
+        var res = new OperatorExpression(leftExpression, opToken, rightExpression);
+        return res; 
+    }
+
 });

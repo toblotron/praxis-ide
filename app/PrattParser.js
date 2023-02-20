@@ -143,6 +143,11 @@ class PrattParser {
         this.registerInfixParselet("|", new BinaryOperatorParselet(1001, false, true));
         this.registerInfixParselet("+", new BinaryOperatorParselet(60, false, true));
         this.registerInfixParselet("-", new BinaryOperatorParselet(60, false, true)); 
+        this.registerInfixParselet("*", new BinaryOperatorParselet(70, false, true)); 
+        this.registerInfixParselet("=", new BinaryOperatorParselet(40, false, true)); 
+        this.registerInfixParselet("/", new BinaryOperatorParselet(70, false, true)); 
+        this.registerInfixParselet("mod", new BinaryOperatorParselet(70, false, true)); 
+
     }
 
   }
