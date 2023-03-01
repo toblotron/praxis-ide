@@ -32,10 +32,18 @@ var ShapeParsing = {
             });
             res.cojunctionExpressions = cojunctionExpressions;
         }
-
-
         return res;
     },
+
+    printAllBelow: function(PC, body){
+        for(var i=0; i<body.length; i++)
+        {
+            PC.res.push(body[i].print(PC));
+            if(i<body.length-1)
+                PC.res.push(",");
+        }
+    },
+
     // parse tree for specific shape
     // call static parsing functions in the shape-classes, found based on shapeData
     parseShapeExpression(shapeData, rpc){
@@ -58,9 +66,11 @@ var ShapeParsing = {
         }
         return targets.sort(compareXPos);;
     },
+    // this is (I think?) needed so that we can go from a text-string to a class-reference, without using the evil eval
     classMap:{
         "FormulaShape": FormulaShape,
-        "RuleShape": RuleShape
+        "RuleShape": RuleShape,
+        "LogicShape": LogicShape
     },
     getShapeClass:function(className){
         // return the prototype of the class, where we can store functions

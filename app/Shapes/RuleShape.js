@@ -504,6 +504,9 @@ var RuleShape = fabric.util.createClass(fabric.Group, {
         $("#cancel_button").on("click", function(){
             var userData = app.view.getShapeModel(figure.id).data;
             var expressionTree = ShapeParsing.parseRuleHead(figure.id, app.view.pageModel);
+            var PrintContext = {res:[], indent:1};
+            expressionTree(PrintContext);
+            var res = PrintContext.join();
             var i = 0;
         });
 

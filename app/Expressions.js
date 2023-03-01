@@ -25,17 +25,34 @@ class RuleExpression {
     this.body = body;
   }
 
-  print(res) {
-    var r = 
-      "\n" + this.name;
-    if(this.args.length > 0)
-      r += "(" + this.args.join(", ") + ")";
+  // print rule head and body
+  print(PC) {
+    PC.res.push("\n" + this.name);
 
-    if(this.body != undefined && this.body.length > 0){
-      r += ":-\n" + this.body.join(",\n");
+    // args?
+    if(this.args.length > 0){
+      PC.res.push("(");
+      
+      for(var i=0; i<this.args.length; i++){
+        this.args[i].print(subRes);
+        if(i<this.args.length-1)
+          PC.res.push(",");
+      };
+
+      PC.res.push(")");
     }
-    res.concat(r);
+
+    if(this.body != undefined && this.body.cojunctionExpressions != null) {
+      PC.res.push(":-\n"); 
+      
+      // rule head shape does not allow outgoing else-arrow; only parse coj-expressions in body
+      ShapeParsing.printAllBelow(PC, body);
+    } 
+    
+    PC.res.push(".\n");
+
   }
+
 }
 
 // may not be necessary to keep "Formula" structure - might just as well just have a bunch OperatorExpressions, but keep it like this for now
@@ -59,6 +76,31 @@ class FormulaExpression {
     res.concat(r);
   }
 }
+
+// used for the LogicShape and LogicGroup - shapes, where we can introduce different operators like OR, 1ST, etc.
+// these get their own expression so that we can handle indentation in a different way from in parsed Prolog text
+// - we take responsibility for how scope-parenthesis' are placed, to isolate child-branches, if necessary
+class LogicExpression {
+  constructor(operatorToken, childBranchExpressions){
+    this.operatorToken = operatorToken;
+    this.childBranchExpressions = childBranchExpressions;
+  }
+
+  // oh my, this will not work - at all.. :)
+  print(res) {
+    var r = 
+      "\n" + this.name;
+    if(this.args.length > 0)
+      r += "(" + this.args.join(", ") + ")";
+
+    if(this.body != undefined && this.body.length > 0){
+      r += ":-\n" + this.body.join(",\n");
+    }
+    res.concat(r);
+  }
+
+}
+
 
 class IntegerExpression {
   constructor(name) {
