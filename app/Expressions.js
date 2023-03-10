@@ -26,31 +26,37 @@ class RuleExpression {
   }
 
   // print rule head and body
-  print(PC) {
-    PC.res.push("\n" + this.name);
+  printAsHead(PC) {
+    this.printContent(PC);
+    if(this.body != undefined && this.body.cojunctionExpressions != null) {
+      PC.res.push(":-\n"); 
+      PC.indentation = 1;
+      // rule head shape does not allow outgoing else-arrow; only parse coj-expressions in body
+      ShapeParsing.printChildren(PC, this.body.cojunctionExpressions);
+    } 
+    
+    PC.res.push(".\n");
+  }
+
+  // if applicable, write out only the code that the shape Itself constitutes,
+  // in the shortest form
+  printContent(PC){
+    ShapeParsing.indent(PC);
+    PC.res.push(this.name);
 
     // args?
     if(this.args.length > 0){
       PC.res.push("(");
-      
-      for(var i=0; i<this.args.length; i++){
-        this.args[i].print(subRes);
-        if(i<this.args.length-1)
-          PC.res.push(",");
-      };
-
+      ShapeParsing.printList(PC, this.args);
       PC.res.push(")");
     }
+  }
 
-    if(this.body != undefined && this.body.cojunctionExpressions != null) {
-      PC.res.push(":-\n"); 
-      
-      // rule head shape does not allow outgoing else-arrow; only parse coj-expressions in body
-      ShapeParsing.printAllBelow(PC, body);
-    } 
-    
-    PC.res.push(".\n");
-
+  // print as part of body, not head
+  print(PC) {
+    // no special structure-features of this shape - it is just a normal "bit of prolog code"
+    // so we just pass it along to the standard rendering method, to handle any possible else-connections and so on
+    ShapeParsing.printNormalShape(this, PC);
   }
 
 }
@@ -63,19 +69,23 @@ class FormulaExpression {
     this.body = body;
   }
 
-  // oh my, this will not work - at all.. :)
-  print(res) {
-    var r = 
-      "\n" + this.name;
-    if(this.args.length > 0)
-      r += "(" + this.args.join(", ") + ")";
+  printContent(PC) {
+    // for every row.. 
+    for(var i=0; i< this.expressionRows.length; i++)
+    {
+        ShapeParsing.indent(PC);
+        this.expressionRows[i].print(PC);
+        if(i<this.expressionRows.length-1)
+            PC.res.push(",\n");
+    }  
+  }
 
-    if(this.body != undefined && this.body.length > 0){
-      r += ":-\n" + this.body.join(",\n");
-    }
-    res.concat(r);
+  print(PC) {
+    this.printContent(PC);
   }
 }
+
+
 
 // used for the LogicShape and LogicGroup - shapes, where we can introduce different operators like OR, 1ST, etc.
 // these get their own expression so that we can handle indentation in a different way from in parsed Prolog text
@@ -86,17 +96,83 @@ class LogicExpression {
     this.childBranchExpressions = childBranchExpressions;
   }
 
-  // oh my, this will not work - at all.. :)
-  print(res) {
-    var r = 
-      "\n" + this.name;
-    if(this.args.length > 0)
-      r += "(" + this.args.join(", ") + ")";
+  print(PC) {
+    switch(this.operatorToken) {
+      case "AND":
+        ShapeParsing.printChildren(PC, this.childBranchExpressions);
+        break;
+      case "OR":
+        ShapeParsing.indent(PC);
+        PC.res.push("(\n");
+        PC.indentation++;
+        for(var i=0; i< this.childBranchExpressions.length; i++)
+        {
+            this.childBranchExpressions[i].print(PC);
+            if(i < this.childBranchExpressions.length-1) {
+              PC.res.push("\n");
+              ShapeParsing.indent(PC);  
+              PC.res.push(";\n");
+            }
+        }
+        PC.indentation--;
+        PC.res.push("\n");
+        ShapeParsing.indent(PC);  
+        PC.res.push(")");
+        break;
+      case "1ST":
+        var startIndent = PC.indentation;
+        for(var i=0; i< this.childBranchExpressions.length; i++)
+        {
+            ShapeParsing.indent(PC);
+            PC.res.push("(\n");
 
-    if(this.body != undefined && this.body.length > 0){
-      r += ":-\n" + this.body.join(",\n");
+            PC.indentation++;
+
+            //ShapeParsing.indent(PC);
+            this.childBranchExpressions[i].print(PC);
+            
+            if(i < this.childBranchExpressions.length-1) {
+              PC.res.push("\n");
+              ShapeParsing.indent(PC);
+              PC.res.push("-> true ;\n");
+            }         
+            else {
+              PC.res.push("\n");
+              ShapeParsing.indent(PC);
+              PC.res.push("-> true ; false");
+            }
+
+        }
+        // back up to the original indentation level again
+        while(PC.indentation > startIndent)
+        {
+          PC.indentation--;
+          PC.res.push("\n");
+          ShapeParsing.indent(PC);
+          PC.res.push(")");
+        }
+
+        break;
+      case "NOT":
+        ShapeParsing.indent(PC);
+        PC.res.push("(\n");
+        PC.indentation++;
+        ShapeParsing.printChildren(PC, this.childBranchExpressions);
+        PC.res.push("\n");
+        ShapeParsing.indent(PC);
+        PC.res.push("-> fail ; true");
+        PC.indentation--;
+        PC.res.push("\n");
+        ShapeParsing.indent(PC);
+        PC.res.push(")");
+        break;
+      case "CUT":
+        ShapeParsing.indent(PC);
+        PC.res.push("!,\n");
+        ShapeParsing.printChildren(PC, this.childBranchExpressions);
+        break;
     }
-    res.concat(r);
+    
   }
 
 }
@@ -107,8 +183,8 @@ class IntegerExpression {
     this.name = name;
   }
   
-  print(res) {
-    res.concat(this.name);
+  print(PC) {
+    PC.res.push(this.name);
   }
 }
 
@@ -117,8 +193,8 @@ class AtomExpression {
     this.name = name;
   }
   
-  print(res) {
-    res.concat(this.name);
+  print(PC) {
+    PC.res.push(this.name);
   }
 }
 
@@ -127,8 +203,8 @@ class VariableExpression {
     this.name = name;
   }
   
-  print(res) {
-    res.concat(this.name);
+  print(PC) {
+    PC.res.push(this.name);
   }
 }
 
@@ -137,8 +213,8 @@ class FloatExpression {
     this.name = name;
   }
   
-  print(res) {
-    res.concat(this.name);
+  print(PC) {
+    PC.res.push(this.name);
   }
 }
 
@@ -147,8 +223,10 @@ class ListExpression {
     this.args = args;
   }
   
-  print(res) {
-    res.concat("[" + this.args.join(",") +"]" );
+  print(PC) {
+    PC.res.push("[");
+    ShapeParsing.printList(PC, this.args);
+    PC.res.push("]");
   }
 }
 
@@ -158,8 +236,11 @@ class TermExpression {
     this.args = args;
   }
   
-  print(res) {
-    res.concat(this.functor + "(" + this.args.join(",") +")" );
+  print(PC) {
+    this.functor.print(PC);
+    PC.res.push("(");
+    ShapeParsing.printList(PC, this.args);
+    PC.res.push(")");
   }
 }
 
@@ -173,10 +254,10 @@ class OperatorExpression {
       this.mRight = rightExpression;
     }
     
-    print(res) {
-      this.mLeft.print(res);
-      res.concat(" " + this.mOperator.value + " ");
-      this.mRight.print(res);
+    print(PC) {
+      this.mLeft.print(PC);
+      PC.res.push(" " + this.mOperator.value +" ");
+      this.mRight.print(PC);
     }
   }
 
@@ -187,9 +268,9 @@ class OperatorExpression {
       this.mRight = rightExpression;
     }
     
-    print(res) {
-      res.concat(" " + this.mOperator.value + " ");
-      this.mRight.print(res);
+    print(PC) {
+      PC.res.push(this.mOperator.value);
+      this.mRight.print(PC);
     }
   }
 

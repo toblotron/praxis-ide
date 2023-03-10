@@ -35,12 +35,75 @@ var ShapeParsing = {
         return res;
     },
 
-    printAllBelow: function(PC, body){
-        for(var i=0; i<body.length; i++)
+    indent(PC) {
+        PC.res.push("\t".repeat(PC.indentation));
+    },
+
+    printList(PC, list) {
+        for(var i=0; i<list.length; i++)
         {
-            PC.res.push(body[i].print(PC));
-            if(i<body.length-1)
+            //PC.res.push(list[i].print(PC));
+            list[i].print(PC);
+            if(i<list.length-1)
                 PC.res.push(",");
+        }
+    },
+
+    printNormalShape(shapeExpression, PC) {
+        // check if this shape has else-connections outgoing
+        if(shapeExpression.body.elseExpressions != null && 
+            shapeExpression.body.elseExpressions.length > 0){
+            // in that case we wrap the whole thing in an if-then-else structure
+
+            // the condition is the code of the shape itself
+            this.indent(PC);
+            PC.res.push("(\n");
+            PC.indentation++;
+            shapeExpression.printContent(PC);
+            PC.indentation--;
+            PC.res.push("\n");
+            this.indent(PC);
+            PC.res.push(") ->\n");
+
+            // if the shape succeeds:
+            if(shapeExpression.body.cojunctionExpressions.length > 0) {
+                // wrap this also in scope
+                this.indent(PC);
+                PC.res.push("(\n");
+                PC.indentation++;
+                this.printChildren(PC,shapeExpression.body.cojunctionExpressions);
+                PC.indentation--;
+                PC.res.push("\n");
+                this.indent(PC);
+                PC.res.push(") ;\n");
+            } else {
+                this.indent(PC) + "true";
+            }
+
+            // and then write the else-branches
+            this.indent(PC);
+            PC.res.push("(\n");
+            PC.indentation++;
+            this.printChildren(PC,shapeExpression.body.elseExpressions);
+            PC.indentation--;
+            PC.res.push("\n");
+            this.indent(PC);
+            PC.res.push(")");
+        } else {
+            shapeExpression.printContent(PC);
+            if(shapeExpression.body.cojunctionExpressions != null && shapeExpression.body.cojunctionExpressions.length > 0) {
+                PC.res.push(",\n");
+                this.printChildren(PC,shapeExpression.body.cojunctionExpressions);
+            }
+        }
+    },
+
+    printChildren(PC, children) {
+        for(var i=0; i<children.length; i++)
+        {
+            children[i].print(PC);
+            if(i<children.length-1)
+                PC.res.push(",\n"); // \n to get newlines between statements in body
         }
     },
 
