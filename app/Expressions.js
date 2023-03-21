@@ -85,18 +85,152 @@ class FormulaExpression {
   }
 }
 
+class FindallExpression {
+  constructor(capturePatternExpression, body, captureListExpression) {
+    this.capturePatternExpression = capturePatternExpression;
+    this.body = body;
+    this.captureListExpression = captureListExpression;
+  }
 
+  printContent(PC) {
+    ShapeParsing.indent(PC);
+    PC.res.push("findall(\n");
+
+    PC.indentation++;
+    ShapeParsing.indent(PC);
+    this.capturePatternExpression.print(PC);
+    PC.res.push(",\n");
+
+    ShapeParsing.indent(PC);
+    PC.res.push("(\n");
+    PC.indentation++
+
+    ShapeParsing.printChildren(PC, this.body.cojunctionExpressions);
+    
+    PC.res.push("\n");
+    PC.indentation--;
+    ShapeParsing.indent(PC);
+    PC.res.push("),\n");
+
+    ShapeParsing.indent(PC);
+    this.captureListExpression.print(PC);
+    PC.res.push("\n");
+
+    PC.indentation--;
+    ShapeParsing.indent(PC);
+    PC.res.push(")");
+    
+  }
+
+  print(PC) {
+    // This demands special handling of else-arrows vs then-arrows; they must be treated in a special way (?)
+    if(this.body.elseExpressions != null){
+      ShapeParsing.indent(PC);
+      PC.res.push("(\n");
+
+      PC.indentation++;
+
+      this.printContent(PC);
+      
+      PC.res.push(",\n");
+      ShapeParsing.indent(PC);
+      PC.res.push("-> true ;\n");
+      
+      // print the else-branches
+      ShapeParsing.printChildren(PC, this.body.elseExpressions);
+      
+      PC.indentation--;
+      PC.res.push("\n");
+      ShapeParsing.indent(PC);
+      PC.res.push(")");
+    } 
+    else {
+      this.printContent(PC);
+    }
+  }
+}
+
+// this is mainly meant to handle outgoing ELSE-connections
+// PS - not used - haven't finished thinking about this, it seems
+class IfThenElseExpression {
+  constructor(conditionExpression, thenExpression, elseExpression){
+    this.conditionExpression = conditionExpression;
+    this.thenExpression = thenExpression;
+    this.elseExpression = elseExpression;
+  }
+
+  // eeh.. lost the thread.. 
+  printContent(PC){
+    ShapeParsing.indent(PC);
+    PC.res.push("(\n");
+
+    PC.indentation++;
+
+    // ShapeParsing.indent(PC);
+    this.conditionExpressions[i].print(PC);
+    
+    if(i < this.thenExpression != null) {
+      PC.res.push("\n");
+      ShapeParsing.indent(PC);
+      PC.res.push("-> true ;\n");
+    }         
+    else {
+      PC.res.push("\n");
+      ShapeParsing.indent(PC);
+      PC.res.push("-> true ; false");
+    }
+
+    PC.indentation--;
+    PC.res.push("\n");
+    ShapeParsing.indent(PC);
+    PC.res.push(")");
+
+  }
+
+  print(PC){
+    this.printContent(PC);
+  }
+
+}
 
 // used for the LogicShape and LogicGroup - shapes, where we can introduce different operators like OR, 1ST, etc.
 // these get their own expression so that we can handle indentation in a different way from in parsed Prolog text
 // - we take responsibility for how scope-parenthesis' are placed, to isolate child-branches, if necessary
 class LogicExpression {
-  constructor(operatorToken, childBranchExpressions){
+  constructor(operatorToken, childBranchExpressions, elseExpressions){
     this.operatorToken = operatorToken;
     this.childBranchExpressions = childBranchExpressions;
+    this.elseExpressions = elseExpressions;
   }
 
   print(PC) {
+    // This demands special handling of else-arrows vs then-arrows; they must be treated in a special way (?)
+    if(this.elseExpressions != null){
+      ShapeParsing.indent(PC);
+      PC.res.push("(\n");
+
+      PC.indentation++;
+
+      this.printContent(PC);
+      
+      PC.res.push(",\n");
+      ShapeParsing.indent(PC);
+      PC.res.push("-> true ;\n");
+      
+      // print the else-branches
+      ShapeParsing.printChildren(PC, this.elseExpressions);
+      
+      PC.indentation--;
+      PC.res.push("\n");
+      ShapeParsing.indent(PC);
+      PC.res.push(")");
+    } 
+    else {
+      this.printContent(PC);
+    }
+  }
+
+  printContent(PC) {
     switch(this.operatorToken) {
       case "AND":
         ShapeParsing.printChildren(PC, this.childBranchExpressions);

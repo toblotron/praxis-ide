@@ -219,6 +219,25 @@ var FindallShape = fabric.util.createClass(fabric.Group, {
         
     },
 
+    parseToExpression:function(shapeData, rpc){
+        var data = shapeData.data;
+        
+        var tokens = Lexer.GetTokens(data.capturePattern);
+        tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
+        var parser = new PrologParser(tokens);
+        var capturePatternExpression = parser.parseThis();
+
+        tokens = Lexer.GetTokens(data.captureList);
+        tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
+        var parser = new PrologParser(tokens);
+        var captureListExpression = parser.parseThis();
+
+        // build and return a RuleExpression
+        var body = ShapeParsing.parseAllBelow(shapeData, rpc);
+        return new FindallExpression(capturePatternExpression, body, captureListExpression);
+    }
+
+
 });
 
 

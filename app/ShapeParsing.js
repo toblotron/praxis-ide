@@ -133,7 +133,8 @@ var ShapeParsing = {
     classMap:{
         "FormulaShape": FormulaShape,
         "RuleShape": RuleShape,
-        "LogicShape": LogicShape
+        "LogicShape": LogicShape,
+        "FindallShape": FindallShape
     },
     getShapeClass:function(className){
         // return the prototype of the class, where we can store functions
