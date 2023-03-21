@@ -61,6 +61,7 @@ praxis.TablePanel = Class.extend({
         '			<button id="cancel_button">Cancel</button>'+
         '			<button id="ok_button">Ok</button>'+
         '   </div>'+
+        '   <button id="delete_rows">Remove selected rows</button>' + 
         ' </div>'+
         '</div>');
 
@@ -158,8 +159,27 @@ praxis.TablePanel = Class.extend({
             tableData.columns.pop();
             // userData.arguments.pop();
         });
+
+        $("#delete_rows").on("click", function(){
+            var grid = app.tableView.grid;
+
+            var data = grid.getData();
+            var rows= grid.getSelectedRows();
+
+            var sure= confirm("Are You Sure You Want to Delete the selected rows?");   
+            if(sure){
+                var deleted = 0;
+                for (var i = 0; i < rows.length; i += 1) {
+                    data.splice(rows[i-deleted], 1);
+                    deleted++;
+                }
+                grid.setData(data, true);
+                grid.render();
+            }
+        });
         
     },
+
 
     getColumnTypeComboHTML:function(colNr,currSel) {
         var res = '<SELECT id="col_' + colNr + '_type">';

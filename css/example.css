@@ -61,6 +61,22 @@ body {
     -moz-box-sizing: content-box;
     -webkit-box-sizing: content-box;
 }
+.slickgrid-cell-reorder {
+    cursor: move;
+    background: url("drag-handle.png") no-repeat center center;
+}
+.slick-cell.selected {
+    background-color: beige;
+}
+.slick-cell, .slick-headerrow-column {
+    padding: 4px 4px 0px 4px !important;
+}
+
+#tableView input[type=text]{
+    vertical-align: middle;
+    padding: 0px;
+    height: 20px;
+   }
 
 #centerPane {
     padding: 0px !important;
