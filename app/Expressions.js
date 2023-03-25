@@ -193,6 +193,99 @@ class IfThenElseExpression {
 
 }
 
+// used for the GroupShape where we can introduce different operators like OR, 1ST, etc.
+class GroupExpression {
+  constructor(operatorToken, childBranchExpressions, body){
+    this.operatorToken = operatorToken;
+    this.childBranchExpressions = childBranchExpressions;
+    this.body = body;
+  }
+
+  print(PC) {
+    // no special structure-features of this shape - it is just a normal "bit of prolog code"
+    // so we just pass it along to the standard rendering method, to handle any possible else-connections and so on
+    ShapeParsing.printNormalShape(this, PC);
+  }
+
+  printContent(PC) {
+    switch(this.operatorToken) {
+      case "AND":
+        ShapeParsing.printChildren(PC, this.childBranchExpressions);
+        break;
+      case "OR":
+        ShapeParsing.indent(PC);
+        PC.res.push("(\n");
+        PC.indentation++;
+        for(var i=0; i< this.childBranchExpressions.length; i++)
+        {
+            this.childBranchExpressions[i].print(PC);
+            if(i < this.childBranchExpressions.length-1) {
+              PC.res.push("\n");
+              ShapeParsing.indent(PC);  
+              PC.res.push(";\n");
+            }
+        }
+        PC.indentation--;
+        PC.res.push("\n");
+        ShapeParsing.indent(PC);  
+        PC.res.push(")");
+        break;
+      case "1ST":
+        var startIndent = PC.indentation;
+        for(var i=0; i< this.childBranchExpressions.length; i++)
+        {
+            ShapeParsing.indent(PC);
+            PC.res.push("(\n");
+
+            PC.indentation++;
+
+            //ShapeParsing.indent(PC);
+            this.childBranchExpressions[i].print(PC);
+            
+            if(i < this.childBranchExpressions.length-1) {
+              PC.res.push("\n");
+              ShapeParsing.indent(PC);
+              PC.res.push("-> true ;\n");
+            }         
+            else {
+              PC.res.push("\n");
+              ShapeParsing.indent(PC);
+              PC.res.push("-> true ; false");
+            }
+
+        }
+        // back up to the original indentation level again
+        while(PC.indentation > startIndent)
+        {
+          PC.indentation--;
+          PC.res.push("\n");
+          ShapeParsing.indent(PC);
+          PC.res.push(")");
+        }
+
+        break;
+      case "NOT":
+        ShapeParsing.indent(PC);
+        PC.res.push("(\n");
+        PC.indentation++;
+        ShapeParsing.printChildren(PC, this.childBranchExpressions);
+        PC.res.push("\n");
+        ShapeParsing.indent(PC);
+        PC.res.push("-> fail ; true");
+        PC.indentation--;
+        PC.res.push("\n");
+        ShapeParsing.indent(PC);
+        PC.res.push(")");
+        break;
+      case "CUT":
+        ShapeParsing.indent(PC);
+        PC.res.push("!,\n");
+        ShapeParsing.printChildren(PC, this.childBranchExpressions);
+        break;
+    }
+  }
+}
+
 // used for the LogicShape and LogicGroup - shapes, where we can introduce different operators like OR, 1ST, etc.
 // these get their own expression so that we can handle indentation in a different way from in parsed Prolog text
 // - we take responsibility for how scope-parenthesis' are placed, to isolate child-branches, if necessary

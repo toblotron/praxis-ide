@@ -8,6 +8,7 @@ var ShapeParsing = {
             return expressionTree;
         }
     },
+
     // normal parsing of shapes below a certain shape
     // build Abstract Syntax Tree - return expression-tree
     parseAllBelow: function(shapeData, rpc){
@@ -33,6 +34,24 @@ var ShapeParsing = {
             res.cojunctionExpressions = cojunctionExpressions;
         }
         return res;
+    },
+
+    // process all shapes that are contained by this shape, and parse them to expressions
+    parseContainedCodes(containedIds, rpc){
+        var targets = [];
+        for(var childId of containedIds) {
+            target = rpc.page.shapes.find(sh => sh.id == childId && incomingArrows(sh, rpc.page) == 0);
+            if(target != undefined) // if has no incoming arrows
+                targets.push(target);
+        }
+        targets = targets.sort(compareXPos);;
+        
+        var targetExpressions = [];
+        for(var target of targets) {
+            var targetExpression = this.parseShapeExpression(target, rpc)
+            targetExpressions.push(targetExpression);
+        }
+        return targetExpressions;
     },
 
     indent(PC) {
@@ -127,14 +146,16 @@ var ShapeParsing = {
                 targets.push(target);
             }
         }
-        return targets.sort(compareXPos);;
+        return targets.sort(compareXPos);
     },
+
     // this is (I think?) needed so that we can go from a text-string to a class-reference, without using the evil eval
     classMap:{
         "FormulaShape": FormulaShape,
         "RuleShape": RuleShape,
         "LogicShape": LogicShape,
-        "FindallShape": FindallShape
+        "FindallShape": FindallShape,
+        "GroupShape": GroupShape
     },
     getShapeClass:function(className){
         // return the prototype of the class, where we can store functions
