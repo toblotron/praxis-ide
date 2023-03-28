@@ -124,6 +124,7 @@ class PrattParser {
         this.registerPrefixParselet(TokenType.Float.name, new FloatParselet());
         this.registerPrefixParselet(TokenType.Atom.name, new AtomParselet());
         this.registerPrefixParselet(TokenType.Variable.name, new VariableParselet());
+        this.registerPrefixParselet(TokenType.BeginList.name, new ListParselet());
         
         this.registerPrefixOperatorParselet("-", 500, true);
 

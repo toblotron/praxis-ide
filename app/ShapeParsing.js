@@ -3,8 +3,12 @@ var ShapeParsing = {
     // start parsing of an individual rule-shape as the head of a rule
     parseRuleHead:function(shapeId, page){
         var shapeData = page.shapes.find(s=>s.id == shapeId);
-        if(shapeData != undefined && shapeData.type == "RuleShape"){
-            var expressionTree = RuleShape.prototype.parseAsHead(shapeData, page);
+        if(shapeData != undefined && (shapeData.type == "RuleShape" || shapeData.type == "DcgShape")){
+            var expressionTree = null;
+            if(shapeData.type == "RuleShape") 
+                expressionTree = RuleShape.prototype.parseAsHead(shapeData, page);
+            if(shapeData.type == "DcgShape") 
+                expressionTree = DcgShape.prototype.parseAsHead(shapeData, page);
             return expressionTree;
         }
     },
@@ -120,7 +124,18 @@ var ShapeParsing = {
     printChildren(PC, children) {
         for(var i=0; i<children.length; i++)
         {
+            // should this child-statement be wrapped in braces, because we are currently printing a DCG rule,
+            // and the statement is normal prolog?
+            //var wrapInBraces = PC.isDcgRule && children[i].isDcgStatement == undefined;
+            
+            //if(wrapInBraces)
+            //    PC.res.push("{");
+            
             children[i].print(PC);
+            
+            //if(wrapInBraces)
+            //    PC.res.push("}");
+
             if(i<children.length-1)
                 PC.res.push(",\n"); // \n to get newlines between statements in body
         }
@@ -155,7 +170,10 @@ var ShapeParsing = {
         "RuleShape": RuleShape,
         "LogicShape": LogicShape,
         "FindallShape": FindallShape,
-        "GroupShape": GroupShape
+        "GroupShape": GroupShape,
+        "TableShape": TableShape,
+        "DcgShape": DcgShape,
+        "DcgTerminalShape": DcgTerminalShape
     },
     getShapeClass:function(className){
         // return the prototype of the class, where we can store functions

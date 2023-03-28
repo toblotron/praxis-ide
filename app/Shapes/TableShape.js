@@ -391,4 +391,25 @@ var TableShape = fabric.util.createClass(fabric.Group, {
         return '<input id="value_' + rowNr + '" tabIndex="' + (1002 + rowNr) + '" "type="text" value="'+ htmlPrologEncode(value) +'"/>';
     },
 
+    // a table call/ reference is really just the same as a normal rule, so we make it into a RuleExpression
+    parseToExpression:function(shapeData, rpc){
+        var data = shapeData.data;
+        var name = data.name;
+        // first, parse all the prolog-texts in the arguments
+        var argumentExpressions = [];
+        data.values.forEach(a=>{
+            // experimental parsing-code - later, make it so we don't have to create a new parser for each argument :) 
+            // - store a parser in rpc
+            var tokens = Lexer.GetTokens(a);
+            tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
+            var parser = new PrologParser(tokens);
+            var res = parser.parseThis();
+            argumentExpressions.push(res);
+        });
+
+        // build and return a RuleExpression
+        var body = ShapeParsing.parseAllBelow(shapeData, rpc);
+        return new RuleExpression(library,name,argumentExpressions,body);
+    }
+
 });

@@ -136,8 +136,7 @@ var DcgTerminalShape = fabric.util.createClass(fabric.Group, {
         '    </div>'+
         '  </div>'+
         '</div>');
-
-           
+        
         $("#ok_button").on("click", function(){
             var userData = app.view.getShapeModel(figure.id).data;
 
@@ -145,8 +144,29 @@ var DcgTerminalShape = fabric.util.createClass(fabric.Group, {
 
             figure.updateContents(userData);
             app.view.canvas.renderAll();
-        });    
-       
+        });       
     },
+
+    // a dcg rule call/ reference is mostly just the same as a normal rule, except there can be a "pushback" part, and
+    // also that it is signified by "-->" instead of ":-"
+    parseToExpression:function(shapeData, rpc){
+        var data = shapeData.data;
+        var value = data.value;
+
+        var valueExpression = null;
+            
+        // experimental parsing-code - later, make it so we don't have to create a new parser for each argument :) 
+        // - store a parser in rpc
+        var tokens = Lexer.GetTokens(value);
+        tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
+        var parser = new PrologParser(tokens);
+        var res = parser.parseThis();
+        valueExpression = res;
+
+        // build and return an expression
+        var body = ShapeParsing.parseAllBelow(shapeData, rpc);
+        return new DcgTerminalExpression(valueExpression, body);
+    }
+
 
 });
