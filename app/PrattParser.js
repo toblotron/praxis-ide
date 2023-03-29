@@ -34,8 +34,11 @@ class PrattParser {
         // others are registered by token type name
         prefixParselet = this.mPrefixParselets.get(token.type.name);
 
-      if (prefixParselet == null) throw new ParseException("Could not parse \"" +
-          token.value + "\".");
+      if (prefixParselet == null) { 
+        console.log("Could not parse \"" + token.value + "\".");
+        //throw new ParseException("Could not parse \"" +
+        //  token.value + "\".");
+      }
       
       var leftExpression = prefixParselet.parse(this, token);
       
@@ -125,10 +128,10 @@ class PrattParser {
         this.registerPrefixParselet(TokenType.Atom.name, new AtomParselet());
         this.registerPrefixParselet(TokenType.Variable.name, new VariableParselet());
         this.registerPrefixParselet(TokenType.BeginList.name, new ListParselet());
+        this.registerPrefixParselet(TokenType.BeginParen.name, new TermParselet());
         
         this.registerPrefixOperatorParselet("-", 500, true);
-
-        this.registerPrefixParselet(TokenType.BeginList, new ListParselet());
+        this.registerPrefixOperatorParselet("+", 500, true);
 
         /*
         register(TokenType.ASSIGN,     new AssignParselet());
@@ -141,7 +144,10 @@ class PrattParser {
         this.registerInfixParselet("(", new TermParselet());
 
         // Register the simple operator parselets.
-        this.registerInfixParselet("|", new BinaryOperatorParselet(1001, false, true));
+        this.registerInfixParselet(",", new BinaryOperatorParselet(30, true, false));
+        this.registerInfixParselet(";", new BinaryOperatorParselet(25, true, false));
+        this.registerInfixParselet("|", new BinaryOperatorParselet(1001, false, false));
+        this.registerInfixParselet(":", new BinaryOperatorParselet(20, true, false));
         this.registerInfixParselet("+", new BinaryOperatorParselet(60, false, true));
         this.registerInfixParselet("-", new BinaryOperatorParselet(60, false, true)); 
         this.registerInfixParselet("*", new BinaryOperatorParselet(70, false, true)); 

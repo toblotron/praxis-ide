@@ -759,7 +759,7 @@ var DcgShape = fabric.util.createClass(fabric.Group, {
     // also that it is signified by "-->" instead of ":-"
     parseToExpression:function(shapeData, rpc){
         var data = shapeData.data;
-        var name = data.name;
+        var name = data.ruleName;
         var library = data.libraryName;
 /*
         newShapeData.ruleName = selectedPredicateName;

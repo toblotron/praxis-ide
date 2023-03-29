@@ -37,6 +37,7 @@ class Lexer {
   {
     this.text = text;
     this.pos = 0;
+    
   }
 
   isOperator(char) 
@@ -47,6 +48,7 @@ class Lexer {
   static GetTokens(text)
   {
       var elements = [];
+      var operatornames = ["mod"];
       var styles = {};
 
       var length = text.length;
@@ -105,11 +107,11 @@ class Lexer {
             elements.push(elem);
             pos += elem.value.length;
           }
-          else if("[],.-/+*:<>()\\=@.|".includes(c)){
+          else if("[],.-/+*:<>\\=@.|".includes(c)){
               do {
                   i++;
                   var c = text[i];
-              } while (i<length && "[],.-/+*:<>()\\=@.|".includes(c));
+              } while (i<length && "[],.-/+*:<>\\=@.|".includes(c));
               elem = new PrologToken(TokenType.Operator, text.substring(from,i));
               from = i;
               elements.push(elem);
@@ -121,7 +123,15 @@ class Lexer {
                   i++;
                   var c = text[i];
               } while (i<length && c.match(/[a-zA-Z0-9_]/));
-              elem = new PrologToken(TokenType.Atom, text.substring(from,i));
+              var atomText = text.substring(from,i);
+              if(operatornames.includes(atomText))
+              {
+                elem = new PrologToken(TokenType.Operator, atomText);
+              }
+              else 
+              {
+                elem = new PrologToken(TokenType.Atom, atomText);
+              }
               from = i;
               elements.push(elem);
               pos += elem.value.length;

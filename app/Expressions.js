@@ -618,7 +618,9 @@ class TermExpression {
   }
   
   print(PC) {
-    this.functor.print(PC);
+    // this may be a term (parenthesis-enclosed expression) without functor
+    if(this.functor != null)
+      this.functor.print(PC);
     PC.res.push("(");
     ShapeParsing.printList(PC, this.args);
     PC.res.push(")");
@@ -637,7 +639,7 @@ class OperatorExpression {
     
     print(PC) {
       this.mLeft.print(PC);
-      PC.res.push(" " + this.mOperator.value +" ");
+      PC.res.push(this.mOperator.value);
       this.mRight.print(PC);
     }
   }
@@ -717,6 +719,9 @@ class OperatorExpression {
         parser.consume(TokenType.EndParen);
       }
       // left hand value will be term name/ functor
+      // if it's just a "(", ignore it (?) - then it comes from a functorless term, and the "(" is just from the parsing procedure
+      if(left instanceof PrologToken && left.type == TokenType.BeginParen)
+        left = null;
       return new TermExpression(left,args);
     }
 
