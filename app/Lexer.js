@@ -219,7 +219,18 @@ class Lexer {
 
             if(i<length && (c == "\'")){
               i++;
-              elem = new PrologToken(TokenType.Atom, text.substring(from,i));
+
+              var operatorText = text.substring(from+1,i-2);
+              var atomText = text.substring(from,i);
+              if(operatornames.includes(operatorText))
+              {
+                elem = new PrologToken(TokenType.Operator, operatorText);
+              }
+              else 
+              {
+                elem = new PrologToken(TokenType.Atom, atomText);
+              }
+
               elements.push(elem);
               pos += elem.value.length;
             } 
