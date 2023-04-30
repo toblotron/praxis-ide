@@ -37,7 +37,31 @@ class Lexer {
   {
     this.text = text;
     this.pos = 0;
+    //this.operatornames = ["mod"];
     
+  }
+
+  static operatornames = ["mod"];
+  static isOperatorString(string)
+  {
+    if(this.operatornames.includes(string))
+       return true;
+    else
+    {
+      var i = 0;
+      var length = string.length;
+      do {
+        var c = string[i];
+        i++;
+      } while (i<length && this.isOperatorChar(c));
+
+      return i == length; // return success if all the chars counted as operators
+    }
+  }
+
+  static isOperatorChar(char) 
+  {
+    return "[],.-/+*:<>\\=@.|".includes(c);
   }
 
   isOperator(char) 
@@ -48,7 +72,7 @@ class Lexer {
   static GetTokens(text)
   {
       var elements = [];
-      var operatornames = ["mod"];
+      
       var styles = {};
 
       var length = text.length;
@@ -124,7 +148,7 @@ class Lexer {
                   var c = text[i];
               } while (i<length && c.match(/[a-zA-Z0-9_]/));
               var atomText = text.substring(from,i);
-              if(operatornames.includes(atomText))
+              if(this.operatornames.includes(atomText))
               {
                 elem = new PrologToken(TokenType.Operator, atomText);
               }
@@ -220,19 +244,22 @@ class Lexer {
             if(i<length && (c == "\'")){
               i++;
 
-              var operatorText = text.substring(from+1,i-2);
               var atomText = text.substring(from,i);
-              if(operatornames.includes(operatorText))
+              var operatorText = text.substring(from+1,i-1);
+              
+              if(this.isOperatorString(operatorText))
               {
                 elem = new PrologToken(TokenType.Operator, operatorText);
               }
               else 
               {
+                var atomText = text.substring(from,i);
                 elem = new PrologToken(TokenType.Atom, atomText);
               }
 
               elements.push(elem);
-              pos += elem.value.length;
+              from = i;
+              pos += atomText.length;
             } 
             else
             {
