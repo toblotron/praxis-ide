@@ -1,18 +1,56 @@
 var ShapeParsing = {
     
     // start parsing of an individual rule-shape as the head of a rule
-    parseRuleHead:function(shapeId, page){
+    parseRuleHead:function(shapeId, page, errorList){
         var shapeData = page.shapes.find(s=>s.id == shapeId);
         if(shapeData != undefined && (shapeData.type == "RuleShape" || shapeData.type == "DcgShape")){
             var expressionTree = null;
+            
             if(shapeData.type == "RuleShape") 
-                expressionTree = RuleShape.prototype.parseAsHead(shapeData, page);
+                expressionTree = RuleShape.prototype.parseAsHead(shapeData, page, errorList );
             if(shapeData.type == "DcgShape") 
-                expressionTree = DcgShape.prototype.parseAsHead(shapeData, page);
+                expressionTree = DcgShape.prototype.parseAsHead(shapeData, page, errorList);
+
             return expressionTree;
         }
     },
 
+    parseShapePrologText(rpc, shapeData, description, prologText){
+        try{
+            var tokens = Lexer.GetTokens(prologText);
+            tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
+            var parser = new PrologParser(tokens);
+            var res = parser.parseThis();
+            return res;
+        } catch (error){
+            // construct error-object and insert into errorList
+            var report = {
+                classification: "error",
+                occasion: "compilation",
+                title: "Syntax error",
+                description: description + ":" + error.message,
+                resourceType: "rules",
+                resourceId: rpc.page.id,
+                targetType: "shape",
+                targetId: shapeData.id
+                /* 
+                classification, // "warning" / "error"
+                occasion, // "validation" / "compilation"
+                title, // short description
+                description, // detailed description
+                resourceType, // "rules", "table"...
+                resourceId // index of resource (page/etc)
+                targetType // "shape", "connection"..
+                targetId // id of target entity
+                */
+            };
+
+            rpc.errorList.push(report);
+
+            return null;
+        }
+    },
+               
     // normal parsing of shapes below a certain shape
     // build Abstract Syntax Tree - return expression-tree
     parseAllBelow: function(shapeData, rpc){
@@ -48,7 +86,7 @@ var ShapeParsing = {
             if(target != undefined) // if has no incoming arrows
                 targets.push(target);
         }
-        targets = targets.sort(compareXPos);;
+        targets = targets.sort(compareXPos);
         
         var targetExpressions = [];
         for(var target of targets) {

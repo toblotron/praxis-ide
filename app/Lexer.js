@@ -249,7 +249,7 @@ class Lexer {
               
               if(this.isOperatorString(operatorText))
               {
-                elem = new PrologToken(TokenType.Operator, operatorText);
+                elem = new PrologToken(TokenType.Operator, atomText);
               }
               else 
               {

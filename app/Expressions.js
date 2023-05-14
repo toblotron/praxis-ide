@@ -1,7 +1,7 @@
 
 // instance follows parsing of entire rule, both for parsing of shapes as well as for parsing of text(?)
 class RuleParsingContext {
-  constructor(page, headShape ) {
+  constructor(page, headShape, errorList ) {
     // datamodel of the current drawing page
     this.page = page;
     // the parsed expression 
@@ -13,6 +13,8 @@ class RuleParsingContext {
     // Sometimes we will want to create intermediate variables with unique names
     // this is for making sure those variables have unique names
     this.idCounter = 0; 
+    // a list where we put all errors/warnings generated while parsing this shape
+    this.errorList = errorList;
   }
 }
 

@@ -1,6 +1,7 @@
 class PrattParser {
 
     constructor(tokens) {
+      this.tokens = tokens;
       this.mTokens = tokens.entries();  // set it as an iterator
       this.mPrefixParselets = new Map();
       this.mInfixParselets = new Map();
@@ -27,25 +28,35 @@ class PrattParser {
     parseExpression(iPrecedence) {
       var token = this.consume();
       var prefixParselet = null;
-      if(token.type.name == "Operator")
+      if(token.type.name == "Operator") {
         // for operators (prefix) we have them registered by operator name
-        prefixParselet = this.mPrefixParselets.get(token.value);
+        var operatorName = token.value;
+        // if operator is snuffed, remove snuff before finding parselet
+        if(operatorName[0] == "'" && operatorName[operatorName.length-1] == "'")  
+          operatorName = operatorName.substring(1,operatorName.length-1);
+        prefixParselet = this.mPrefixParselets.get(operatorName);
+      }
       else
         // others are registered by token type name
         prefixParselet = this.mPrefixParselets.get(token.type.name);
 
       if (prefixParselet == null) { 
         console.log("Could not parse \"" + token.value + "\".");
-        //throw new ParseException("Could not parse \"" +
-        //  token.value + "\".");
+        throw new PrologParsingException("Could not parse \"" +
+          token.value + "\".");
       }
       
       var leftExpression = prefixParselet.parse(this, token);
       
       while (iPrecedence < this.getPrecedence()) {
         token = this.consume();
-        
-        var infixParselet = this.mInfixParselets.get(token.value);
+        var tokenName = token.value;
+        // if operator is snuffed, remove snuff before finding parselet
+        if(token.type.name == "Operator") {
+          if(tokenName[0] == "'" && tokenName[tokenName.length-1] == "'")  
+          tokenName = tokenName.substring(1,tokenName.length-1);
+        }
+        var infixParselet = this.mInfixParselets.get(tokenName);
         leftExpression = infixParselet.parse(this, leftExpression, token);
       }
       
@@ -53,7 +64,15 @@ class PrattParser {
     }
     
     parseThis() {
-      return this.parseExpression(0);
+      var res = this.parseExpression(0);
+      // after parsing, check that all tokens have been consumed - otherwise throw error
+      var nextValue = this.mTokens.next();
+      if(nextValue.done == false || this.mRead.length > 0){
+        // report what token was unparseable, and where it occured
+        throw new PrologParsingException("Expected end of expression, found token {"+this.mRead[0].value+"}" );
+      }
+
+      return res;
     }
     
     match(expectedTokenType) {
@@ -69,7 +88,7 @@ class PrattParser {
     consumeToken(expectedTokenType) {
       var token = this.lookAhead(0);
       if (token.type != expectedTokenType) {
-        throw new RuntimeException("Expected token " + expectedTokenType +
+        throw new PrologParsingException("Expected token " + expectedTokenType +
             " and found " + token.type);
       }
       
@@ -78,8 +97,12 @@ class PrattParser {
     
     consume() {
       // Make sure we've read the token.
-      this.lookAhead(0);
-      
+      var ret = this.lookAhead(0);
+      if(ret == null)
+      {
+        // looked for more tokens but found none
+        throw new PrologParsingException("Unexpected end of expression");
+      }
       return this.mRead.shift(); // remove first element
       //return mRead.remove(0);
     }
@@ -107,13 +130,25 @@ class PrattParser {
     getPrecedence() {
       var currentToken = this.lookAhead(0);
       if(currentToken != null){
-        var infixParselet = this.mInfixParselets.get(currentToken.value);
+        var tokenName = currentToken.value;
+        // handle the case when an operator is snuffed
+        if(currentToken.type.name == "Operator") {
+          if(tokenName[0] == "'" && tokenName[tokenName.length-1] == "'")  
+          tokenName = tokenName.substring(1,tokenName.length-1);
+        }
+        var infixParselet = this.mInfixParselets.get(tokenName);
         if(infixParselet != undefined) 
             return infixParselet.getPrecedence();
       }
       return 0;
     }
 
+  }
+
+  class PrologParsingException extends Error {
+    constructor(message) {
+      super(message);
+    }
   }
 
   class PrologParser extends PrattParser {
