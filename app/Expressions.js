@@ -584,6 +584,14 @@ class AtomExpression {
 class VariableExpression {
   constructor(name) {
     this.name = name;
+    // add this instance to the collection in this map
+    if(this.name[0] != '_') {
+      var found = ShapeParsing.variableMap.get(this.name);
+      if(found == undefined)
+        found = [];
+      found.push(this.name); // add a copy of the name to the list..
+      ShapeParsing.variableMap.set(this.name, found);
+    }
   }
   
   print(PC) {

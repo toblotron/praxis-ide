@@ -1,11 +1,13 @@
 var ShapeParsing = {
-    
+    // store found variables during parsing of a rule
+    variableMap:new Map(),
     // start parsing of an individual rule/dcg-shape as the head of a rule
     parseRuleHead:function(shapeData, page, errorList){
         if(shapeData != undefined && (shapeData.type == "RuleShape" || shapeData.type == "DcgShape")){
             var expressionTree = null;
             try {
                 var rpc = new RuleParsingContext(page, shapeData, errorList);
+                this.variableMap = new Map();
                 if(shapeData.type == "RuleShape") 
                     expressionTree = RuleShape.prototype.parseToExpression(shapeData, rpc);
                 if(shapeData.type == "DcgShape") 
@@ -18,6 +20,37 @@ var ShapeParsing = {
                 // from attempt to write out code
                 console.log("Exception: " + JSON.stringify(error));
             }
+
+            // check if there are singleton variables
+            this.variableMap.forEach((value, key) => {
+                if(value.length < 2){
+                    // only one variable found, with a certain name?
+                    // - report it as a singleton variable!
+                    var error = {
+                        classification:"warning",
+                        occasion:"compilation",
+                        title:"Singleton '" + key + "'",
+                        description:"This variable is only used One time in this rule, which indicates an error.",
+                        resourceType: "rules",
+                        resourceId: page.id,
+                        targetType: "shape",
+                        targetId: shapeData.id
+                    }
+                    app.bottombar.submitMessage(error);
+                    /* 
+                    classification, // "warning" / "error"
+                    occasion, // "validation" / "compilation"
+                    title, // short description
+                    description, // detailed description
+                    resourceType, // "rules", "table"...
+                    resourceId // index of resource (page/etc)
+                    targetType // "shape", "connection"..
+                    targetId // id of target entity
+                    */
+
+                }
+              });
+
             return expressionTree;
         }
     },
