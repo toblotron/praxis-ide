@@ -336,30 +336,27 @@ var FormulaShape = fabric.util.createClass(fabric.Group, {
         
         // first, parse all the prolog-texts in the arguments
         var expressionRows = [];
+        var rowNr = 1;
         data.rows.forEach(r=>{
-            var row = this.parseRowToExpression(r, rpc);
+            var row = this.parseRowToExpression(r, rowNr, rpc, shapeData);
             expressionRows.push(row);
+            rowNr++;
         });
 
         // build and return a RuleExpression
         var body = ShapeParsing.parseAllBelow(shapeData, rpc);
         return new FormulaExpression(expressionRows,body);
     },
-    parseRowToExpression:function(row, rpc){
+    parseRowToExpression:function(row, rowNr, rpc, shapeData){
         
-        var tokens = Lexer.GetTokens(row.left);
-        tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
-        var parser = new PrologParser(tokens);
-        var leftExpression = parser.parseThis();
+        var leftExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + rowNr + " left expression", row.left);
         
         tokens = Lexer.GetTokens(row.op);
+        
         // there should only be One token, here - but we're not checking that yet
         var opToken = tokens[0];
 
-        tokens = Lexer.GetTokens(row.right);
-        tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
-        var parser = new PrologParser(tokens);
-        var rightExpression = parser.parseThis();
+        var rightExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + rowNr + " right expression", row.right);
 
         var res = new OperatorExpression(leftExpression, opToken, rightExpression);
         return res; 

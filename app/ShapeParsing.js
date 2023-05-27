@@ -1,18 +1,83 @@
 var ShapeParsing = {
     
-    // start parsing of an individual rule-shape as the head of a rule
-    parseRuleHead:function(shapeId, page, errorList){
-        var shapeData = page.shapes.find(s=>s.id == shapeId);
+    // start parsing of an individual rule/dcg-shape as the head of a rule
+    parseRuleHead:function(shapeData, page, errorList){
         if(shapeData != undefined && (shapeData.type == "RuleShape" || shapeData.type == "DcgShape")){
             var expressionTree = null;
-            
-            if(shapeData.type == "RuleShape") 
-                expressionTree = RuleShape.prototype.parseAsHead(shapeData, page, errorList );
-            if(shapeData.type == "DcgShape") 
-                expressionTree = DcgShape.prototype.parseAsHead(shapeData, page, errorList);
-
+            try {
+                var rpc = new RuleParsingContext(page, shapeData, errorList);
+                if(shapeData.type == "RuleShape") 
+                    expressionTree = RuleShape.prototype.parseToExpression(shapeData, rpc);
+                if(shapeData.type == "DcgShape") 
+                    expressionTree = DcgShape.prototype.parseToExpression(shapeData, rpc);
+            }
+            catch(error){
+                // probably a parsing-error. 
+                // do nothing - error has already been added to error-list
+                // return null, to signal faulty code generation, and stop
+                // from attempt to write out code
+                console.log("Exception: " + JSON.stringify(error));
+            }
             return expressionTree;
         }
+    },
+
+    generateAST:function() {
+        // update contained of all Group figures
+        updateAllGroupsContained(app.view);
+
+        // gather all rules, grouped by name/arity
+        //...
+        var res = "";
+
+        // include all included libraries
+        for(lib of Model.settings.includedLibraries){
+            res += ":- use_module(library(" + lib + ")).\n";
+        }
+        res += "\n";
+
+        // declare dynamics
+        for(signature of Model.settings.dynamic){
+            res += ":- dynamic(" + signature + ").\n";
+        }
+        res += "\n";
+
+        var errorList = [];
+
+        var pages = pagesInTreeOrder();
+        for(var page of pages){
+            var parsingContext = {};
+            parsingContext.page = page;
+            
+            // sort all shapes, to ensure left-to-right-order of rules
+            var shapes = page.shapes.sort(compareXPos);
+            for(var shape of shapes){
+                parsingContext.shape = shape;
+                if(pb[shape.type].shouldStartRule(shape, parsingContext)){
+                    var expressionTree = ShapeParsing.parseRuleHead(shape, page, errorList);
+                    var PrintContext = {res:[], indentation:0};
+                    if(expressionTree != undefined){
+                        expressionTree.printAsHead(PrintContext);
+                        res = res + PrintContext.res.join("");
+                    }
+                }
+            }
+        }
+
+        // table data
+        var tables = tablesInTreeOrder();
+        var tableCode = "";
+        for(var table of tables){
+            tableCode += pb.generateTableCode(table);
+        }
+        res = res + tableCode;
+
+        if(errorList.length > 0){
+            errorList.forEach(err=>app.bottombar.errorList.push(err));
+            app.bottombar.updateErrorTable();
+        } 
+
+        return res
     },
 
     parseShapePrologText(rpc, shapeData, description, prologText){
@@ -47,7 +112,7 @@ var ShapeParsing = {
 
             rpc.errorList.push(report);
 
-            return null;
+            throw(error);
         }
     },
                
@@ -169,7 +234,8 @@ var ShapeParsing = {
             //if(wrapInBraces)
             //    PC.res.push("{");
             
-            children[i].print(PC);
+            this.printNormalShape(children[i],PC);
+            // children[i].print(PC);
             
             //if(wrapInBraces)
             //    PC.res.push("}");
