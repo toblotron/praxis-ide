@@ -15,41 +15,43 @@ var ShapeParsing = {
             }
             catch(error){
                 // probably a parsing-error. 
-                // do nothing - error has already been added to error-list
+                // do nothing - error has already been added to error-list (?..)
                 // return null, to signal faulty code generation, and stop
                 // from attempt to write out code
                 console.log("Exception: " + JSON.stringify(error));
             }
 
             // check if there are singleton variables
-            this.variableMap.forEach((value, key) => {
-                if(value.length < 2){
-                    // only one variable found, with a certain name?
-                    // - report it as a singleton variable!
-                    var error = {
-                        classification:"warning",
-                        occasion:"compilation",
-                        title:"Singleton '" + key + "'",
-                        description:"This variable is only used One time in this rule, which indicates an error.",
-                        resourceType: "rules",
-                        resourceId: page.id,
-                        targetType: "shape",
-                        targetId: shapeData.id
-                    }
-                    app.bottombar.submitMessage(error);
-                    /* 
-                    classification, // "warning" / "error"
-                    occasion, // "validation" / "compilation"
-                    title, // short description
-                    description, // detailed description
-                    resourceType, // "rules", "table"...
-                    resourceId // index of resource (page/etc)
-                    targetType // "shape", "connection"..
-                    targetId // id of target entity
-                    */
+            if(expressionTree != null){
+                this.variableMap.forEach((value, key) => {
+                    if(value.length < 2){
+                        // only one variable found, with a certain name?
+                        // - report it as a singleton variable!
+                        var error = {
+                            classification:"warning",
+                            occasion:"compilation",
+                            title:"Singleton '" + key + "'",
+                            description:"This variable is only used One time in this rule, which indicates an error.",
+                            resourceType: "rules",
+                            resourceId: page.id,
+                            targetType: "shape",
+                            targetId: shapeData.id
+                        }
+                        app.bottombar.submitMessage(error);
+                        /* 
+                        classification, // "warning" / "error"
+                        occasion, // "validation" / "compilation"
+                        title, // short description
+                        description, // detailed description
+                        resourceType, // "rules", "table"...
+                        resourceId // index of resource (page/etc)
+                        targetType // "shape", "connection"..
+                        targetId // id of target entity
+                        */
 
-                }
-              });
+                    }
+                });
+            }
 
             return expressionTree;
         }
@@ -210,7 +212,7 @@ var ShapeParsing = {
 
     printNormalShape(shapeExpression, PC) {
         // check if this shape has else-connections outgoing
-        if(shapeExpression.body.elseExpressions != null && 
+        if(shapeExpression.body != null && shapeExpression.body.elseExpressions != null && 
             shapeExpression.body.elseExpressions.length > 0){
             // in that case we wrap the whole thing in an if-then-else structure
 
@@ -225,7 +227,7 @@ var ShapeParsing = {
             PC.res.push(") ->\n");
 
             // if the shape succeeds:
-            if(shapeExpression.body.cojunctionExpressions.length > 0) {
+            if(shapeExpression.body.cojunctionExpressions != undefined && shapeExpression.body.cojunctionExpressions.length > 0) {
                 // wrap this also in scope
                 this.indent(PC);
                 PC.res.push("(\n");
@@ -250,7 +252,7 @@ var ShapeParsing = {
             PC.res.push(")");
         } else {
             shapeExpression.printContent(PC);
-            if(shapeExpression.body.cojunctionExpressions != null && shapeExpression.body.cojunctionExpressions.length > 0) {
+            if(shapeExpression.body != null && shapeExpression.body.cojunctionExpressions != null && shapeExpression.body.cojunctionExpressions.length > 0) {
                 PC.res.push(",\n");
                 this.printChildren(PC,shapeExpression.body.cojunctionExpressions);
             }

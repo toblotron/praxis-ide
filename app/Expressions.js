@@ -581,6 +581,16 @@ class AtomExpression {
   }
 }
 
+class StringExpression {
+  constructor(name) {
+    this.name = name;
+  }
+  
+  print(PC) {
+    PC.res.push(this.name);
+  }
+}
+
 class VariableExpression {
   constructor(name) {
     this.name = name;
@@ -685,6 +695,12 @@ class OperatorExpression {
   class AtomParselet {
     parse(parser, token) {
       return new AtomExpression(token.value);
+    }
+  }
+
+  class StringParselet {
+    parse(parser, token) {
+      return new StringExpression(token.value);
     }
   }
 

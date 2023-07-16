@@ -161,6 +161,7 @@ class PrattParser {
         this.registerPrefixParselet(TokenType.Integer.name, new IntegerParselet());
         this.registerPrefixParselet(TokenType.Float.name, new FloatParselet());
         this.registerPrefixParselet(TokenType.Atom.name, new AtomParselet());
+        this.registerPrefixParselet(TokenType.String.name, new StringParselet());
         this.registerPrefixParselet(TokenType.Variable.name, new VariableParselet());
         this.registerPrefixParselet(TokenType.BeginList.name, new ListParselet());
         this.registerPrefixParselet(TokenType.BeginParen.name, new TermParselet());

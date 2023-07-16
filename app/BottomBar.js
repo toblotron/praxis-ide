@@ -444,6 +444,9 @@ praxis.BottomBar = Class.extend({
 				$("#bottomtabs").tabs("option", "active", 1);
 			}, 500);
 			window.alert("There were critical errors during compilation");
+
+			// reset the compilation, so we will automatically try to compile any changes made
+			this.session = null;
 		}
 	},
 
