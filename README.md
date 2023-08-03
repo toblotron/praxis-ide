@@ -81,9 +81,9 @@ Version 0.1.0 is available to run here, in your browser: https://toblotron.com/p
 * **Import libraries** (WIP) from URL's, and use the (Tau-Prolog) code therein. 
 
 ## Goals for next version (0.2.0)
-* **Introduction of pratt-parser**, and generation of an intermediate Abstract Syntax Tree before code generation, allowing better control over parsing and generation of error-messages.
-* **Handling schema-defined types**, (editing, importing from schema, using specialized shapes to process structured data) allowing handy integration of your logic models through (for example) a REST-service interface. 
-* **Creating developer documentation**, for easier understanding of what the system is and how the different parts work together. Documentation is kind of a thing of mine, so I am ambitious about this.
+* **Introduction of pratt-parser**, and generation of an intermediate Abstract Syntax Tree before code generation, allowing better control over parsing and generation of error-messages. (60% ready)
+* **Handling schema-defined types**, (editing, importing from schema, using specialized shapes to process structured data) allowing handy integration of your logic models through (for example) a REST-service interface. (10% ready)
+* **Creating developer documentation**, for easier understanding of what the system is and how the different parts work together. Documentation is kind of a thing of mine, so I am ambitious about this. (20% ready)
 
 ## Praxis website
 Praxis is hosted on https://toblotron.com/praxis/ - it contains a [resource overview page](https://toblotron.com/praxis/), [the web-app](https://toblotron.com/praxis/0.1.0/) and a [blog](https://toblotron.com/blog/) where interesting developments are sometimes announced.
