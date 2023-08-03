@@ -409,7 +409,7 @@ var DcgShape = fabric.util.createClass(fabric.Group, {
             '			<button id="plus_push" tabIndex="'+ taborder+row+4+'">+</button>');
 
         view.append(
-        //'			<button id="cancel_button">Cancel</button>'+
+        '			<button id="cancel_button">parse</button>'+
         '			<hr><button id="ok_button" tabIndex="'+ taborder+row+4+'">Ok</button>'+
         '   </div>'+
         ' </div>'+
@@ -516,6 +516,20 @@ var DcgShape = fabric.util.createClass(fabric.Group, {
 
         $("#cancel_button").on("click", function(){
             var userData = app.view.getShapeModel(figure.id).data;
+            var errorList =  [];
+            var expressionTree = ShapeParsing.parseRuleHead(figure.id, app.view.pageModel,errorList);
+            
+            if(errorList.length > 0){
+                errorList.forEach(err=>app.bottombar.errorList.push(err));
+                app.bottombar.updateErrorTable();
+            } else {
+                var PrintContext = {res:[], indentation:0};
+                if(expressionTree != undefined){
+                    expressionTree.printAsHead(PrintContext);
+                    var res = PrintContext.res.join("");
+                }
+            }
+            var i = 0;
         });
 
         $("#plus_button").on("click", function(){
@@ -717,6 +731,64 @@ var DcgShape = fabric.util.createClass(fabric.Group, {
         } else {
             // ignore what's there?
         }
+    },
+/*
+    // create AST node for the rule-heads, based on shapeData and RuleParsingContext, which contains everything else needed
+    parseAsHead:function(shapeData, drawingPage, errorList){
+        var rpc = new RuleParsingContext(drawingPage, shapeData, errorList);
+        var data = shapeData.data;
+        // parse the rule-shape itself - produce a RuleExpression
+        var library = data.libraryName;
+        var name = data.ruleName;
+        var args = [];
+        if(data.arguments.length > 0)
+            var argIndex = 1;
+            data.arguments.forEach(element => {
+                var res = ShapeParsing.parseShapePrologText(rpc, shapeData, "Argument #" + argIndex, element);
+                args.push(res);
+                argIndex ++;
+            });
+        
+        var pushbackExpressions = [];
+        var argIndex = 1;
+        data.pushback.forEach(a=>{
+            // experimental parsing-code - later, make it so we don't have to create a new parser for each argument :) 
+            // - store a parser in rpc
+            var res = ShapeParsing.parseShapePrologText(rpc, shapeData, "Pushback #" + argIndex, a);
+            pushbackExpressions.push(res);
+            argIndex++;
+        });
+        var body = ShapeParsing.parseAllBelow(shapeData, rpc);
+        return new DcgRuleExpression(library,name,args,pushbackExpressions,body);
+    },
+*/
+    // a dcg rule call/ reference is mostly just the same as a normal rule, except there can be a "pushback" part, and
+    // also that it is signified by "-->" instead of ":-"
+    parseToExpression:function(shapeData, rpc){
+        var data = shapeData.data;
+        // parse the rule-shape itself - produce a RuleExpression
+        var library = data.libraryName;
+        var name = data.ruleName;
+        var args = [];
+        if(data.arguments.length > 0)
+            var argIndex = 1;
+            data.arguments.forEach(element => {
+                var res = ShapeParsing.parseShapePrologText(rpc, shapeData, "Argument #" + argIndex, element);
+                args.push(res);
+                argIndex ++;
+            });
+        
+        var pushbackExpressions = [];
+        var argIndex = 1;
+        data.pushback.forEach(a=>{
+            // experimental parsing-code - later, make it so we don't have to create a new parser for each argument :) 
+            // - store a parser in rpc
+            var res = ShapeParsing.parseShapePrologText(rpc, shapeData, "Pushback #" + argIndex, a);
+            pushbackExpressions.push(res);
+            argIndex++;
+        });
+        var body = ShapeParsing.parseAllBelow(shapeData, rpc);
+        return new DcgRuleExpression(library,name,args,pushbackExpressions,body);
     }
 
     });

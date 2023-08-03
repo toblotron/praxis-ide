@@ -1503,7 +1503,7 @@ function getContainer(shape, pc){
     var res = pc.page.shapes.find(sh => sh.type == "GroupShape" && sh.data.contained.includes(shape.id));
     return res;
 }
-
+/*
 function generateAST()
 {
     // update contained of all Group figures
@@ -1511,7 +1511,22 @@ function generateAST()
 
     // gather all rules, grouped by name/arity
     //...
-     
+    var res = "";
+
+    // include all included libraries
+    for(lib of Model.settings.includedLibraries){
+        res += ":- use_module(library(" + lib + ")).\n";
+    }
+    res += "\n";
+
+    // declare dynamics
+    for(signature of Model.settings.dynamic){
+        res += ":- dynamic(" + signature + ").\n";
+    }
+    res += "\n";
+
+    var errorList = [];
+
     var pages = pagesInTreeOrder();
     for(var page of pages){
         var parsingContext = {};
@@ -1521,10 +1536,31 @@ function generateAST()
         var shapes = page.shapes.sort(compareXPos);
         for(var shape of shapes){
             parsingContext.shape = shape;
-            if(pb[shape.type].shouldStartRule(shape, parsingContext))
-                res = res + pb[shape.type].startParseRule(shape, parsingContext);
+            if(pb[shape.type].shouldStartRule(shape, parsingContext)){
+                var expressionTree = ShapeParsing.parseRuleHead(shape, page, errorList);
+                var PrintContext = {res:[], indentation:0};
+                if(expressionTree != undefined){
+                    expressionTree.printAsHead(PrintContext);
+                    res = res + PrintContext.res.join("");
+                }
+            }
         }
     }
+
+    // table data
+    var tables = tablesInTreeOrder();
+    var tableCode = "";
+    for(var table of tables){
+        tableCode += pb.generateTableCode(table);
+    }
+    res = res + tableCode;
+
+    if(errorList.length > 0){
+        errorList.forEach(err=>app.bottombar.errorList.push(err));
+        app.bottombar.updateErrorTable();
+    } 
+
+    return res
 }
 
 
@@ -1570,7 +1606,7 @@ function generateCode()
 
     return res
 }
-
+*/
 
 function compareXPos( a, b ) {
     if ( a.x < b.x ){

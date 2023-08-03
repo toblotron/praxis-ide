@@ -224,4 +224,17 @@ var GroupShape = fabric.util.createClass(fabric.Group, {
         });
         
     },
+
+    parseToExpression:function(shapeData, rpc){
+        var data = shapeData.data;
+        
+        var operatorToken = data.operator;
+
+        var childBranchExpressions = ShapeParsing.parseContainedCodes(data.contained, rpc);
+
+        // build and return a RuleExpression
+        var body = ShapeParsing.parseAllBelow(shapeData, rpc);
+        return new GroupExpression(operatorToken, childBranchExpressions, body, );
+    }
+
     });

@@ -178,4 +178,16 @@ var LogicShape = fabric.util.createClass(fabric.Group, {
         
     },
 
+    parseToExpression:function(shapeData, rpc){
+        var data = shapeData.data;
+        
+        // first, parse all the child-branches
+        // we will get (possibly) two collections of branches; "true" (cojunctionExpressions) and "false", for connected shapes
+        var childBranches = ShapeParsing.parseAllBelow(shapeData, rpc);
+        var cojunctionExpressions = childBranches.cojunctionExpressions; 
+        var elseExpressions = childBranches.elseExpressions; 
+               
+        return new LogicExpression(data.operator, cojunctionExpressions, elseExpressions);
+    },
+
 });

@@ -249,6 +249,11 @@ praxis.BottomBar = Class.extend({
 
 	onNextButtonClick:function(){
 		//this.recursiveImportPackages(["https://raw.githubusercontent.com/toblotron/Trafo/master/Prolog/my_module.js"],[],this.loadingFinishedTest);
+		
+		// check if there are compilation errors
+		if(this.validateNoErrors() == false)
+			return;
+			
 		var session = this.session;
 	
 		session.answer({
@@ -316,7 +321,7 @@ praxis.BottomBar = Class.extend({
 		var self = app.bottombar;
 
 		self.errorList = [];
-		var code = generateCode();
+		var code = ShapeParsing.generateAST();
 		self.updateErrorTable();
 
 		console.log(code);
@@ -428,7 +433,29 @@ praxis.BottomBar = Class.extend({
 		//app.bottombar.codeConsole
 	},
 
+	validateNoErrors(){
+		// if there were compilation errors, show dialog and return false
+		if(this.errorList.length == 0)
+			return true;
+		else
+		{
+			// auto-select the Errors-tab.. 
+			setTimeout(function() {
+				$("#bottomtabs").tabs("option", "active", 1);
+			}, 500);
+			window.alert("There were critical errors during compilation");
+
+			// reset the compilation, so we will automatically try to compile any changes made
+			this.session = null;
+		}
+	},
+
 	makeFirstCall:function(packageDefinitions){
+
+		// check if there are compilation errors
+		if(this.validateNoErrors() == false)
+			return;
+
 		// get query
 		var queryText = app.bottombar.queryCode.getValue();//document.getElementById("queryField").value;
 		app.bottombar.addToConsole("> " + queryText);
@@ -505,7 +532,7 @@ praxis.BottomBar = Class.extend({
 	},
 
 	downloadCode:function(){
-		var code = generateCode();
+		var code = ShapeParsing.generateAST();
 		var filename = Model.name + ".pl";
 		var $link = $("<a />");  
 		// encode any special characters in the JSON
@@ -523,7 +550,7 @@ praxis.BottomBar = Class.extend({
 	// (right now Praxis only works with One, though)
 	downloadModule:function(){
 
-		var code = generateCode();
+		var code = ShapeParsing.generateAST();
 		var session = pl.create();
 		
 		session.consult(code, {
