@@ -117,12 +117,6 @@
             
         });        
 
-       /* $(function () {
-            $("#southpanel").resizable({
-                minHeight: 100
-            });
-        });
-        */
         // fit canvas to start-size of central pane
         app.canvasFillCenterPane();
 
@@ -130,14 +124,6 @@
 
         app.enterSettings();//.enterPage(app.view,0);
 
-
-
-/*
-        var text = new fabric.Text("Sharp enough for ya?!",{fontSize:12, fill: 'white', objectCaching: false,fontFamily:'arial'});
-        app.view.canvas.add(text);
-        text.left = 100;
-        text.top = 100;  
-*/
         // arguments = "?example=try_dcg"
         var arguments = window.location.search;
         if(arguments != undefined){
@@ -308,6 +294,7 @@
        
         </div>
         <div id="tablePanel"></div>
+        <div id="classPanel"></div>
         <div id="folderPanel"></div>
         <div id="drawingPanel"></div>
         <div id="properties">
