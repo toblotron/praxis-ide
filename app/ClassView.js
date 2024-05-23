@@ -22,7 +22,8 @@ praxis.ClassView = Class.extend({
             columns.forEach(element => {
                 // find named columns - not the dragrow column
                 if(element.name != undefined){
-                    var modelColumn = classData.columns.find(c => c.name == element.name);
+                    var modelColumn = this.default_columns.find(c => c.name == element.name);
+                    //var modelColumn = classData.columns.find(c => c.name == element.name);
                     if(modelColumn != undefined)
                       modelColumn.width = element.width;
                 }
@@ -42,12 +43,29 @@ praxis.ClassView = Class.extend({
         autoEdit: false
     },
 
+    default_columns: [
+      {
+        "id": "type",
+        "name": "Type",
+        "field": "type",
+        "content": "atom",
+        "width": 80
+      },
+      {
+        "id": "name",
+        "name": "Name",
+        "field": "name",
+        "content": "atom",
+        "width": 80
+      }
+    ],
+
     showClass: function(classData){
         
         var options = app.classView.table_options;
     
         // make deep copy of columns to avoid the table putting a lot of extra stuff there
-        var copiedColumns = JSON.parse(JSON.stringify(classData.columns));
+        var copiedColumns = JSON.parse(JSON.stringify(this.default_columns)); // classData.columns));
        
         var undoRedoBuffer = {
           commandQueue : [],
@@ -111,7 +129,8 @@ praxis.ClassView = Class.extend({
         app.classView.grid = grid;
         app.classView.classData = classData;
 
-        var size = classData.columns.length;
+        // to get custom column data from Dom
+        /*var size = copiedColumns.length-1; // classData.columns.length; - minus one to avoid drag-column
         for(i = 0; i < size; i++)
         {
             var colname = $("#col_"+i+"_name").val();
@@ -130,7 +149,8 @@ praxis.ClassView = Class.extend({
     
             // {id: "name", name: "Name", field: "name", content:"string"},
         }
-    
+      */
+     
           grid.setSelectionModel(new Slick.CellSelectionModel());
           var moveRowsPlugin = new Slick.RowMoveManager({
             cancelEditOnDrag: true

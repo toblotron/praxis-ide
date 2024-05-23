@@ -64,6 +64,7 @@
 <script src="./app/Shapes/DcgShape.js"></script>
 <script src="./app/Shapes/DcgTerminalShape.js"></script>
 <script src="./app/Shapes/CommentShape.js"></script>
+<script src="./app/Shapes/ClassShape.js"></script>
 <script src="./app/Shapes/PrologText.js"></script>
 <script src="./app/Shapes/StraightConnector.js"></script>
 <script src="./app/Shapes/Port.js"></script>
@@ -74,6 +75,8 @@
 <script src="./app/BottomBar.js"></script>
 <script src="./app/TableView.js"></script>
 <script src="./app/FolderPanel.js"></script>
+<script src="./app/ClassView.js"></script>
+<script src="./app/ClassPanel.js"></script>
 <script src="./app/TablePanel.js"></script>
 <script src="./app/DrawingPanel.js"></script>
 <script src="./app/ShapePalette.js"></script>
@@ -180,6 +183,7 @@
             <canvas id="c" style="padding: 0px; margin:0px;" ></canvas>
         </div>
         <div id="tableView"></div>
+        <div id="classView"></div>
         <div id="projectSettings"></div> <!-- generate project settings page to this -->
     </div>
     <div class="ui-layout-north" height="30">
@@ -291,7 +295,8 @@
             <div class="palette_node_element" id="LogicShape" ondragstart="dragStart(event)" draggable="true"><img width="40px" src="./gfx/shape_logic.png" /><br>Connector</div>
             <div class="palette_node_element" id="DcgTerminalShape" ondragstart="dragStart(event)" draggable="true"><img width="40px" src="./gfx/shape_dcgterminal.png" /><br>Terminal</div>
             <div class="palette_node_element" id="CommentShape" ondragstart="dragStart(event)" draggable="true"><img width="40px" src="./gfx/shape_comment.png" /><br>Comment</div>
-       
+            <div class="palette_node_element" id="ClassShape" ondragstart="dragStart(event)" draggable="true"><img width="40px" src="./gfx/shape_class.png" /><br>ClassNav</div>
+            
         </div>
         <div id="tablePanel"></div>
         <div id="classPanel"></div>

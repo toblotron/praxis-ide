@@ -81,9 +81,9 @@ praxis.TreeMenu = Class.extend({
                     else if(data.node.data.type == 'table'){
                         app.enterTable(data.node.data.page, data.node);
                     }
-                    /*else if(data.node.data.type == 'struct'){
-                        app.enterStruct(data.node.data.page, data.node);
-                    }*/
+                    else if(data.node.data.type == 'class'){
+                        app.enterClass(data.node.data.page, data.node);
+                    }
                     else if(data.node.data.type == 'root'){
                         app.enterSettings(app.view, data.node);
                     }
@@ -153,7 +153,7 @@ praxis.TreeMenu = Class.extend({
                             'add_page': {'name': 'Add rules page', 'icon': 'add'},
                             'add_table': {'name': 'Add data table', 'icon': 'addtable'},
                             'import_csv': {'name': 'Import CSV table', 'icon': 'addtable'},
-                            //'add_struct': {'name': 'Add struct', 'icon': 'addstruct'}, - feature paused
+                            'add_class': {'name': 'Add class', 'icon': 'addclass'},
                             'add_folder': {'name': 'Add folder', 'icon': 'folder'},
                             'delete': {'name': 'Delete', 'icon': 'delete'}
                           };
@@ -164,7 +164,7 @@ praxis.TreeMenu = Class.extend({
                                 'add_page': {'name': 'Add rules page', 'icon': 'add'},
                                 'add_table': {'name': 'Add data table', 'icon': 'addtable'},
                                 'import_csv': {'name': 'Import CSV table', 'icon': 'addtable'},
-                                //'add_struct': {'name': 'Add struct', 'icon': 'addstruct'}, - feature paused
+                                'add_class': {'name': 'Add class', 'icon': 'addclass'},
                                 'add_folder': {'name': 'Add folder', 'icon': 'folder'}
                             }
                          }
@@ -173,7 +173,7 @@ praxis.TreeMenu = Class.extend({
                                 'add_page': {'name': 'Add rules page', 'icon': 'add'},
                                 'add_table': {'name': 'Add data table', 'icon': 'addtable'},
                                 'import_csv': {'name': 'Import CSV table', 'icon': 'addtable'},
-                                //'add_struct': {'name': 'Add struct', 'icon': 'addstruct'}, - feature paused
+                                'add_class': {'name': 'Add class', 'icon': 'addclass'},
                                 'add_folder': {'name': 'Add folder', 'icon': 'folder'},
                                 'delete': {'name': 'Delete', 'icon': 'delete'}
                              };
@@ -239,12 +239,18 @@ praxis.TreeMenu = Class.extend({
                             // start file-explorer for csv files
                             this.importCSVFile.click();
                         }
-                        /*else if(action == "add_struct")
+                        else if(action == "add_class")
                         {
-                            var newPage = app.treemenu.addNewStruct();
-                            var newNode = {title:newPage.name, type:'struct', page:newPage.id,icon: "tree_struct"}
+                            var newPage = app.treemenu.addNewClass();
+                            var newNode = {title:newPage.name, type:'struct', page:newPage.id,icon: "tree_class"}
                             node.addChildren(newNode);
-                        }*/
+
+                            // select the new page in the menu-tree
+                            app.treemenu.selectFromMessage({resourceType:'class',resourceId:newPage.id});
+                            
+                            // go edit it in the drawing page
+                            app.enterClass(newPage.id, newNode);
+                        }
                         else if(action == "delete")
                         {
                             // only delete empty folders
@@ -336,8 +342,9 @@ praxis.TreeMenu = Class.extend({
                 var tableTitle = table.name + " /" + table.columns.length;
                 me.push({title:tableTitle,type:child.type,page:child.index,icon: "tree_table"});
             }
-            if(child.type == 'struct' ){
-                me.push({title:Model.structs[child.index].name,type:child.type,page:child.index,icon: "tree_struct"});
+            if(child.type == 'class' ){
+
+                me.push({title:Model.classes[child.index].name,type:child.type,page:child.index,icon: "tree_class"});
             }         
             else if(child.type == 'folder')
             {
@@ -407,24 +414,24 @@ addNewDataTable:function(table){
 },
 
 // returns id nr
-addNewStruct:function(){
+addNewClass:function(){
     var newId = 0;
     
-    if(Model.structs == undefined)
-        Model.structs = [];
+    if(Model.classes == undefined)
+        Model.classes = [];
     
-    for(var struct of Model.structs) {
+    for(var struct of Model.classes) {
         if(struct.id > newId)
             newId = struct.id;
     }
     if (newId > 0)
         newId = newId +1;
 
-    var newStruct = {
+    var newClass = {
         id: newId,
         nameSpace: "",
         version:"1.0.0",
-        name: "New Struct #" + newId,
+        name: "New Class #" + newId,
         inherits: "",
         implements:[],
         fields:[
@@ -434,9 +441,9 @@ addNewStruct:function(){
         ]
     };
 
-    Model.structs.push(newStruct);
+    Model.classes.push(newClass);
 
-    return newStruct; 
+    return newClass; 
 },
 
 

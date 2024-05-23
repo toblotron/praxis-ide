@@ -20,6 +20,10 @@ praxis.Application = Class.extend({
         
         this.tableView = new praxis.TableView("tableView");
 
+        this.classView = new praxis.ClassView("classView");
+
+        this.classPanel = new praxis.ClassPanel("classPanel");
+
         this.projectSettings = new praxis.ProjectSettings("projectSettings");
 
         this.view = new praxis.View("c");
@@ -177,6 +181,7 @@ praxis.Application = Class.extend({
 
         app.folderPanel.show();
         app.tablePanel.hide();
+        app.classPanel.hide();
     },
 
     enterSettings: function(nr, treeNode){
@@ -186,6 +191,8 @@ praxis.Application = Class.extend({
         if(app.view.pageModel != null)
             app.view.calculatePageGroupContainment();
 
+        app.classView.hide();
+        app.classPanel.hide();
         app.tableView.hide();
         app.view.hide();
         app.folderPanel.hide();
@@ -197,6 +204,35 @@ praxis.Application = Class.extend({
         this.updateHeading(treeNode);
     },
 
+    enterClass: function(nr, treeNode){
+        $("#properties").html(""); // clear possible shape-panels
+
+        // if switching from drawing, update groups (very ugly)
+        if(app.view.pageModel != null)
+            app.view.calculatePageGroupContainment();
+
+        app.classView.show();
+        app.classPanel.show();
+        app.tableView.hide();
+        app.view.hide();
+        app.folderPanel.hide();
+        app.drawingPanel.hide();
+        app.projectSettings.hide();
+        app.palette.hide();
+        app.tablePanel.hide();
+
+    
+        var grid = document.getElementById("classView");
+    
+        var classData = app.getClass(nr);
+        
+        // NEEDS TO BE HERE
+        app.classPanel.showPanel(classData, treeNode);
+        app.classView.showClass(classData);
+
+        this.updateHeading(treeNode);
+    },
+
     enterTable: function(nr, treeNode){
         $("#properties").html(""); // clear possible shape-panels
 
@@ -204,6 +240,8 @@ praxis.Application = Class.extend({
         if(app.view.pageModel != null)
             app.view.calculatePageGroupContainment();
 
+        app.classView.hide();
+        app.classPanel.hide();
         app.tableView.show();
         app.view.hide();
         app.folderPanel.hide();
@@ -216,51 +254,10 @@ praxis.Application = Class.extend({
     
         var tableData = app.getDataTable(nr);
         
-        
         // NEEDS TO BE HERE
-        app.tablePanel.showPanel(tableData, treeNode);
+        // app.classPanel.showPanel(classData, treeNode);
         app.tableView.showTable(tableData);
 
-    /* ///
-        var options = {
-            editable: true,
-            enableCellNavigation: true,
-            enableColumnReorder: false,
-            enableAddRow: true
-        };
-    
-        grid = new Slick.Grid("#tableView", tableData.datarows, tableData.columns, options);
-    
-        var size = tableData.columns.length;
-        for(i = 0; i < size; i++)
-        {
-            var colname = $("#col_"+i+"_name").val();
-            var coltype = $("#col_"+i+"_type").val();
-    
-            // save these if the col already exists
-            if(tableData.columns[i].id == undefined) {
-                tableData.columns[i].id = colname.toLowerCase();
-                tableData.columns[i].field = colname.toLowerCase();
-            }
-    
-            tableData.columns[i].name = colname;
-            tableData.columns[i].content = coltype;
-            tableData.columns[i].editor = Slick.Editors.Text;
-    
-            // {id: "name", name: "Name", field: "name", content:"string"},
-        }
-    
-        grid.onAddNewRow.subscribe(function (e, args) {
-            var item = args.item;
-            grid.invalidateRow(tableData.datarows.length);
-            tableData.datarows.push(item);
-            grid.updateRowCount();
-            grid.render();
-        });
-     *//////
-        // implement schema changes, if any
-        
-    
         this.updateHeading(treeNode);
     },
 
@@ -276,7 +273,8 @@ enterPage:function(nr, treeNode){
 
   app.tableView.hide();
   app.view.show();
-  
+  app.classView.hide();
+  app.classPanel.hide();
   app.palette.show();
   app.tablePanel.hide();
   app.projectSettings.hide();
@@ -331,6 +329,11 @@ enterPage:function(nr, treeNode){
 
 getRulePage:function(nr){
     res = Model.rulePages.find(p=>p.id == nr);
+    return res;
+},
+
+getClass:function(nr){
+    res = Model.classes.find(p=>p.id == nr);
     return res;
 },
 
@@ -454,7 +457,11 @@ Model =
     },
     formatVersion: 0.2,
     pageIndexTree: 
-    [/*
+    [
+        {type: 'class', index:0, name:"Person"},
+        {type: 'class', index:1, name:"Address"},
+        {type: 'class', index:2, name:"Date"}
+        /*
         {type: 'rules', index:0},
         {
             type: 'folder', name: 'Folder', children:
@@ -462,7 +469,40 @@ Model =
                 {type: 'rules', index:1}
             ]
         }
-    */],
+    */
+   ],
+    classes:[
+        {
+            id:0,
+            name:"Person",
+            fields:[
+                {type:"string", name:"FirstName"},
+                {type:"string", name:"LastName"},
+                {type:"Address", name:"Address"},
+                {type:"Date", name:"BirthDate"}
+            ]
+        },
+        {
+            id:1,
+            name:"Address",
+            fields:[
+                {type:"string", name:"StreetName"},
+                {type:"string", name:"StreetNr"},
+                {type:"string", name:"ZipCode"},
+                {type:"string", name:"City"},
+                {type:"string", name:"Country"}
+            ]
+        },
+        {
+            id:2,
+            name:"Date",
+            fields:[
+                {type:"int", name:"Year"},
+                {type:"int", name:"Month"},
+                {type:"int", name:"Day"}
+            ]
+        }
+    ],
     dataTables: [
     ],
     rulePages: [/*
