@@ -43,7 +43,12 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
     },
 
     isInvalid:function(shapeData){
-        if(shapeData.data.classId == -1 || shapeData.data.name == "" || shapeData.data.name == null)
+        var data = shapeData.data;
+        if(data == undefined)
+            return true;
+
+        var classId = parseInt(data.classId);
+        if(classId == -1 || data.name == "" || data.name == null)
             return true;
         else
             return false;
@@ -88,7 +93,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 fields:[
                     {name:"Field1",type:"int"}, 
                     {name:"Field2", type: "string"},
-                    {name:"AnArray", type: "int", parent:true}
+                    {name:"AnArray", type: "int"}
                 ]};
         }
         var isPreview = false;
@@ -121,8 +126,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
         // create class name row
         this.classNameRect = new RoundedRect({fill:'#000000',topLeft:[5,5],topRight:[5,5]});
-        this.className = new fabric.Text(classDef.name,{fontSize:11, objectCaching: false, fontFamily:'arial'});
-        this.classValue = new fabric.Text(shapeData.value,{fontSize:11, objectCaching: false, fontFamily:'arial'});
+        this.className = new fabric.Text(classDef.name,{fontSize:11, fill: 'white', objectCaching: false, fontFamily:'arial'});
+        this.classValue = new fabric.Text(shapeData.value,{fontSize:11, fill: 'blue', objectCaching: false, fontFamily:'arial'});
 
         if(isPreview){
             this.classNameRect.set({fill:'#000000', opacity:0.5});
@@ -149,8 +154,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 // get the set value for the row
                 var Field = shapeData.children[valueIndex];
 
-                if(Field.val == undefined || Field.val == "")
-                    Field.val = "_";
+                if(Field.value == undefined || Field.value == "")
+                    Field.value = "_";
 
                 var bottomLeft = [0,0];
                 if(valueIndex+1 == shapeData.children.length)
@@ -159,17 +164,23 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 var colRect = new RoundedRect({fill:'#000000',bottomLeft:bottomLeft}); // color COULD be used to show some extra info..? 
                 
                 var colName;
-                if(Field.field != undefined)
-                    colName = new fabric.Text(Field.field,{fill:'green',fontSize:10, objectCaching: false,fontFamily:'arial'});
-                else 
-                    colName = new fabric.Text(Field.index + " ("+Field.type+")",{fill:'green',fontSize:10, objectCaching: false,fontFamily:'arial'});
-                
+                if(Field.field != undefined){
+                    var fillCol = "green";
+                    if(Field.parent)
+                        fillCol = "white";
+                    
+                    colName = new fabric.Text(Field.field,{fill:fillCol,fontSize:10, objectCaching: false,fontFamily:'arial'});
+                }
+                else{ 
+                    colName = new fabric.Text(Field.index + " ("+Field.type+")",{fill:'white',fontSize:10, objectCaching: false,fontFamily:'arial'});
+                }
+
                 if(colName.width > leftMax)
                     leftMax = colName.width;
                 colRect.height = colName.height + padding * 2;
                 totHeight += colName.height + padding *2;
 
-                var valueText = new PrologText(Field.val,{fontSize:10, fontFamily:'arial',isPreview:isPreview});
+                var valueText = new PrologText(Field.value,{fontSize:10, fontFamily:'arial',isPreview:isPreview});
                 if(valueText.width > rightMax)
                     rightMax = valueText.width;
 
@@ -234,10 +245,16 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         this.addWithUpdate(this.classNameRect);
 
         this.className.left = startx + padding * 1;
-
         this.className.top = starty + top + padding;
+
+        this.classValue.top = starty + top + padding;
+        this.classValue.left = startx + this.className.width + padding;
+
         top += this.className.height + padding * 2;
         this.addWithUpdate(this.className);
+        this.addWithUpdate(this.classValue);
+
+
 
         for(c of this.childRows) {
             c.colRect.left = startx;
@@ -345,16 +362,64 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             tableString += "<div class='comment'>There are no classes defined in this model. Create by right-clicking target node in the Model tree.</div>";
         }
 
-        if(usedClassId > -1) // If a class is actually selected.. show it
+        if(usedClassId > -1) // If a class is selected as root.. show the entire path
         {
             var rowNr = 0
-            var usedClass = classRefs.find(t=>t.id == usedClassId);
+            var usedClass = classRefs.find(t=>t.id == usedClassId); // this is the class where we expect to find fields
 
-            // first, display all previously selected fields, above the active class (active class = the one which is the last class in the list, displaying All its fields, even without value)
-            // find the last class-row of the list
-            var activeClassId
+            // show the path of the (possible) children ("path") //////////////////////////////////////////////////
+            var lastParentRowOfPath = -1;
+            userData.children.forEach(c=> {
+                if(c.parent == true) 
+                    lastParentRowOfPath = rowNr; 
+                rowNr++;
+            });
             
+            rowNr = 0;
+
+            if(userData.children != undefined && userData.children.length > 0){
+                while(lastParentRowOfPath >= rowNr){
+
+                    var child = userData.children[rowNr];
+                    // find the typename of this field, from the current usedClass
+                    var fieldTypeName = usedClass.fields.find(f=>f.name == child.field).type;
+
+                    tableString += '<tr>';
+                    tableString += 
+                    '<td width="*">'+
+                        '<label id=fieldType_' + rowNr + '>' + fieldTypeName + '</label>' + 
+                    '</td>'+
+                    '<td>'+
+                        '<label id=fieldName_' + rowNr + ' style="background:yellow">'+child.field+'</label>' + 
+                        '<label hidden id=isParentRow_' + rowNr + '>'+child.parent+'</label>' +
+                        '<label hidden id=index_' + rowNr + '>'+child.index+'</label>' +  
+                    '</td>';
+                    
+                    valueString = child.value;
+                    tableString += 
+                        '<td>' +
+                            this.getValueString(rowNr, valueString)
+                        +'</td>';
+
+                    tableString += '</tr>';
+                    
+                    // if this child is parent, or "in an expanded state", go down into it
+                    if(child.parent){
+                        // if it is an array, object or an index-row
+                        var newClass = classRefs.find(t=>t.name == fieldTypeName);
+                        if(newClass != undefined)
+                            usedClass = newClass;
+                    }
+
+                    rowNr++;
+                }
+            }
             
+            // get the list of children of the final parent, which we may use to fill some field-values here below
+            var finalChildren = userData.children.filter((c,index,arr)=>index > lastParentRowOfPath);
+
+
+            // show the fields of the currently expanded class /////////////////////////////////
             for(field of usedClass.fields){
                 var valueString = "";
                 //if(externalTableNr != undefined && 
@@ -371,7 +436,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     '<label id=fieldType_' + rowNr + '>'+field.type+'</label>' + 
                 '</td>'+
                 '<td>'+
-                    '<label id=fieldName_' + rowNr + '>'+field.name+'</label>' + 
+                    '<label class=classrow id=fieldName_' + rowNr + '>'+field.name+'</label>' + 
                     '<label hidden id=isParentRow_' + rowNr + '>'+field.parent+'</label>' +  
                 '</td>';
 
@@ -383,6 +448,12 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 }
 
                 valueString = "";
+
+                // can we take a value from the incoming path?
+                var thisChild = finalChildren.find(c=>c.field == field.name);
+                if(thisChild != undefined)
+                    valueString = thisChild.value;
+
                 tableString += 
                     '<td>' +
                         this.getValueString(rowNr, valueString)
@@ -414,6 +485,19 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             figure.buildInputPanel(view,figure,externalClassNr);
         });
 
+        // a classrow was clicked, containing a line of the path
+        $(".classrow").on("dblclick", function(){
+            var clickedRowNr = this.id.split("_")[1]; // pickout "X" from "fieldName_X"
+            var latestParentRow = -1; // which is the closest parentrow above the clicked row?
+
+            // the class we are currently "in", when processing the classrows
+            var currentClassDefinition = Model.classes.find(t=>t.id == usedClassId);
+            
+            // go through all the rows, collecting all the available data
+            var editedRowData = figure.harvestRowData(); // this is how we can access the methods, here
+            
+        });
+
         $("#ok_button").on("click", function(){
             var shapeModel = app.view.getShapeModel(figure.id);
         
@@ -431,6 +515,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 var children = shapeModel.data.children;
                 children = []; // this path-structured array will have to be rebuilt for each save
                 var targetRow = 0; // the row of the possibly saved shape-field-data
+
+                shapeModel.data.name = usedClass.name;
+                var classValueInput = document.getElementById('classValue');
+                shapeModel.data.value = classValueInput.value;
 
                 var row = 0;
                 do{
@@ -461,7 +549,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                         matchValue = matchInput.value;
 
                     // copy to shapeData
-                    if(matchValue != undefined || rowIndex != undefined) // only SAVE rows that carry information
+                    if((matchValue != undefined && matchValue != "") || (rowIndex != undefined && rowIndex != "")) // only SAVE rows that carry information
                     {
                         var newRow = {};
                         if(fieldName != undefined)
@@ -501,6 +589,62 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         //var elem = $("#table_selector");  // focus on this
         //window.setTimeout(() => elem.focus().select(), 0);
        
+    },
+
+    // harvest the row-data from the DOM
+    harvestRowData:function(){
+        var rows = [];
+        var row = 0;
+        do{
+            // look for all possible values on each row
+            var fieldNameLabel = document.getElementById('fieldName_'+row);
+            var fieldName = null;
+            if(fieldNameLabel != undefined)
+                fieldName = fieldNameLabel.innerText;
+
+            var isParentRowLabel = document.getElementById('isParentRow_'+row);
+            var isParentRow = false;
+            if(isParentRowLabel != undefined)
+                isParentRow = isParentRowLabel.innerText;
+
+            var rowIndexInput = document.getElementById('index_'+row);
+            var rowIndex = undefined;
+            if(rowIndexInput != undefined)
+                rowIndex = rowIndexInput.value;
+
+            var fieldTypeLabel = document.getElementById('fieldType_'+row);
+            var className = undefined;
+            if(fieldTypeLabel != undefined) 
+                className = fieldTypeLabel.innerText;
+            
+            var matchInput = document.getElementById('value_'+row);
+            var matchValue = undefined;
+            if(matchInput != undefined && matchInput.value != undefined)    
+                matchValue = matchInput.value;
+
+            // copy EVERYTHING to rowData
+            
+            var newRow = {};
+            if(fieldName != undefined)
+                newRow.field = fieldName;
+            if(rowIndex != undefined)
+            {
+                newRow.index = rowIndex;
+            }
+            if(matchValue != undefined)
+                newRow.value = matchValue;
+            if(className != undefined)
+                newRow.type = className;
+
+            newRow.parent = isParentRow;
+            newRow.rowNr = row;
+            
+            rows.push(newRow);
+            row++;
+            // go on until we are out of rows with meaningful content
+        } while (rowIndex != undefined || className != undefined) // a valid row has One of these..
+
+        return rows;
     },
 
     getValueString: function(rowNr, value){
