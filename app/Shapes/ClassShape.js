@@ -299,6 +299,129 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         ctx.fillStyle = '#333';
     },
 
+    /* take the shapedata, and build a model of all the rows that should be used in the UI (path + all fields of the latest class)
+    */
+    buildRowModelFromShape: function(userData, usedClassId){
+
+        var rowsModel = [];
+        var classRefs = Model.classes;
+
+        if(usedClassId > -1) // If a class is selected as root.. show the entire path
+        {
+            var rowNr = 0
+            var usedClass = classRefs.find(t=>t.id == usedClassId); // this is the class where we expect to find fields
+
+            // show the path of the (possible) children ("path") //////////////////////////////////////////////////
+            var lastParentRowOfPath = -1;
+            userData.children.forEach(c=> {
+                if(c.parent == true) 
+                    lastParentRowOfPath = rowNr; 
+                rowNr++;
+            });
+
+            if(userData.children != undefined && userData.children.length > 0){
+                while(lastParentRowOfPath >= rowNr){
+                    var rowModel = {};
+
+                    var child = userData.children[rowNr];
+                    // find the typename of this field, from the current usedClass
+                    var fieldTypeName = usedClass.fields.find(f=>f.name == child.field).type;
+
+                    rowModel.type = fieldTypeName;
+                    rowModel.field = child.field;
+                    if(child.parent)
+                        rowModel.isParent = child.parent;
+                    if(child.index)
+                        rowModel.index = child.index;
+                    if(child.value)
+                        rowModel.value = child.value; // keep it in raw form, not adjusted for rendering
+                    
+                    // if this child is parent, or "in an expanded state", go down into it
+                    if(child.parent){
+                        // if it is an array, object or an index-row
+                        var newClass = classRefs.find(t=>t.name == fieldTypeName);
+                        if(newClass != undefined)
+                            usedClass = newClass;
+                    }
+
+                    rowsModel.push(rowModel);
+                    rowNr++;
+                }
+            }
+            
+            // get the list of children of the final parent, which we may use to fill some field-values here below
+            var finalChildren = userData.children.filter((c,index,arr)=>index > lastParentRowOfPath);
+
+            // show the fields of the currently expanded class /////////////////////////////////
+            for(field of usedClass.fields){
+                var valueString = "";
+                //if(externalTableNr != undefined && 
+                if(userData.children.length > rowNr)
+                    valueString = userData.children[rowNr].value;
+
+                var rowModel = {};
+                rowModel.type = field.type;
+                rowModel.field = field.name;
+                rowModel.isParent = false;  // the fields of the last class are never expanded, and thus never parents
+               
+                if(field.index != null)
+                    rowModel.index = field.index;
+
+                // can we take a value from the incoming path?
+                var thisChild = finalChildren.find(c=>c.field == field.name);
+                if(thisChild != undefined)
+                    valueString = thisChild.value;
+
+                if(valueString != "")
+                    rowModel.value = valueString;
+                
+                rowsModel.push(rowModel);
+
+                rowNr++;
+            }
+        }
+
+        return rowsModel;
+    },
+
+    // build html for the classrows
+    renderRowsModel: function(model){
+        var htmlCode = "";
+
+        var rowNr = 0; 
+        model.forEach(row=> {
+            htmlCode += '<tr>';
+
+            var fieldTypeStyle = "";
+            if(row.isParent)
+                fieldTypeStyle = "background:black; color:brown";
+            else
+                fieldTypeStyle = "background:beige; color:brown";
+
+            htmlCode +=
+            '<td width="*">'+
+                '<label class=classrow style="' + fieldTypeStyle + '" id=fieldType_' + rowNr + '>' + row.type + '</label>' + 
+            '</td>'+
+            '<td>'+
+                '<label id=fieldName_' + rowNr + ' style="' + fieldTypeStyle + '">'+row.field+'</label>' + 
+                '<label hidden id=isParentRow_' + rowNr + '>'+row.parent+'</label>' +
+                '<label hidden id=index_' + rowNr + '>'+row.index+'</label>' +  
+            '</td>';
+
+            htmlCode += 
+            '<td>' +
+                this.getValueString(rowNr, row.value);
+            +'</td>';
+
+
+            htmlCode += '</tr>';
+
+            rowNr++;
+        });
+
+        return htmlCode;
+    },
+
     buildInputPanel: function(view, figure, externalClassNr){
         
         // bygg HTML för panel
@@ -362,109 +485,14 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             tableString += "<div class='comment'>There are no classes defined in this model. Create by right-clicking target node in the Model tree.</div>";
         }
 
-        if(usedClassId > -1) // If a class is selected as root.. show the entire path
-        {
-            var rowNr = 0
-            var usedClass = classRefs.find(t=>t.id == usedClassId); // this is the class where we expect to find fields
+        var rowsModel = figure.buildRowModelFromShape(userData, usedClassId);
 
-            // show the path of the (possible) children ("path") //////////////////////////////////////////////////
-            var lastParentRowOfPath = -1;
-            userData.children.forEach(c=> {
-                if(c.parent == true) 
-                    lastParentRowOfPath = rowNr; 
-                rowNr++;
-            });
-            
-            rowNr = 0;
-
-            if(userData.children != undefined && userData.children.length > 0){
-                while(lastParentRowOfPath >= rowNr){
-
-                    var child = userData.children[rowNr];
-                    // find the typename of this field, from the current usedClass
-                    var fieldTypeName = usedClass.fields.find(f=>f.name == child.field).type;
-
-                    tableString += '<tr>';
-                    tableString += 
-                    '<td width="*">'+
-                        '<label id=fieldType_' + rowNr + '>' + fieldTypeName + '</label>' + 
-                    '</td>'+
-                    '<td>'+
-                        '<label id=fieldName_' + rowNr + ' style="background:yellow">'+child.field+'</label>' + 
-                        '<label hidden id=isParentRow_' + rowNr + '>'+child.parent+'</label>' +
-                        '<label hidden id=index_' + rowNr + '>'+child.index+'</label>' +  
-                    '</td>';
-                    
-                    valueString = child.value;
-                    tableString += 
-                        '<td>' +
-                            this.getValueString(rowNr, valueString)
-                        +'</td>';
-
-                    tableString += '</tr>';
-                    
-                    // if this child is parent, or "in an expanded state", go down into it
-                    if(child.parent){
-                        // if it is an array, object or an index-row
-                        var newClass = classRefs.find(t=>t.name == fieldTypeName);
-                        if(newClass != undefined)
-                            usedClass = newClass;
-                    }
-
-                    rowNr++;
-                }
-            }
-            
-            // get the list of children of the final parent, which we may use to fill some field-values here below
-            var finalChildren = userData.children.filter((c,index,arr)=>index > lastParentRowOfPath);
-
-
-            // show the fields of the currently expanded class /////////////////////////////////
-            for(field of usedClass.fields){
-                var valueString = "";
-                //if(externalTableNr != undefined && 
-                if(userData.children.length > rowNr)
-                    valueString = userData.children[rowNr].value;
-
-                    /*var isParentRow = $("#isParentRow_"+row)[0].innerText;
-                    var rowIndex = $("#rowIndex_"+row).val();*/
-                
-                tableString += '<tr>';
-
-                tableString += 
-                '<td width="*">'+
-                    '<label id=fieldType_' + rowNr + '>'+field.type+'</label>' + 
-                '</td>'+
-                '<td>'+
-                    '<label class=classrow id=fieldName_' + rowNr + '>'+field.name+'</label>' + 
-                    '<label hidden id=isParentRow_' + rowNr + '>'+field.parent+'</label>' +  
-                '</td>';
-
-                if(field.index != null){
-                    tableString += 
-                        '<td width="*">'+
-                            this.getIndexString(rowNr, field.index) +
-                        '</td>';
-                }
-
-                valueString = "";
-
-                // can we take a value from the incoming path?
-                var thisChild = finalChildren.find(c=>c.field == field.name);
-                if(thisChild != undefined)
-                    valueString = thisChild.value;
-
-                tableString += 
-                    '<td>' +
-                        this.getValueString(rowNr, valueString)
-                    +'</td>';
-
-                tableString += '</tr>';
-                rowNr++;
-            };
-
-            tableString += '</tbody></table>';
-        } 
+        var rowsCode = figure.renderRowsModel(rowsModel);
+        
+        tableString += '<table><tbody id="rowstable_body">';
+        tableString += rowsCode;
+        tableString += '</tbody></table>';
+       
 
 
         view.append(tableString);
@@ -486,16 +514,98 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         });
 
         // a classrow was clicked, containing a line of the path
+        // if an unexpanded class was clicked, expand it and show its children
+        // if something above the downmost expanded class was clicked, "back up" to the closest expanded class above, and show its children
+        // this method should construct a new rowsmodel to render, just like when we are first opening a shape for editing
         $(".classrow").on("dblclick", function(){
             var clickedRowNr = this.id.split("_")[1]; // pickout "X" from "fieldName_X"
-            var latestParentRow = -1; // which is the closest parentrow above the clicked row?
+ 
+            // find the closest expanded class above the clicked row
+            var currentParentClass = null;
+            var rowIndex = clickedRowNr;
+            while(currentParentClass == null && rowIndex > -1){
+                if(rowsModel[rowIndex].isParent == true) // only look after expanded rows
+                    currentParentClass = Model.classes.find(t=>t.id == rowsModel[rowIndex].type);
+                rowIndex--;
+            }
+            // was one found? in other case, take the root class
+            if(currentParentClass == undefined)
+                currentParentClass = Model.classes.find(t=>t.id == usedClassId);
 
-            // the class we are currently "in", when processing the classrows
-            var currentClassDefinition = Model.classes.find(t=>t.id == usedClassId);
+            // is clicked row expandable?
+            var clickedClass = Model.classes.find(t=>t.name == rowsModel[clickedRowNr].type);
+
+            // 1 - go down into an unexpanded class? (the clicked row is the same where we found the closest above class, and that node is unexpanded)
+            if(clickedRowNr > (rowIndex+1) && clickedClass != undefined && rowsModel[clickedRowNr].isParent == false)
+            {
+                // gather all the visible data from DOM
+                var newModel = figure.harvestRowData();
+                // remove everything that is not directly below the previous parent (the current leaves)
+                //  - find the closest parent above the clicked classrow
+                var oldParentClass = null;
+                var oldParentIndex = rowIndex;
+                while(oldParentClass == null && oldParentIndex > -1){
+                    if(newModel[oldParentIndex].isParent == true) // only look after expanded rows
+                        oldParentClass = Model.classes.find(t=>t.name == newModel[oldParentIndex].type);
+                    oldParentIndex--;
+                }
+                //  - was one found? in other case, take the root class
+                if(currentParentClass == undefined)
+                    currentParentClass = Model.classes.find(t=>t.id == usedClassId);
+                // save the clicked parent row
+                var newParentRow = newModel[clickedRowNr];
+                // remove it from the model
+                newModel = newModel.filter(r => r != newParentRow);
+                // remove all rows below the old parent-row that do not carry value
+                var toBeRemoved = [];
+                for(i=0; i<newModel.length; i++)
+                {
+                    if(i > (oldParentIndex+2) && newModel[i].value == undefined)
+                        toBeRemoved.push(newModel[i]);
+                }
+                newModel = newModel.filter(e => !toBeRemoved.includes(e));
+                // add clicked row as expanded parent
+                newParentRow.isParent = true; // mark it as expanded parent
+                newModel.push(newParentRow);
+                // add leaves of newly expanded parent
+                // show the fields of the currently expanded class /////////////////////////////////
+                var newParentClass = Model.classes.find(t=>t.name == newParentRow.type);
+                for(field of newParentClass.fields){
+                    var rowModel = {};
+                    rowModel.type = field.type;
+                    rowModel.field = field.name;
+                    rowModel.isParent = false;  // the fields of the last class are never expanded, and thus never parents                    
+                    newModel.push(rowModel);
+                    //rowNr++;
+                }
+
+                // show the new rowsModel!
+                var rowsTableHTML = figure.renderRowsModel(newModel);
+                var rowsTableBodyElem = $("#rowstable_body")[0];
+                rowsTableBodyElem.innerHTML = rowsTableHTML;
+                rowsModel = newModel;
+
+            }
+            // 2 - backing up into the structure, by clicking a row above the downmost expanded class (may be class or field of class)
+            else if(clickedRowNr < (rowIndex+1))
+            {
+                // gather all the visible data from DOM
+                var newModel = figure.harvestRowData();
+                // remove all rows that are not directly below the new parent that we want to back up to
+                // add leaves of newly re-expanded parent (keeping variables)   
+            }
+
             
-            // go through all the rows, collecting all the available data
-            var editedRowData = figure.harvestRowData(); // this is how we can access the methods, here
             
+            
+            
+            // go down to the (if any) expanded class below the clicked row - remove it, and everything below
+
+
+            // go through all the rows, collecting all the available data from the DOM
+            // var editedRowData = figure.harvestRowData();
+            
+
         });
 
         $("#ok_button").on("click", function(){
@@ -595,6 +705,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
     harvestRowData:function(){
         var rows = [];
         var row = 0;
+        var endReached = false;
         do{
             // look for all possible values on each row
             var fieldNameLabel = document.getElementById('fieldName_'+row);
@@ -636,20 +747,25 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             if(className != undefined)
                 newRow.type = className;
 
-            newRow.parent = isParentRow;
+            newRow.isParent = isParentRow;
             newRow.rowNr = row;
             
-            rows.push(newRow);
+            // when both these are undefined, the row was invalid
+            endReached = rowIndex == undefined && className == undefined;
+
+            if(!endReached)
+                rows.push(newRow);
+
             row++;
             // go on until we are out of rows with meaningful content
-        } while (rowIndex != undefined || className != undefined) // a valid row has One of these..
+        } while (!endReached) // a valid row has One of these..
 
         return rows;
     },
 
     getValueString: function(rowNr, value){
         var printString = "";
-        if(value != "")
+        if(value != "" && value != undefined)
             printString = htmlPrologEncode(value);
         return '<input id="value_' + rowNr + '" tabIndex="' + (1002 + rowNr) + '" "type="text" value="'+ printString +'"/>';
     },
