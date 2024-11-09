@@ -106,7 +106,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 children:[
                     {field: "Field1", value:"Nr"}, 
                     {field: "Field2", value:"text"},
-                    {field: "AnArray", value:"", parent: true},
+                    {field: "AnArray", value:"", level: 2},
                     {index: "1", typeName:"int", value:"A1"}
                 ]
             };
@@ -166,7 +166,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 var colName;
                 if(Field.field != undefined){
                     var fillCol = "green";
-                    if(Field.parent)
+                    if(Field.level > 0)
                         fillCol = "white";
                     
                     colName = new fabric.Text(Field.field,{fill:fillCol,fontSize:10, objectCaching: false,fontFamily:'arial'});
@@ -314,7 +314,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             // show the path of the (possible) children ("path") //////////////////////////////////////////////////
             var lastParentRowOfPath = -1;
             userData.children.forEach(c=> {
-                if(c.parent == true) 
+                if(c.level > 0) 
                     lastParentRowOfPath = rowNr; 
                 rowNr++;
             });
@@ -329,15 +329,15 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
                     rowModel.type = fieldTypeName;
                     rowModel.field = child.field;
-                    if(child.parent)
-                        rowModel.isParent = child.parent;
+                    if(child.level)
+                        rowModel.level = child.level;
                     if(child.index)
                         rowModel.index = child.index;
                     if(child.value)
                         rowModel.value = child.value; // keep it in raw form, not adjusted for rendering
                     
                     // if this child is parent, or "in an expanded state", go down into it
-                    if(child.parent){
+                    if(child.level > 0){
                         // if it is an array, object or an index-row
                         var newClass = classRefs.find(t=>t.name == fieldTypeName);
                         if(newClass != undefined)
@@ -362,7 +362,13 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 var rowModel = {};
                 rowModel.type = field.type;
                 rowModel.field = field.name;
-                rowModel.isParent = false;  // the fields of the last class are never expanded, and thus never parents
+                
+                // set level of new row - if it is expandable or not
+                rowModel.level = 0
+                if(Model.classes.find(t=>t.name == field.type) != undefined)
+                    rowModel.level = 1; // expandable class/array..?
+
+                // rowModel.isParent = false;  // the fields of the last class are never expanded, and thus never parents
                
                 if(field.index != null)
                     rowModel.index = field.index;
@@ -393,7 +399,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             htmlCode += '<tr>';
 
             var fieldTypeStyle = "";
-            if(row.isParent)
+            if(row.level > 0)
                 fieldTypeStyle = "background:black; color:brown";
             else
                 fieldTypeStyle = "background:beige; color:brown";
@@ -404,7 +410,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             '</td>'+
             '<td>'+
                 '<label id=fieldName_' + rowNr + ' style="' + fieldTypeStyle + '">'+row.field+'</label>' + 
-                '<label hidden id=isParentRow_' + rowNr + '>'+row.parent+'</label>' +
+                '<label hidden id=level_' + rowNr + '>'+row.level+'</label>' +
                 '<label hidden id=index_' + rowNr + '>'+row.index+'</label>' +  
             '</td>';
 
@@ -524,7 +530,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             var currentParentClass = null;
             var rowIndex = clickedRowNr;
             while(currentParentClass == null && rowIndex > -1){
-                if(rowsModel[rowIndex].isParent == true) // only look after expanded rows
+                if(rowsModel[rowIndex].level == 2) // only look after expanded rows
                     currentParentClass = Model.classes.find(t=>t.id == rowsModel[rowIndex].type);
                 rowIndex--;
             }
@@ -536,7 +542,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             var clickedClass = Model.classes.find(t=>t.name == rowsModel[clickedRowNr].type);
 
             // 1 - go down into an unexpanded class? (the clicked row is the same where we found the closest above class, and that node is unexpanded)
-            if(clickedRowNr > (rowIndex+1) && clickedClass != undefined && rowsModel[clickedRowNr].isParent == false)
+            if(clickedRowNr > (rowIndex+1) && clickedClass != undefined && rowsModel[clickedRowNr].level == 1) // 1 = expandable unexpanded
             {
                 // gather all the visible data from DOM
                 var newModel = figure.harvestRowData();
@@ -545,7 +551,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 var oldParentClass = null;
                 var oldParentIndex = rowIndex;
                 while(oldParentClass == null && oldParentIndex > -1){
-                    if(newModel[oldParentIndex].isParent == true) // only look after expanded rows
+                    if(newModel[oldParentIndex].level == 2) // only look after expanded rows
                         oldParentClass = Model.classes.find(t=>t.name == newModel[oldParentIndex].type);
                     oldParentIndex--;
                 }
@@ -560,12 +566,12 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 var toBeRemoved = [];
                 for(i=0; i<newModel.length; i++)
                 {
-                    if(i > (oldParentIndex+2) && newModel[i].value == undefined)
+                    if(i > (oldParentIndex+1) && newModel[i].value == '') // empty value
                         toBeRemoved.push(newModel[i]);
                 }
                 newModel = newModel.filter(e => !toBeRemoved.includes(e));
                 // add clicked row as expanded parent
-                newParentRow.isParent = true; // mark it as expanded parent
+                newParentRow.level = 2; // mark it as expanded parent
                 newModel.push(newParentRow);
                 // add leaves of newly expanded parent
                 // show the fields of the currently expanded class /////////////////////////////////
@@ -574,7 +580,9 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     var rowModel = {};
                     rowModel.type = field.type;
                     rowModel.field = field.name;
-                    rowModel.isParent = false;  // the fields of the last class are never expanded, and thus never parents                    
+                    rowModel.level = 0;  // the fields of the last class are never expanded, and thus never parents                    
+                    if(Model.classes.find(t=>t.name == field.type) != undefined)
+                        rowModel.level = 1;
                     newModel.push(rowModel);
                     //rowNr++;
                 }
@@ -638,10 +646,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     if(fieldNameLabel != undefined)
                         fieldName = fieldNameLabel.innerText;
 
-                    var isParentRowLabel = document.getElementById('isParentRow_'+row);
-                    var isParentRow = false;
-                    if(isParentRowLabel != undefined)
-                        isParentRow = isParentRowLabel.innerText;
+                    var levelLabel = document.getElementById('level_'+row);
+                    var level = 0;
+                    if(levelLabel != undefined)
+                        level = levelLabel.innerText;
 
                     var rowIndexInput = document.getElementById('index_'+row);
                     var rowIndex = undefined;
@@ -662,6 +670,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     if((matchValue != undefined && matchValue != "") || (rowIndex != undefined && rowIndex != "")) // only SAVE rows that carry information
                     {
                         var newRow = {};
+                        newRow.level = level;
                         if(fieldName != undefined)
                             newRow.field = fieldName;
                         if(rowIndex != undefined)
@@ -713,10 +722,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             if(fieldNameLabel != undefined)
                 fieldName = fieldNameLabel.innerText;
 
-            var isParentRowLabel = document.getElementById('isParentRow_'+row);
-            var isParentRow = false;
-            if(isParentRowLabel != undefined)
-                isParentRow = isParentRowLabel.innerText;
+            var levelLabel = document.getElementById('level_'+row);
+            var level = false;
+            if(levelLabel != undefined)
+                level = levelLabel.innerText;
 
             var rowIndexInput = document.getElementById('index_'+row);
             var rowIndex = undefined;
@@ -747,7 +756,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             if(className != undefined)
                 newRow.type = className;
 
-            newRow.isParent = isParentRow;
+            newRow.level = level;
             newRow.rowNr = row;
             
             // when both these are undefined, the row was invalid
