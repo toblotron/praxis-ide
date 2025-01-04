@@ -479,7 +479,8 @@ Model =
                 {type:"string", name:"FirstName"},
                 {type:"string", name:"LastName"},
                 {type:"Address", name:"Address"},
-                {type:"Date", name:"BirthDate"}
+                {type:"Date", name:"BirthDate"},
+                {type:"Person", name:"Employer"}
             ]
         },
         {
