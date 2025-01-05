@@ -19,6 +19,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         this.childRows = [];
         this.classNameRect = null;
         this.className = null;
+        this.classValueRect = null;
         this.classValue = null;
         this.isDataShape = true;
           
@@ -60,9 +61,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
         // delete all the old content
         for(f of this.childRows){
-            if(f.fieldName != undefined) this.remove(f.fieldName);
+            if(f.colName != undefined) this.remove(f.colName);
             if(f.colRect != undefined) this.remove(f.colRect); 
             if(f.valueText!=undefined) this.remove(f.valueText);
+            if(f.expansionRect != undefined) this.remove(f.expansionRect);
         }
         
         this.childRows = [];
@@ -71,6 +73,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             this.remove(this.bg);
             this.remove(this.classNameRect);
             this.remove(this.className);
+            this.remove(this.classValueRect);
             this.remove(this.classValue);
         }
     
@@ -101,13 +104,13 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             isPreview = true;
             // set temporary preview-values
             shapeData = {
-                name:"Example",
-                value: "E",
+                name:"ClassName",
+                value: "I",
                 children:[
-                    {field: "Field1", value:"Nr"}, 
-                    {field: "Field2", value:"text"},
-                    {field: "AnArray", value:"", level: 2},
-                    {index: "1", typeName:"int", value:"A1"}
+                    {field: "Field", level: 0, value:"Nr"}, 
+                    {field: "Unexpanded", level: 1, value:"M"},
+                    {field: "Expanded", level: 2, value:""},
+                    {field: "SubField", level: 0, value:"text"}
                 ]
             };
         }
@@ -123,15 +126,19 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         var bgStartY = 0;
         var bottomPad = 2; // extra padding after last row
         var linePad =3;
+        // space for expansion-indication
+        var expansionWidth = 7;
 
         // create class name row
-        this.classNameRect = new RoundedRect({fill:'#000000',topLeft:[5,5],topRight:[5,5]});
+        this.classNameRect = new RoundedRect({fill:'#000000',topLeft:[5,5]});
         this.className = new fabric.Text(classDef.name,{fontSize:11, fill: 'white', objectCaching: false, fontFamily:'arial'});
+        this.classValueRect = new RoundedRect({fill:'#ffffff',topRight:[5,5]});
         this.classValue = new fabric.Text(shapeData.value,{fontSize:11, fill: 'blue', objectCaching: false, fontFamily:'arial'});
 
         if(isPreview){
             this.classNameRect.set({fill:'#000000', opacity:0.5});
             this.className.set({opacity:0.5, fontStyle:'italic'});
+            this.classValueRect.set({fill:'#ffffff', opacity:0.5});
             this.classValue.set({opacity:0.5, fontStyle:'italic'});
         }
 
@@ -161,15 +168,32 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 if(valueIndex+1 == shapeData.children.length)
                     bottomLeft = [5,5];
                 
-                var colRect = new RoundedRect({fill:'#000000',bottomLeft:bottomLeft}); // color COULD be used to show some extra info..? 
+                var backgroundCol = '#000000';
+                var textCol = '#ffffff';
+                var sideCol = '#000000';
+
+                switch(parseInt(Field.level)){
+                    case 0: // field
+                        backgroundCol = '#f3e7c9';
+                        textCol = '#000000';
+                        sideCol = '#f3e7c9';
+                        break;
+                    case 1: // unexpanded
+                        backgroundCol = '#7282c8';
+                        textCol = '#000000';
+                        sideCol = '#f3e7c9';
+                    case 2: // expanded
+                        backgroundCol = '#7282c8';
+                        textCol = '#000000';
+                        sideCol = '#000000';
+                        break;
+                }
+
+                var colRect = new RoundedRect({fill:backgroundCol,bottomLeft:bottomLeft}); // color COULD be used to show some extra info..? 
                 
                 var colName;
-                if(Field.field != undefined){
-                    var fillCol = "green";
-                    if(Field.level > 0)
-                        fillCol = "white";
-                    
-                    colName = new fabric.Text(Field.field,{fill:fillCol,fontSize:10, objectCaching: false,fontFamily:'arial'});
+                if(Field.field != undefined){                   
+                    colName = new fabric.Text(Field.field,{fill:textCol,fontSize:10, objectCaching: false,fontFamily:'arial'});
                 }
                 else{ 
                     colName = new fabric.Text(Field.index + " ("+Field.type+")",{fill:'white',fontSize:10, objectCaching: false,fontFamily:'arial'});
@@ -194,6 +218,9 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     colName:colName,
                     valueText:valueText};
 
+                if(Field.level == 2)
+                    controlRow.expansionRect = new RoundedRect({fill:sideCol, bottomLeft:[0,0]});
+
                 this.childRows.push(controlRow);
             }
             valueIndex++;
@@ -214,6 +241,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
         if(isPreview)
           bg.set({opacity:0.5});
+
+        leftMax += expansionWidth;
 
         var totWidth = leftMax + rightMax + 4*padding;
         if(topWidth > totWidth)
@@ -240,17 +269,23 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         this.classNameRect.height = this.className.height + padding * 2;
         this.classNameRect.top = starty;
         this.classNameRect.left = startx;
-        this.classNameRect.width = totWidth; // this.tableName.width + padding * 2;
+        this.classNameRect.width = leftMax + padding *2; //totWidth; // this.tableName.width + padding * 2;
+        
 
-        this.addWithUpdate(this.classNameRect);
-
-        this.className.left = startx + padding * 1;
+        this.className.left = expansionWidth + startx + padding * 1;
         this.className.top = starty + top + padding;
 
+        this.classValueRect.height = this.className.height + padding * 2;
+        this.classValueRect.top = starty;
+        this.classValueRect.left = startx + this.classNameRect.width; //startx;
+        this.classValueRect.width = totWidth - leftMax - padding *2;
+
         this.classValue.top = starty + top + padding;
-        this.classValue.left = startx + this.className.width + padding;
+        this.classValue.left = this.classValueRect.left + padding;//      startx + this.className.width + padding;
 
         top += this.className.height + padding * 2;
+        this.addWithUpdate(this.classNameRect);
+        this.addWithUpdate(this.classValueRect);
         this.addWithUpdate(this.className);
         this.addWithUpdate(this.classValue);
 
@@ -261,7 +296,14 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             c.colRect.top = starty + top;
             c.colRect.width = leftMax + padding *2;
             
-            c.colName.left = c.colRect.left + padding;
+            if(c.expansionRect != undefined){
+                c.expansionRect.left = startx;
+                c.expansionRect.top = starty + top;
+                c.expansionRect.width = expansionWidth;
+                c.expansionRect.height = c.colRect.height;
+            }
+
+            c.colName.left = expansionWidth + c.colRect.left + padding;
             c.colName.top = starty + top + padding;
 
             c.valueText.left = c.colRect.left + c.colRect.width + padding;
@@ -272,7 +314,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             this.addWithUpdate(c.colRect);  
             this.addWithUpdate(c.colName); 
             this.addWithUpdate(c.valueText);
-     
+            if(c.expansionRect != undefined)
+                this.addWithUpdate(c.expansionRect);
         };
         
         // finally - set proper dimensions of bg - should just be background
@@ -415,18 +458,18 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             var typeStyle ="";
             switch(parseInt(row.level)){
                 case 0: // normal field
-                    fieldTypeStyle = "background:beige; color:black";
-                    sideTypeStyle = "background:beige; color:black";
-                    typeStyle = "background:beige; color:black";
+                    fieldTypeStyle = "background:#f3e7c9; color:black";
+                    sideTypeStyle = "background:#f3e7c9; color:black";
+                    typeStyle = "background:#f3e7c9; color:black";
                     break;
                 case 1: // unexpanded class
-                    fieldTypeStyle = "background:#997799; color:black";
-                    sideTypeStyle = "background:beige; color:black";
+                    fieldTypeStyle = "background: #7282c8; color:black";
+                    sideTypeStyle = "background:#f3e7c9; color:black";
                     typeStyle = "background:black; color:white";
                     break;
                 case 2: // expanded class
                 case -1: // root-row
-                    fieldTypeStyle = "background:#997799; color:black";
+                    fieldTypeStyle = "background:#7282c8; color:black";
                     sideTypeStyle = "background:black; color:white";
                     typeStyle = "background:black; color:white";
                     break;
@@ -664,48 +707,6 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             rowsTableBodyElem.innerHTML = rowsTableHTML;
             rowsModel = newModel;
         }
-        /*// 3 - click back on an above, expanded parent-row
-        else if(clickedClass != undefined && rowsModel[clickedRowNr].level == 2) // 2 = expanded - should be able to back up into parent)
-        {
-            // gather all the visible data from DOM
-            var newModel = self.harvestRowData();
-            
-            // remove all rows below the old parent-row (until the following expanded parent) that do not carry value
-            var toBeRemoved = [];
-            for(i=0; i<newModel.length; i++)
-            {
-                if(newModel[i].rowNr > (parentRowIndex) && newModel[i].value == '') // empty value
-                    toBeRemoved.push(newModel[i]);
-            }
-            newModel = newModel.filter(e => !toBeRemoved.includes(e));
-            
-            // add leaves of (still) expanded parent
-            // show the fields of the currently expanded class /////////////////////////////////
-            var newParentClass = Model.classes.find(t=>t.name == rowsModel[clickedRowNr].type);
-            for(field of newParentClass.fields){
-                var rowModel = {};
-                rowModel.type = field.type;
-                rowModel.field = field.name;
-                rowModel.level = 0;  // the fields of the last class are never expanded, and thus never parents                    
-                if(Model.classes.find(t=>t.name == field.type) != undefined)
-                    rowModel.level = 1;
-                newModel.push(rowModel);
-            }
-
-            // show the new rowsModel!
-            var rowsTableHTML = self.renderRowsModel(newModel);
-            var rowsTableBodyElem = $("#rowstable_body")[0];
-            rowsTableBodyElem.innerHTML = rowsTableHTML;
-            rowsModel = newModel;
-        }*/
-        
-        // go down to the (if any) expanded class below the clicked row - remove it, and everything below
-
-
-        // go through all the rows, collecting all the available data from the DOM
-        // var editedRowData = figure.harvestRowData();
-        
-
     },
 
     
@@ -754,7 +755,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 if(row.level != -1 && (row.level == 2 || row.value != '')){
                     children.push(
                         {
-                            field: row.name,
+                            field: row.field,
                             level: row.level,
                             value: row.value
                         }
