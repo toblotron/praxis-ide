@@ -70,6 +70,11 @@ var pb = {
             return false;
         }
     },
+    "ClassShape":{
+        shouldStartRule: function(shape, pc){
+            return false;
+        }
+    },
     "RuleShape":{
         shouldStartRule: function(shape, pc){
 

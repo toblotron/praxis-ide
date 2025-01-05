@@ -357,11 +357,12 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             // show the path of the (possible) children ("path") //////////////////////////////////////////////////
             var lastParentRowOfPath = -1;
             userData.children.forEach(c=> {
-                if(c.level > 0) 
+                if(c.level == 2) 
                     lastParentRowOfPath = rowNr; 
                 rowNr++;
             });
 
+            rowNr = 0; // reset
             var rootRow = {
                 type: usedClass.name,
                 field: "{root}",
@@ -372,11 +373,12 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             rowsModel.push(rootRow);
             rowNr++;
 
+            var childRow = 0;
             if(userData.children != undefined && userData.children.length > 0){
-                while(lastParentRowOfPath >= rowNr){
+                while(lastParentRowOfPath >= childRow){
                     var rowModel = {};
 
-                    var child = userData.children[rowNr];
+                    var child = userData.children[childRow];
                     // find the typename of this field, from the current usedClass
                     var fieldTypeName = usedClass.fields.find(f=>f.name == child.field).type;
 
@@ -390,7 +392,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                         rowModel.value = child.value; // keep it in raw form, not adjusted for rendering
                     
                     // if this child is parent, or "in an expanded state", go down into it
-                    if(child.level > 0){
+                    if(child.level == 2){
                         // if it is an array, object or an index-row
                         var newClass = classRefs.find(t=>t.name == fieldTypeName);
                         if(newClass != undefined)
@@ -399,6 +401,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
                     rowsModel.push(rowModel);
                     rowNr++;
+                    childRow++;
                 }
             }
             
@@ -421,8 +424,6 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 if(Model.classes.find(t=>t.name == field.type) != undefined)
                     rowModel.level = 1; // expandable class/array..?
 
-                // rowModel.isParent = false;  // the fields of the last class are never expanded, and thus never parents
-               
                 if(field.index != null)
                     rowModel.index = field.index;
 
@@ -609,8 +610,17 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         // is clicked row expandable?
         var clickedClass = Model.classes.find(t=>t.name == rowsModel[clickedRowNr].type);
 
+        // get index of last expanded parent 
+        var lastParentRowOfPath = -1;
+        var rowNr = 0;
+        rowsModel.forEach(c=> {
+            if(c.level == 2) 
+                lastParentRowOfPath = rowNr; 
+            rowNr++;
+        });
+
         // 1 - go down into an unexpanded class? (the clicked row is the same where we found the closest above class, and that node is unexpanded)
-        if(clickedRowNr > (parentRowIndex) && clickedClass != undefined && rowsModel[clickedRowNr].level == 1) // 1 = expandable unexpanded
+        if(clickedRowNr > parentRowIndex && clickedRowNr > lastParentRowOfPath  && clickedClass != undefined && rowsModel[clickedRowNr].level == 1) // 1 = expandable unexpanded
         {
             // gather all the visible data from DOM
             var newModel = self.harvestRowData();
@@ -653,7 +663,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         }
         // 2 - clicking an unexpandable field-row; take the closest above expanded parent, and list its fields
         // or: click an already opened parent, or rootrow, and go "back" up to showing them as lowest parent
-        else if(rowsModel[clickedRowNr].level == 0 || (clickedClass != undefined && (rowsModel[clickedRowNr].level == 2 || rowsModel[clickedRowNr].level == -1)))
+        else if(rowsModel[clickedRowNr].level == 0 || rowsModel[clickedRowNr].level == 1 || (clickedClass != undefined && (rowsModel[clickedRowNr].level == 2 || rowsModel[clickedRowNr].level == -1)))
         {
             // gather all the visible data from DOM
             var newModel = self.harvestRowData();
