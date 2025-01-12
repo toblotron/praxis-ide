@@ -305,6 +305,7 @@ var ShapeParsing = {
 
     // this is (I think?) needed so that we can go from a text-string to a class-reference, without using the evil eval
     classMap:{
+        // #parsing
         "FormulaShape": FormulaShape,
         "RuleShape": RuleShape,
         "LogicShape": LogicShape,
@@ -312,7 +313,8 @@ var ShapeParsing = {
         "GroupShape": GroupShape,
         "TableShape": TableShape,
         "DcgShape": DcgShape,
-        "DcgTerminalShape": DcgTerminalShape
+        "DcgTerminalShape": DcgTerminalShape,
+        "ClassShape":ClassShape
     },
     getShapeClass:function(className){
         // return the prototype of the class, where we can store functions

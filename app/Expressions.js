@@ -194,6 +194,42 @@ class FormulaExpression {
   }
 }
 
+// Class expression
+class ClassExpression {
+  constructor(pathRows, body){
+    this.pathRows = pathRows; // calls to in/2, etc
+    this.body = body;
+  }
+
+  printContent(PC) {
+
+    // should this child-statement be wrapped in braces, because we are currently printing a DCG rule,
+    // and the statement is normal prolog?
+    var wrapInBraces = PC.isDcgRule;
+
+    // for every row.. 
+    for(var i=0; i< this.pathRows.length; i++)
+    {
+        ShapeParsing.indent(PC);
+
+        if(wrapInBraces)
+          PC.res.push("{");
+
+        this.pathRows[i].print(PC);
+
+        if(wrapInBraces)
+          PC.res.push("}");
+
+        if(i<this.pathRows.length-1)
+            PC.res.push(",\n");
+    }  
+  }
+
+  print(PC) {
+    this.printContent(PC);
+  }
+}
+
 class FindallExpression {
   constructor(capturePatternExpression, body, captureListExpression) {
     this.capturePatternExpression = capturePatternExpression;

@@ -920,22 +920,58 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
     parseToExpression:function(shapeData, rpc){
         var data = shapeData.data;
-        var name = data.name;
-        // first, parse all the prolog-texts in the arguments
-        var argumentExpressions = [];
-        data.values.forEach(a=>{
-            // experimental parsing-code - later, make it so we don't have to create a new parser for each argument :) 
-            // - store a parser in rpc
-            var tokens = Lexer.GetTokens(a);
-            tokens = tokens.filter(t=>t.type != TokenType.Blankspace);
-            var parser = new PrologParser(tokens);
-            var res = parser.parseThis();
-            argumentExpressions.push(res);
+        var parentString = data.value;
+
+        // first, parse all the rows into rule-calls
+        var pathExpressions = [];
+
+        var argIndex = 0;
+
+        tokens = Lexer.GetTokens(":");
+        var opToken = tokens[0];
+
+        var parentExpression = new VariableExpression(parentString);
+
+        data.children.forEach(a=>{
+
+            var level = parseInt(a.level);
+            var field = null;
+            var valueExpression = null;
+
+            field = new AtomExpression("'" + a.field + "'");
+
+            if(a.value != undefined)
+                valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Argument #" + argIndex, a.value);
+
+            var res = null; 
+
+            switch(level){
+                case 0:
+                case 1:
+                    var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
+                    res = new RuleExpression(null, "praxis_field_in", [matchExpression, parentExpression]);
+                    break;
+                case 2:
+                    if(valueString == undefined || valueString == ''){
+                        var valueString = "VAR_" + rpc.idCounter++;
+                        valueExpression = new VariableExpression(valueString);
+                    }
+                    var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
+                    res = new RuleExpression(null, "praxis_field_in", [matchExpression, parentExpression]);
+                    
+                    parentString = valueString;
+                    parentExpression = new VariableExpression(parentString);
+                    break;
+            }
+
+            argIndex++;
+
+            pathExpressions.push(res);
         });
 
         // build and return a RuleExpression
         var body = ShapeParsing.parseAllBelow(shapeData, rpc);
-        return new RuleExpression(library,name,argumentExpressions,body);
+        return new ClassExpression(pathExpressions, body);
     }
 
 });
