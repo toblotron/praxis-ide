@@ -260,6 +260,9 @@ var ShapeParsing = {
     },
 
     printChildren(PC, children) {
+        if(children == undefined)
+            return;
+        
         for(var i=0; i<children.length; i++)
         {
             // should this child-statement be wrapped in braces, because we are currently printing a DCG rule,

@@ -255,7 +255,7 @@ praxis.Application = Class.extend({
         var tableData = app.getDataTable(nr);
         
         // NEEDS TO BE HERE
-        // app.classPanel.showPanel(classData, treeNode);
+        app.tablePanel.showPanel(tableData, treeNode);
         app.tableView.showTable(tableData);
 
         this.updateHeading(treeNode);
@@ -460,7 +460,8 @@ Model =
     [
         {type: 'class', index:0, name:"Person"},
         {type: 'class', index:1, name:"Address"},
-        {type: 'class', index:2, name:"Date"}
+        {type: 'class', index:2, name:"Date"},
+        {type: 'class', index:3, name:"PrivatePerson"}
         /*
         {type: 'rules', index:0},
         {
@@ -480,7 +481,8 @@ Model =
                 {type:"string", name:"LastName"},
                 {type:"Address", name:"Address"},
                 {type:"Date", name:"BirthDate"},
-                {type:"Person", name:"Employer"}
+                {type:"Person", name:"Superior"},
+                {type:"Person", fieldType:"Array", name:"Dependants"}
             ]
         },
         {
@@ -501,6 +503,14 @@ Model =
                 {type:"int", name:"Year"},
                 {type:"int", name:"Month"},
                 {type:"int", name:"Day"}
+            ]
+        },
+        {
+            id:3,
+            name:"PrivatePerson",
+            super:"Person",
+            fields:[
+                {type:"string", name:"IdCode"}
             ]
         }
     ],

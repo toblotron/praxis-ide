@@ -45,6 +45,13 @@ praxis.ClassView = Class.extend({
 
     default_columns: [
       {
+        "id": "fieldType",
+        "name": "",
+        "field": "fieldType",
+        "content": "atom",
+        "width": 50
+      },
+      {
         "id": "type",
         "name": "Type",
         "field": "type",
@@ -149,7 +156,7 @@ praxis.ClassView = Class.extend({
     
             // {id: "name", name: "Name", field: "name", content:"string"},
         }
-      */
+        */
      
           grid.setSelectionModel(new Slick.CellSelectionModel());
           var moveRowsPlugin = new Slick.RowMoveManager({

@@ -357,7 +357,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             // show the path of the (possible) children ("path") //////////////////////////////////////////////////
             var lastParentRowOfPath = -1;
             userData.children.forEach(c=> {
-                if(c.level == 2) 
+                if(c.level == 2 || c.level == 5) // expanded object or indexrow
                     lastParentRowOfPath = rowNr; 
                 rowNr++;
             });
@@ -380,10 +380,15 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
                     var child = userData.children[childRow];
                     // find the typename of this field, from the current usedClass
-                    var fieldTypeName = usedClass.fields.find(f=>f.name == child.field).type;
+                    var fieldTypeName = null;
+                    if(child.level != 5){
+                        fieldTypeName = usedClass.fields.find(f=>f.name == child.field).type;
+                    } else
+                        fieldTypeName = child.type; // for indexrows we expect the child to have a type, for possible subclassing
 
                     rowModel.type = fieldTypeName;
-                    rowModel.field = child.field;
+                    if(child.field) // indexrows do not have field-properties
+                        rowModel.field = child.field;
                     if(child.level)
                         rowModel.level = child.level;
                     if(child.index)
@@ -392,7 +397,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                         rowModel.value = child.value; // keep it in raw form, not adjusted for rendering
                     
                     // if this child is parent, or "in an expanded state", go down into it
-                    if(child.level == 2){
+                    if(child.level == 2 || child.level == 5) // expanded object or index-row
+                    {
                         // if it is an array, object or an index-row
                         var newClass = classRefs.find(t=>t.name == fieldTypeName);
                         if(newClass != undefined)
@@ -408,7 +414,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             // get the list of children of the final parent, which we may use to fill some field-values here below
             var finalChildren = userData.children.filter((c,index,arr)=>index > lastParentRowOfPath);
 
-            // show the fields of the currently expanded class /////////////////////////////////
+            // add the fields of the currently expanded class /////////////////////////////////
             for(field of usedClass.fields){
                 var valueString = "";
                 //if(externalTableNr != undefined && 
@@ -421,11 +427,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 
                 // set level of new row - if it is expandable or not
                 rowModel.level = 0
-                if(Model.classes.find(t=>t.name == field.type) != undefined)
+                if(field.fieldType == "Array")
+                    rowModel.level = 3; // unexpanded array
+                else if(Model.classes.find(t=>t.name == field.type) != undefined)
                     rowModel.level = 1; // expandable class/array..?
-
-                if(field.index != null)
-                    rowModel.index = field.index;
 
                 // can we take a value from the incoming path?
                 var thisChild = finalChildren.find(c=>c.field == field.name);
@@ -774,63 +779,6 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             }
 
             shapeModel.data.children = children;
-
-            /*
-            var row = 0;
-            do{
-                // look for all possible values on each row
-                var fieldNameLabel = document.getElementById('fieldName_'+row);
-                var fieldName = null;
-                if(fieldNameLabel != undefined)
-                    fieldName = fieldNameLabel.innerText;
-
-                var levelLabel = document.getElementById('level_'+row);
-                var level = 0;
-                if(levelLabel != undefined)
-                    level = levelLabel.innerText;
-
-                var rowIndexInput = document.getElementById('index_'+row);
-                var rowIndex = undefined;
-                if(rowIndexInput != undefined)
-                    rowIndex = rowIndexInput.value;
-
-                var fieldTypeLabel = document.getElementById('fieldType_'+row);
-                var className = undefined;
-                if(fieldTypeLabel != undefined) 
-                    className = fieldTypeLabel.innerText;
-                
-                var matchInput = document.getElementById('value_'+row);
-                var matchValue = undefined;
-                if(matchInput != undefined && matchInput.value != undefined)    
-                    matchValue = matchInput.value;
-
-                // copy to shapeData
-                if((matchValue != undefined && matchValue != "") || (rowIndex != undefined && rowIndex != "")) // only SAVE rows that carry information
-                {
-                    var newRow = {};
-                    newRow.level = level;
-                    if(fieldName != undefined)
-                        newRow.field = fieldName;
-                    if(rowIndex != undefined)
-                    {
-                        newRow.index = rowIndex;
-                    }
-                    if(matchValue != undefined)
-                        newRow.value = matchValue;
-                    if(className != undefined)
-                        newRow.type = className;
-
-                    children.push(newRow);
-
-                    targetRow++;
-                }
-
-                row++;
-                // go on until we are out of rows with meaningful content
-            } while (rowIndex != undefined || className != undefined) // a valid row has One of these..
-            */
-            
-
         }
         
         app.view.updateShapeContents(shapeModel);
