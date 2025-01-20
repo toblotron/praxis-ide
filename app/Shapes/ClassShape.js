@@ -462,37 +462,58 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             var fieldTypeStyle = "";
             var sideTypeStyle = "";
             var typeStyle ="";
-            switch(parseInt(row.level)){
+
+            var levelInt = parseInt(row.level);
+            switch(levelInt){
                 case 0: // normal field
                     fieldTypeStyle = "background:#f3e7c9; color:black";
                     sideTypeStyle = "background:#f3e7c9; color:black";
                     typeStyle = "background:#f3e7c9; color:black";
                     break;
                 case 1: // unexpanded class
+                case 3: // unexpanded array
                     fieldTypeStyle = "background: #7282c8; color:black";
                     sideTypeStyle = "background:#f3e7c9; color:black";
                     typeStyle = "background:black; color:white";
                     break;
                 case 2: // expanded class
-                case -1: // root-row
+                case 4: // expanded array
                     fieldTypeStyle = "background:#7282c8; color:black";
                     sideTypeStyle = "background:black; color:white";
                     typeStyle = "background:black; color:white";
                     break;
+                case 5: // indexrow of array
+                case -1: // root-row
+                    fieldTypeStyle = "background:black; color:white";
+                    sideTypeStyle = "background:black; color:white";
+                    typeStyle = "background:black; color:white";
+                    break;
             }
-                
-            
+               
+            htmlCode += '<td style="' + sideTypeStyle + '; width=10px">&nbsp;</td>' +
+            '<td width="*" style="' + typeStyle + '">' 
 
-            htmlCode +=
-            '<td style="' + sideTypeStyle + '; width=10px">&nbsp;</td>' +
-            '<td width="*" style="' + typeStyle + '">'+
-                '<label style="' + typeStyle + '" class="classrow" id=fieldType_' + rowNr + '>' + row.type + '</label>' + 
-            '</td>'+
-            '<td style="' + fieldTypeStyle + '">'+
-                '<label style="' + fieldTypeStyle + '" id=fieldName_' + rowNr + '>'+row.field+'</label>' + 
-                '<label hidden id=level_' + rowNr + '>'+row.level+'</label>' +
-                '<label hidden id=index_' + rowNr + '>'+row.index+'</label>' +  
-            '</td>';
+            if(levelInt == 5){
+                htmlCode += 
+                '# '+ this.getIndexString(rowNr, row.index) +
+                '</td>'+'<td style="' + fieldTypeStyle + '">'+
+                '<label style="' + fieldTypeStyle + ';width:70%">(' + row.type + ')</label>' + 
+                '<label hidden id=level_' + rowNr + '>'+row.level+'</label>'+
+                '<label hidden id=fieldType_' + rowNr + '>'+row.level+'</label>';
+            } else if(levelInt == 3 || levelInt == 4) {
+                htmlCode += '<label style="' + typeStyle + '" class="classrow" id=fieldType_' + rowNr + '>' + row.type + '</label>' + 
+                '</td>'+'<td style="' + fieldTypeStyle + '">'+
+                '<label style="' + fieldTypeStyle + '">' + row.field + ' []</label>' + 
+                '<label hidden id=level_' + rowNr + '>'+ row.level+'</label>'+
+                '<label hidden id=fieldName_' + rowNr + '>' + row.field+'</label>';  
+            } else {
+                htmlCode += '<label style="' + typeStyle + '" class="classrow" id=fieldType_' + rowNr + '>' + row.type + '</label>' + 
+                '</td>'+'<td style="' + fieldTypeStyle + '">'+
+                '<label style="' + fieldTypeStyle + '" id=fieldName_' + rowNr + '>' + row.field + '</label>' + 
+                '<label hidden id=level_' + rowNr + '>'+row.level+'</label>';  
+            }
+            
+            htmlCode += '</td>';
 
             htmlCode += 
             '<td>' +
@@ -624,8 +645,9 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             rowNr++;
         });
 
+        var clickedRowLevel = rowsModel[clickedRowNr].level;
         // 1 - go down into an unexpanded class? (the clicked row is the same where we found the closest above class, and that node is unexpanded)
-        if(clickedRowNr > parentRowIndex && clickedRowNr > lastParentRowOfPath  && clickedClass != undefined && rowsModel[clickedRowNr].level == 1) // 1 = expandable unexpanded
+        if(clickedRowNr > parentRowIndex && clickedRowNr > lastParentRowOfPath  && clickedClass != undefined && (clickedRowLevel == 1 || clickedRowLevel == 3)) // 1 = expandable unexpanded, 3 = array unexpanded
         {
             // gather all the visible data from DOM
             var newModel = self.harvestRowData();
@@ -643,8 +665,23 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             }
             newModel = newModel.filter(e => !toBeRemoved.includes(e));
             // add clicked row as expanded parent
-            newParentRow.level = 2; // mark it as expanded parent
+            if(clickedRowLevel == 2)
+                newParentRow.level = 2; // mark it as expanded parent
+            else if(clickedRowLevel == 3)
+                newParentRow.level = 4; // mark it as expanded array
+
             newModel.push(newParentRow);
+
+            // add indexrow, if appropriate
+            if(clickedRowLevel == 3){
+                var indexRow = {
+                    index: "_",
+                    level: 5, // index-row
+                    type: newParentRow.type // to begin with, indexrows always have the same type/subclass as their parent array-row (it's the default, even if subclassing can occur later)
+                };
+                newModel.push(indexRow); // insert index-row
+            }
+
             // add leaves of newly expanded parent
             // show the fields of the currently expanded class /////////////////////////////////
             var newParentClass = Model.classes.find(t=>t.name == newParentRow.type);
@@ -653,8 +690,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 rowModel.type = field.type;
                 rowModel.field = field.name;
                 rowModel.level = 0;  // the fields of the last class are never expanded, and thus never parents                    
-                if(Model.classes.find(t=>t.name == field.type) != undefined)
-                    rowModel.level = 1;
+                if(field.fieldType == "Array")
+                    rowModel.level = 3; // unexpanded array
+                else if(Model.classes.find(t=>t.name == field.type) != undefined)
+                    rowModel.level = 1; // unexpanded object
                 newModel.push(rowModel);
                 //rowNr++;
             }
@@ -857,13 +896,13 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         var printString = "";
         if(value != "" && value != undefined)
             printString = htmlPrologEncode(value);
-        return '<input id="value_' + rowNr + '" tabIndex="' + (1002 + rowNr) + '" "type="text" value="'+ printString +'"/>';
+        return '<input id="value_' + rowNr + '" tabIndex="' + (1002 + rowNr) + '" type="text" value="'+ printString +'"/>';
     },
-    getIndexString: function(rowNr, value){
+    getIndexString: function(rowNr, index){
         var printString = "";
-        if(value != "")
-            printString = htmlPrologEncode(value);
-        return '<input id="index_' + rowNr + '" type="text" value="'+ printString +'"/>';
+        if(index != "")
+            printString = htmlPrologEncode(index);
+        return '<input id="index_' + rowNr + '" style="width:70%" type="text" value="'+ printString +'"/>';
     },
 
     parseToExpression:function(shapeData, rpc){
