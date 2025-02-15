@@ -499,7 +499,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 '</td>'+'<td style="' + fieldTypeStyle + '">'+
                 '<label style="' + fieldTypeStyle + ';width:70%">(' + row.type + ')</label>' + 
                 '<label hidden id=level_' + rowNr + '>'+row.level+'</label>'+
-                '<label hidden id=fieldType_' + rowNr + '>'+row.level+'</label>';
+                '<label hidden id=fieldType_' + rowNr + '>'+row.type+'</label>';
             } else if(levelInt == 3 || levelInt == 4) {
                 htmlCode += '<label style="' + typeStyle + '" class="classrow" id=fieldType_' + rowNr + '>' + row.type + '</label>' + 
                 '</td>'+'<td style="' + fieldTypeStyle + '">'+
@@ -624,7 +624,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         var currentParentClass = null;
         var parentRowIndex = parseInt(clickedRowNr);
         while(currentParentClass == null && parentRowIndex > -1){
-            if(rowsModel[parentRowIndex].level == 2 || rowsModel[parentRowIndex].level == -1) // only look after expanded rows/ root-row
+            if(rowsModel[parentRowIndex].level == 2 || rowsModel[parentRowIndex].level == 4 || rowsModel[parentRowIndex].level == 5 || rowsModel[parentRowIndex].level == -1) // only look after expanded rows/ root-row
                 currentParentClass = Model.classes.find(t=>t.name == rowsModel[parentRowIndex].type);
             else 
                 parentRowIndex--;
@@ -665,7 +665,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             }
             newModel = newModel.filter(e => !toBeRemoved.includes(e));
             // add clicked row as expanded parent
-            if(clickedRowLevel == 2)
+            if(clickedRowLevel == 1)
                 newParentRow.level = 2; // mark it as expanded parent
             else if(clickedRowLevel == 3)
                 newParentRow.level = 4; // mark it as expanded array
@@ -707,18 +707,23 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         }
         // 2 - clicking an unexpandable field-row; take the closest above expanded parent, and list its fields
         // or: click an already opened parent, or rootrow, and go "back" up to showing them as lowest parent
-        else if(rowsModel[clickedRowNr].level == 0 || rowsModel[clickedRowNr].level == 1 || (clickedClass != undefined && (rowsModel[clickedRowNr].level == 2 || rowsModel[clickedRowNr].level == -1)))
+        else if(rowsModel[clickedRowNr].level == 0 || rowsModel[clickedRowNr].level == 1 || (clickedClass != undefined && (rowsModel[clickedRowNr].level == 2 ||rowsModel[clickedRowNr].level == 4 || rowsModel[clickedRowNr].level == -1)))
         {
             // gather all the visible data from DOM
             var newModel = self.harvestRowData();
         
+            // if clicking an expanded parent array- count as if the indexrow below was clicked, instead - should save some bother
+            if(rowsModel[clickedRowNr].level == 4) // expanded array
+                parentRowIndex++; // step down to the indexrow, so we get ITS children
+
             // get any rowmodel-siblings of clicked field - they may contain values that we should keep when building up the view again   
             var siblinghood = []; // step past the parent
             var currRow = parentRowIndex+1; 
             foundParent = false;
             while(currRow < newModel.length && foundParent == false){
                 siblinghood.push(newModel[currRow]);
-                if(newModel[currRow].level == 2)
+                if(newModel[currRow].level == 2 // expanded instance
+                    || newModel[currRow].level == 4) // expanded array) // indexrow of expanded array
                     foundParent = true; // we want to save any Value of (the possibly) One sibling who is also an expanded parent
                 currRow++;
             }
@@ -745,14 +750,15 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 rowModel.type = field.type;
                 rowModel.field = field.name;
                 rowModel.level = 0;  // the fields of the last class are never expanded, and thus never parents                    
-                if(Model.classes.find(t=>t.name == field.type) != undefined)
+                if(field.fieldType == "Array")
+                    rowModel.level = 3; // unexpanded array
+                else if(Model.classes.find(t=>t.name == field.type) != undefined)
                     rowModel.level = 1;
                 
                 if(foundValueString != undefined && foundValueString != '')
                     rowModel.value = foundValueString;
 
                 newModel.push(rowModel);
-                //rowNr++;
             }
 
             // show the new rowsModel!
