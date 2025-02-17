@@ -172,19 +172,29 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 var textCol = '#ffffff';
                 var sideCol = '#000000';
 
-                switch(parseInt(Field.level)){
+                var levelInt = parseInt(Field.level);
+
+                switch(levelInt){
                     case 0: // field
                         backgroundCol = '#f3e7c9';
                         textCol = '#000000';
                         sideCol = '#f3e7c9';
                         break;
-                    case 1: // unexpanded
+                    case 1: // unexpanded object
+                    case 3: // unexpanded array
                         backgroundCol = '#7282c8';
                         textCol = '#000000';
-                        sideCol = '#f3e7c9';
-                    case 2: // expanded
+                        sideCol = '#7282c8';
+                        break;
+                    case 2: // expanded object
+                    case 4: // expanded array
                         backgroundCol = '#7282c8';
                         textCol = '#000000';
+                        sideCol = '#000000';
+                        break;
+                    case 5: // array index
+                        backgroundCol = '#000000';
+                        textCol = '#ffffff';
                         sideCol = '#000000';
                         break;
                 }
@@ -192,8 +202,11 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 var colRect = new RoundedRect({fill:backgroundCol,bottomLeft:bottomLeft}); // color COULD be used to show some extra info..? 
                 
                 var colName;
-                if(Field.field != undefined){                   
-                    colName = new fabric.Text(Field.field,{fill:textCol,fontSize:10, objectCaching: false,fontFamily:'arial'});
+                if(Field.field != undefined){        
+                    var fieldText = Field.field;
+                    if(levelInt == 3 || levelInt == 4)
+                        fieldText += " []";           
+                    colName = new fabric.Text(fieldText,{fill:textCol,fontSize:10, objectCaching: false,fontFamily:'arial'});
                 }
                 else{ 
                     colName = new fabric.Text(Field.index + " ("+Field.type+")",{fill:'white',fontSize:10, objectCaching: false,fontFamily:'arial'});
@@ -218,7 +231,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     colName:colName,
                     valueText:valueText};
 
-                if(Field.level == 2)
+                if(Field.level == 2 || Field.level== 4)
                     controlRow.expansionRect = new RoundedRect({fill:sideCol, bottomLeft:[0,0]});
 
                 this.childRows.push(controlRow);
@@ -785,6 +798,15 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         $(document.body).on("click", '#ok_button', this.onClickOkButton);
    
     },
+/* levels
+-1- root
+0 - field
+1 - unexpanded object
+2 - expanded object
+3 - unexpanded array
+4 - expanded array
+5 - index-row of expanded array
+*/
 
     onClickOkButton : function(){
         var shapeModel = app.view.getShapeModel(self.id);
@@ -812,14 +834,18 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             // copy necessary lines to children of shapedata
             for(i = 0; i < saveModel.length; i++){
                 var row = saveModel[i];
-                if(row.level != -1 && (row.level == 2 || row.value != '')){
-                    children.push(
-                        {
-                            field: row.field,
-                            level: row.level,
-                            value: row.value
-                        }
-                    )
+                if(row.level != -1 && (row.level == 2 || row.level == 4 || row.level == 5 || row.value != '')){
+                    var childRow = {    
+                        level: row.level,
+                        value: row.value
+                    };
+                    if(row.field)
+                        childRow.field = row.field;
+                    if(row.index){
+                        childRow.index = row.index;
+                        childRow.type = row.type;
+                    }
+                    children.push(childRow);
                 }
             }
 
