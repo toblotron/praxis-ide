@@ -965,12 +965,14 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             var res = null; 
 
             switch(level){
-                case 0:
-                case 1:
+                case 0: // field
+                case 1: // object
+                case 3: // array
                     var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
                     res = new RuleExpression(null, "praxis_field_in", [matchExpression, parentExpression]);
                     break;
                 case 2:
+                case 4: // expanded array
                     if(valueString == undefined || valueString == ''){
                         var valueString = "VAR_" + rpc.idCounter++;
                         valueExpression = new VariableExpression(valueString);
@@ -980,6 +982,16 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     
                     parentString = valueString;
                     parentExpression = new VariableExpression(parentString);
+                    break;
+                case 5: // array index
+                    // ?type of instance - should this be subclass? 
+                    var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
+                    var indexExpression = null;
+                    var indexString = a.index != undefined ? a.index : "_";
+                    
+                    indexExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Array index", indexString);
+                    
+                    res = new RuleExpression(null, "praxis_array_in", [matchExpression, indexExpression, parentExpression]);
                     break;
             }
 

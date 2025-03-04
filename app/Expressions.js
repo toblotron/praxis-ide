@@ -587,8 +587,11 @@ class LogicExpression {
         break;
       case "CUT":
         ShapeParsing.indent(PC);
-        PC.res.push("!,\n");
+        PC.res.push("!");
+        if(this.childBranchExpressions != null)
+          PC.res.push(",\n");
         ShapeParsing.printChildren(PC, this.childBranchExpressions);
+        
         break;
     }
     

@@ -242,7 +242,7 @@ praxis.TreeMenu = Class.extend({
                         else if(action == "add_class")
                         {
                             var newPage = app.treemenu.addNewClass();
-                            var newNode = {title:newPage.name, type:'struct', page:newPage.id,icon: "tree_class"}
+                            var newNode = {title:newPage.name, type:'class', page:newPage.id,icon: "tree_class"}
                             node.addChildren(newNode);
 
                             // select the new page in the menu-tree
@@ -466,8 +466,8 @@ copyFolderRecursive:function(children){
             else if(data.type == 'table' ){
                 copiedChildren.push({type:'table', index:data.page});
             }
-            else if(data.type == 'struct' ){
-                copiedChildren.push({type:'struct', index:data.page});
+            else if(data.type == 'class' ){
+                copiedChildren.push({type:'class', index:data.page});
             }
             else if(child.data.type == 'folder')
             {

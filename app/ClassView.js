@@ -137,7 +137,7 @@ praxis.ClassView = Class.extend({
         app.classView.classData = classData;
 
         // to get custom column data from Dom
-        /*var size = copiedColumns.length-1; // classData.columns.length; - minus one to avoid drag-column
+        var size = copiedColumns.length-1; // classData.columns.length; - minus one to avoid drag-column
         for(i = 0; i < size; i++)
         {
             var colname = $("#col_"+i+"_name").val();
@@ -156,7 +156,7 @@ praxis.ClassView = Class.extend({
     
             // {id: "name", name: "Name", field: "name", content:"string"},
         }
-        */
+        
      
           grid.setSelectionModel(new Slick.CellSelectionModel());
           var moveRowsPlugin = new Slick.RowMoveManager({
