@@ -32,15 +32,34 @@ praxis.ClassPanel = Class.extend({
         this.html.append(
         '			<button id="class_ok_button">Ok</button>'+
         '   </div>'+
+        '   <button id="class_delete_rows">Remove selected rows</button>' + 
         ' </div>'+
         '</div>');
 
         $("#class_ok_button").on("click", function(){
             
             var newTitle=$("#class_name").val();
-           
+            classData.name = newTitle;
             treeNode.setTitle(newTitle);
             app.treemenu.copyStructureFromTree();
+        });
+
+        $("#class_delete_rows").on("click", function(){
+            var grid = app.classView.grid;
+
+            var data = grid.getData();
+            var rows= grid.getSelectedRows();
+
+            var sure= confirm("Are You Sure You Want to Delete the selected rows?");   
+            if(sure){
+                var deleted = 0;
+                for (var i = 0; i < rows.length; i += 1) {
+                    data.splice(rows[i-deleted], 1);
+                    deleted++;
+                }
+                grid.setData(data, true);
+                grid.render();
+            }
         });
         
     },

@@ -559,8 +559,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
         // if there is an externalClassNr it means we are previewing a change of class
         usedClassId = userData.classId;
-        if(externalClassNr != undefined)
+        if(externalClassNr != undefined && usedClassId != externalClassNr){
             usedClassId = externalClassNr;
+            userData = {children:[], value:"_"};
+        }
 
         var tableString = "";
 
@@ -971,10 +973,11 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
                     res = new RuleExpression(null, "praxis_field_in", [matchExpression, parentExpression]);
                     break;
-                case 2:
+                case 2: // expanded class
                 case 4: // expanded array
-                    if(valueString == undefined || valueString == ''){
-                        var valueString = "VAR_" + rpc.idCounter++;
+                    var valueString = a.value;
+                    if(valueString == undefined || valueString == '' || valueString == '_'){
+                        valueString = "VAR_" + rpc.idCounter++;
                         valueExpression = new VariableExpression(valueString);
                     }
                     var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
@@ -985,13 +988,13 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     break;
                 case 5: // array index
                     // ?type of instance - should this be subclass? 
-                    var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
+                    //var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
                     var indexExpression = null;
                     var indexString = a.index != undefined ? a.index : "_";
                     
                     indexExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Array index", indexString);
                     
-                    res = new RuleExpression(null, "praxis_array_in", [matchExpression, indexExpression, parentExpression]);
+                    res = new RuleExpression(null, "praxis_array_in", [valueExpression, indexExpression, parentExpression]);
                     break;
             }
 

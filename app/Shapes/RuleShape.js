@@ -336,7 +336,7 @@ var RuleShape = fabric.util.createClass(fabric.Group, {
         view.append(tableString);
         view.append(
         '			<button id="cancel_button">parse</button>'+
-        '			<button id="ok_button" tabIndex="1050">Ok</button>'+
+        '			<button id="rule_ok_button" tabIndex="1050">Ok</button>'+
         '			<button id="minus_button" tabIndex="1051">-</button>'+
         '			<button id="plus_button" tabIndex="1052">+</button>'+
         '   </div>');
@@ -456,11 +456,11 @@ var RuleShape = fabric.util.createClass(fabric.Group, {
 
             } 
 
-            $("#ok_button").prop("disabled", blockOkButton);
+            $("#rule_ok_button").prop("disabled", blockOkButton);
 
         });
              
-        $("#ok_button").on("click", function(){
+        $("#rule_ok_button").on("click", function(){
             var shapeModel = app.view.getShapeModel(figure.id);
             var userData = shapeModel.data;
 
@@ -713,7 +713,7 @@ var RuleShape = fabric.util.createClass(fabric.Group, {
         this.updatePredicateCheckboxes(userData);
 
         // block/ unblock ok button?
-        $("#ok_button").prop("disabled", blockOkButton);
+        $("#rule_ok_button").prop("disabled", blockOkButton);
     },
 
     // set the panel to display the correct number of arguments, possibly with reasonable variable names
