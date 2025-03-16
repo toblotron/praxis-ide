@@ -15,6 +15,8 @@ class TokenType {
     static Blankspace = new TokenType("Blankspace")
     static Comma = new TokenType("Comma")
     static Pipe = new TokenType("Pipe")
+    static BeginGull = new TokenType("BeginGull")
+    static EndGull = new TokenType("EndGull")
 
     constructor(name) {
       this.name = name
@@ -66,7 +68,7 @@ class Lexer {
 
   isOperator(char) 
   {
-    return "[],.-/+*:<>()\\=@.\'\"|".includes(char);
+    return "[],.-/+*:<>(){}\\=@.\'\"|".includes(char);
   }
   
   static GetTokens(text)
@@ -113,6 +115,20 @@ class Lexer {
           else if(c == ")"){
             i++;
             elem = new PrologToken(TokenType.EndParen, text.substring(from,i));
+            from = i;
+            elements.push(elem);
+            pos += elem.value.length;
+          }
+          else if(c == "{"){
+            i++;
+            elem = new PrologToken(TokenType.BeginGull, text.substring(from,i));
+            from = i;
+            elements.push(elem);
+            pos += elem.value.length;
+          }
+          else if(c == "}"){
+            i++;
+            elem = new PrologToken(TokenType.EndGull, text.substring(from,i));
             from = i;
             elements.push(elem);
             pos += elem.value.length;

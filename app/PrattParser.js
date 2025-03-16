@@ -165,6 +165,7 @@ class PrattParser {
         this.registerPrefixParselet(TokenType.Variable.name, new VariableParselet());
         this.registerPrefixParselet(TokenType.BeginList.name, new ListParselet());
         this.registerPrefixParselet(TokenType.BeginParen.name, new TermParselet());
+        this.registerPrefixParselet(TokenType.BeginGull.name, new GullParselet());
         
         this.registerPrefixOperatorParselet("-", 500, true);
         this.registerPrefixOperatorParselet("+", 500, true);
@@ -178,6 +179,7 @@ class PrattParser {
 
         // term parselet, like: "a(1,2)"
         this.registerInfixParselet("(", new TermParselet());
+        //this.registerInfixParselet("{", new TermParselet());
 
         // Register the simple operator parselets.
         this.registerInfixParselet(",", new BinaryOperatorParselet(30, true, false));

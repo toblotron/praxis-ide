@@ -12,6 +12,8 @@ prologStyles = {
     "EndList":{fill:'blue', fontWeight: 'bold'},
     "BeginParen":{fill:'blue', fontWeight: 'bold'},
     "EndParen":{fill:'blue', fontWeight: 'bold'},
+    "BeginGull":{fill:'blue', fontWeight: 'bold'},
+    "EndGull":{fill:'blue', fontWeight: 'bold'},
     "Blankspace":{}
 }
 
@@ -56,7 +58,7 @@ var PrologText = fabric.util.createClass(fabric.Text, {
     },
 
     isOperator: function(c){
-        return "[],.-/+*:<>()\\=@.\'\"|".includes(c);
+        return "[],.-/+*:<>(){}\\=@.\'\"|".includes(c);
     },
 
     addStyles: function(tokens){

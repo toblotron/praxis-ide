@@ -670,6 +670,18 @@ class ListExpression {
   }
 }
 
+class GullExpression {
+  constructor(args) {
+    this.args = args;
+  }
+  
+  print(PC) {
+    PC.res.push("{");
+    ShapeParsing.printList(PC, this.args);
+    PC.res.push("}");
+  }
+}
+
 class TermExpression {
   constructor(functor, args) {
     this.functor = functor;
@@ -763,6 +775,28 @@ class OperatorExpression {
         parser.consume(TokenType.EndList);
       }
       return new ListExpression(args);
+    }
+
+    getPrecedence() {
+      return 1000;
+    }
+  }
+
+  // gull-wings {} - are here treated as another way of describing a List
+  class GullParselet {
+
+    parse(parser, token) {
+      var args = [];
+      if (!parser.match(TokenType.EndGull))
+      {
+        do
+        {
+          args.push(parser.parseExpression(0));
+        } while (parser.match(TokenType.Comma));
+
+        parser.consume(TokenType.EndGull);
+      }
+      return new GullExpression(args);
     }
 
     getPrecedence() {
