@@ -376,6 +376,21 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             });
 
             rowNr = 0; // reset
+
+            // add update-row?
+            if(userData.updateVar != undefined)
+            {
+                var updateRow = {
+                    type: usedClass.name,
+                    field: "UPDATE",
+                    level: 6, // special value for rootrow
+                    value: htmlPrologEncode(userData.updateVar),
+                    rowNr: rowNr
+                };
+                rowsModel.push(updateRow);
+                rowNr++;
+            }
+
             var rootRow = {
                 type: usedClass.name,
                 field: "{root}",
@@ -501,6 +516,11 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     sideTypeStyle = "background:black; color:white";
                     typeStyle = "background:black; color:white";
                     break;
+                case 6: // update-row
+                    fieldTypeStyle = "background:orange; color:black";
+                    sideTypeStyle = "background:orange; color:black";
+                    typeStyle = "background:orange; color:orange";
+                    break;
             }
                
             htmlCode += '<td style="' + sideTypeStyle + '; width=10px">&nbsp;</td>' +
@@ -595,9 +615,12 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             tableString +='</SELECT>';
 
             // show class-variable
-            var classVarName = htmlPrologEncode(userData.value);
-            tableString += '<INPUT id="classValue" value="' + classVarName + '" />';
+            //var classVarName = htmlPrologEncode(userData.value);
+            //tableString += '<INPUT id="classValue" value="' + classVarName + '" />';
             
+            // show checkbox for get/update
+            tableString += "<div>Update: <input type='checkbox' id='checkbox_update' value='" + (userData.updateVar != undefined ? 'checked' : '') + "' /></div>";
+
             // if no table is selected, show comment with instructions
             if(usedClassId == -1)
                 tableString += "<div class='comment'>Select a class to navigate</div>";
@@ -614,8 +637,6 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         tableString += '<table cellPadding="0"><tbody id="rowstable_body">';
         tableString += rowsCode;
         tableString += '</tbody></table>';
-
-
 
         view.append(tableString);
 
@@ -797,6 +818,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         $(document.body).off();
         $(document.body).on("click", '.classrow', this.onClickClassRow);
         $(document.body).on("change", '#class_selector', this.onChangeClassSelector);
+        $(document.body).on("change", '#checkbox_update', this.onChangeUpdateCheckbox);
         $(document.body).on("click", '#ok_button', this.onClickOkButton);
    
     },
@@ -808,7 +830,36 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 3 - unexpanded array
 4 - expanded array
 5 - index-row of expanded array
+6 - update-row
 */
+
+    // toggle if shape should be about update or set/get
+    onChangeUpdateCheckbox : function(event){
+        var newModel = self.harvestRowData();
+        if(event.currentTarget.checked){
+            // add update row
+            self.updateVar = "U";
+            
+            var updateRow = {
+                //type: usedClass.name,
+                field: "UPDATE",
+                level: 6, // special value for rootrow
+                value: htmlPrologEncode(self.updateVar),
+                rowNr: 0
+            };
+            newModel.unshift(updateRow);
+        }
+        else 
+        {
+            self.updateVar = null;
+            newModel.shift();
+        }
+
+        // redraw the control, to update
+        var rowsTableHTML = self.renderRowsModel(newModel);
+        var rowsTableBodyElem = $("#rowstable_body")[0];
+        rowsTableBodyElem.innerHTML = rowsTableHTML;
+    },
 
     onClickOkButton : function(){
         var shapeModel = app.view.getShapeModel(self.id);
@@ -836,7 +887,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             // copy necessary lines to children of shapedata
             for(i = 0; i < saveModel.length; i++){
                 var row = saveModel[i];
-                if(row.level != -1 && (row.level == 2 || row.level == 4 || row.level == 5 || row.value != '')){
+                // remove rootrow and updaterow
+                if(row.level != -1 && row.level != 6 && (row.level == 2 || row.level == 4 || row.level == 5 || row.value != '')){
                     var childRow = {    
                         level: row.level,
                         value: row.value
