@@ -75,6 +75,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             this.remove(this.className);
             this.remove(this.classValueRect);
             this.remove(this.classValue);
+            this.remove(this.updateNameRect);
+            this.remove(this.updateValueRect);
+            this.remove(this.updateName);
+            this.remove(this.updateValue);
         }
     
         var startx = this.left;
@@ -129,10 +133,29 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         // space for expansion-indication
         var expansionWidth = 7;
 
+        var topLeftVal = [5,5];
+        var topRightVal = [5,5];
+
+        // add UPDATE-row?
+        if(!isPreview && shapeData.updateVar != undefined){
+            this.updateNameRect = new RoundedRect({fill:'orange',topLeft:topLeftVal});
+            this.updateName = new fabric.Text("UPDATE",{fontSize:11, fill: 'black', objectCaching: false, fontFamily:'arial'});
+            this.updateValueRect = new RoundedRect({fill:'#ffffff',topRight:topRightVal});
+            this.updateValue = new fabric.Text(shapeData.updateVar,{fontSize:11, fill: 'blue', objectCaching: false, fontFamily:'arial'});
+
+            leftMax = this.updateName.width + padding * 2;
+            totHeight += this.updateName.height + 2*padding;
+            bgStartY = totHeight;
+            topWidth = this.updateName.width + 2*padding;
+
+            topLeftVal = [0,0];
+            topRightVal = [0,0];
+        }
+
         // create class name row
-        this.classNameRect = new RoundedRect({fill:'#000000',topLeft:[5,5]});
+        this.classNameRect = new RoundedRect({fill:'#000000',topLeft:topLeftVal});
         this.className = new fabric.Text(classDef.name,{fontSize:11, fill: 'white', objectCaching: false, fontFamily:'arial'});
-        this.classValueRect = new RoundedRect({fill:'#ffffff',topRight:[5,5]});
+        this.classValueRect = new RoundedRect({fill:'#ffffff',topRight:topRightVal});
         this.classValue = new fabric.Text(shapeData.value,{fontSize:11, fill: 'blue', objectCaching: false, fontFamily:'arial'});
 
         if(isPreview){
@@ -142,12 +165,16 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             this.classValue.set({opacity:0.5, fontStyle:'italic'});
         }
 
-        leftMax = this.className.width + padding * 2;
+        left2Max = this.className.width + padding * 2;
+        if(left2Max > leftMax)
+            leftMax = left2Max;
+
         totHeight += this.className.height + 2*padding;
         bgStartY = totHeight;
 
-        topWidth = this.className.width + 2*padding;
-
+        var top2Width = this.className.width + 2*padding;
+        if(top2Width > topWidth)
+            topWidth = top2Width;
         
         var valueIndex = 0;
 
@@ -279,8 +306,33 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         this.addWithUpdate(bg);
 
         
+        if(shapeData.updateVar != undefined){
+            this.updateNameRect.height = this.updateName.height + padding * 2;
+            this.updateNameRect.top = starty;
+            this.updateNameRect.left = startx;
+            this.updateNameRect.width = leftMax + padding *2; //totWidth; // this.tableName.width + padding * 2;
+            
+
+            this.updateName.left = expansionWidth + startx + padding * 1;
+            this.updateName.top = starty + top + padding;
+
+            this.updateValueRect.height = this.updateName.height + padding * 2;
+            this.updateValueRect.top = starty;
+            this.updateValueRect.left = startx + this.updateNameRect.width; //startx;
+            this.updateValueRect.width = totWidth - leftMax - padding *2;
+
+            this.updateValue.top = starty + top + padding;
+            this.updateValue.left = this.updateValueRect.left + padding;//      startx + this.className.width + padding;
+
+            top += this.updateName.height + padding * 2;
+            this.addWithUpdate(this.updateNameRect);
+            this.addWithUpdate(this.updateValueRect);
+            this.addWithUpdate(this.updateName);
+            this.addWithUpdate(this.updateValue);
+        }
+
         this.classNameRect.height = this.className.height + padding * 2;
-        this.classNameRect.top = starty;
+        this.classNameRect.top = starty + top;
         this.classNameRect.left = startx;
         this.classNameRect.width = leftMax + padding *2; //totWidth; // this.tableName.width + padding * 2;
         
@@ -289,7 +341,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         this.className.top = starty + top + padding;
 
         this.classValueRect.height = this.className.height + padding * 2;
-        this.classValueRect.top = starty;
+        this.classValueRect.top = starty + top;
         this.classValueRect.left = startx + this.classNameRect.width; //startx;
         this.classValueRect.width = totWidth - leftMax - padding *2;
 
@@ -878,7 +930,14 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             //var targetRow = 0; // the row of the possibly saved shape-field-data
 
             var saveModel = self.harvestRowData();
-            var rootRow = saveModel[0];
+            
+            var index = 0;
+            var firstRow = saveModel[0];
+            if(firstRow.level == 6){
+                shapeModel.data.updateVar = firstRow.value;
+                index++; // look for rootrow just below
+            }
+            var rootRow = saveModel[index];
             
             shapeModel.data.name = usedClass.name;
             shapeModel.data.value = rootRow.value;
