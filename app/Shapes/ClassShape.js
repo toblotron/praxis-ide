@@ -1051,6 +1051,92 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
     },
 
     parseToExpression:function(shapeData, rpc){
+        
+        var pathExpressions = null;
+        if(shapeData.data.updateVar != undefined)
+            pathExpressions = this.parseUpdate(shapeData, rpc);
+        else
+            pathExpressions = this.parseMatch(shapeData, rpc);
+
+        // build and return a RuleExpression
+        var body = ShapeParsing.parseAllBelow(shapeData, rpc);
+        return new ClassExpression(pathExpressions, body);
+    },
+
+    parseUpdate:function(shapeData, rpc){
+        
+        var data = shapeData.data;
+        var pathExpressions = [];
+        var parents = []; // keep a stack of overlying parent objects - the one last down is the one we are manipulating
+
+        // Add update-var first
+        //parents.push({var:new VariableExpression(data.updateVar)});
+        // add rootvar
+        parents.push({var:new VariableExpression(data.value)});
+
+        var tokens = Lexer.GetTokens(":");
+        var opToken = tokens[0];
+
+        for(var i = 0; i < data.children.length; i++){
+            var child = data.children[i];
+            var level = parseInt(child.level);
+            var parent = parents[parents.length-1];
+            var childExpression = null; 
+
+            switch(level){
+                // unexpanded things
+                case 0: // field
+                case 1: // object
+                case 3: // array
+                    var valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + i, child.value); // all children of this type must have a value
+                    var fieldExpression = new AtomExpression("'" + child.field + "'");
+                    var matchExpression = new OperatorExpression(fieldExpression, opToken, valueExpression);
+                    var newTargetExpression = new VariableExpression("VAR_" + rpc.idCounter++);
+                    var parentExpression = parent.var;
+                    childExpression = new RuleExpression(null, "praxis_field_update", [parentExpression,matchExpression,newTargetExpression]);
+                    parent.var = newTargetExpression; // now, THIS is the variable we will do further updates on, from now
+                /*
+                case 2: // expanded class
+                case 4: // expanded array
+                    var valueString = a.value;
+                    if(valueString == undefined || valueString == '' || valueString == '_'){
+                        valueString = "VAR_" + rpc.idCounter++;
+                        valueExpression = new VariableExpression(valueString);
+                    }
+                    var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
+                    res = new RuleExpression(null, "praxis_field_in", [matchExpression, parentExpression]);
+                    
+                    parentString = valueString;
+                    parentExpression = new VariableExpression(parentString);
+                    break;
+                case 5: // array index
+                    // ?type of instance - should this be subclass? 
+                    //var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
+                    var indexExpression = null;
+                    var indexString = a.index != undefined ? a.index : "_";
+                    
+                    indexExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Array index", indexString);
+                    
+                    res = new RuleExpression(null, "praxis_array_in", [valueExpression, indexExpression, parentExpression]);
+                    break;*/
+            }
+            pathExpressions.push(childExpression);
+        }
+        
+        // all children are gone through! 
+        // now we just have to transmit the changes, upwards :)
+        
+        // below should be enough to update just a field, in a single instance
+        var eqTokens = Lexer.GetTokens("=");
+        var eqToken = eqTokens[0];
+        pathExpressions.push(new OperatorExpression(new VariableExpression(data.updateVar),eqToken,parent.var));
+
+
+        return pathExpressions;
+
+    },
+
+    parseMatch:function(shapeData, rpc){
         var data = shapeData.data;
         var parentString = data.value;
 
@@ -1059,7 +1145,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
         var argIndex = 0;
 
-        tokens = Lexer.GetTokens(":");
+        var tokens = Lexer.GetTokens(":");
         var opToken = tokens[0];
 
         var parentExpression = new VariableExpression(parentString);
@@ -1114,9 +1200,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             pathExpressions.push(res);
         });
 
-        // build and return a RuleExpression
-        var body = ShapeParsing.parseAllBelow(shapeData, rpc);
-        return new ClassExpression(pathExpressions, body);
+        return pathExpressions;
     }
 
 });
