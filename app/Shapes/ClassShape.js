@@ -1072,7 +1072,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         // Add update-var first
         //parents.push({var:new VariableExpression(data.updateVar)});
         // add rootvar
-        parents.push({var:new VariableExpression(data.value)});
+        parents.push({var:new VariableExpression(data.value), level:0});
 
         var tokens = Lexer.GetTokens(":");
         var opToken = tokens[0];
@@ -1092,33 +1092,26 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     var fieldExpression = new AtomExpression("'" + child.field + "'");
                     var matchExpression = new OperatorExpression(fieldExpression, opToken, valueExpression);
                     var newTargetExpression = new VariableExpression("VAR_" + rpc.idCounter++);
-                    var parentExpression = parent.var;
+                    var parentExpression = new VariableExpression(parent.var.name);
                     childExpression = new RuleExpression(null, "praxis_field_update", [parentExpression,matchExpression,newTargetExpression]);
                     parent.var = newTargetExpression; // now, THIS is the variable we will do further updates on, from now
-                /*
+                    break;
                 case 2: // expanded class
                 case 4: // expanded array
-                    var valueString = a.value;
-                    if(valueString == undefined || valueString == '' || valueString == '_'){
-                        valueString = "VAR_" + rpc.idCounter++;
-                        valueExpression = new VariableExpression(valueString);
-                    }
-                    var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
-                    res = new RuleExpression(null, "praxis_field_in", [matchExpression, parentExpression]);
+                    // praxis_field_in(Parent, FieldName:Instance)
+                    var valueExpression = null;    
+                    if(child.value != undefined)
+                        valueExpression = new VariableExpression("VAR_" + rpc.idCounter++);
+                    else
+                        valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + i, child.value);
                     
-                    parentString = valueString;
-                    parentExpression = new VariableExpression(parentString);
+                    var fieldExpression = new AtomExpression("'" + child.field + "'");
+                    var matchExpression = new OperatorExpression(fieldExpression, opToken, valueExpression);
+                    var newValueExpression = new VariableExpression(parent.var.name); // create new, so it will register the new occurence of the variable, and not cause singelton error
+                    childExpression = new RuleExpression(null, "praxis_field_in", [matchExpression, newValueExpression]); // pick out the target object
+                    var newParent = {var:valueExpression, field:fieldExpression, level: level};
+                    parents.push(newParent);  // push the new parent object on the stack
                     break;
-                case 5: // array index
-                    // ?type of instance - should this be subclass? 
-                    //var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
-                    var indexExpression = null;
-                    var indexString = a.index != undefined ? a.index : "_";
-                    
-                    indexExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Array index", indexString);
-                    
-                    res = new RuleExpression(null, "praxis_array_in", [valueExpression, indexExpression, parentExpression]);
-                    break;*/
             }
             pathExpressions.push(childExpression);
         }
@@ -1126,10 +1119,41 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         // all children are gone through! 
         // now we just have to transmit the changes, upwards :)
         
-        // below should be enough to update just a field, in a single instance
+        // each parent in the stack should update Its parent, until there are none left
+        var parent = null;
+        var currTarget = parents.pop(); // take last element
+        while(parents.length > 0){
+            parent = parents.pop();
+            // now, update currParent to contain currTarget
+            switch(currTarget.level){
+                case 0: // root
+                case 2: // expanded class
+                case 4: // expanded array
+                    // praxis_field_update(Parent, targetFieldName:targetVar,NewParentContent)
+                    var valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + i, currTarget.var.name); // all children of this type must have a value
+                    var fieldExpression = currTarget.field;
+                    var matchExpression = new OperatorExpression(fieldExpression, opToken, valueExpression);
+                    var newTargetExpression = new VariableExpression("VAR_" + rpc.idCounter++);
+                    var parentExpression = new VariableExpression(parent.var.name);
+                    childExpression = new RuleExpression(null, "praxis_field_update", [parentExpression,matchExpression,newTargetExpression]);
+                    parent.var = newTargetExpression; // now, THIS is the variable we will pass upwards; it's the updated parent
+                    break;
+            }
+            if(parents.length > 0)
+                currTarget = parent;
+
+            pathExpressions.push(childExpression);
+        }
+        // unify the last, modified, parent with the update-variable
         var eqTokens = Lexer.GetTokens("=");
         var eqToken = eqTokens[0];
-        pathExpressions.push(new OperatorExpression(new VariableExpression(data.updateVar),eqToken,parent.var));
+        pathExpressions.push(new OperatorExpression(new VariableExpression(data.updateVar),eqToken,new VariableExpression(parent.var.name)));
+
+
+        // below should be enough to update just a field, in a single instance
+        //var eqTokens = Lexer.GetTokens("=");
+        //var eqToken = eqTokens[0];
+        //pathExpressions.push(new OperatorExpression(new VariableExpression(data.updateVar),eqToken,parent.var));
 
 
         return pathExpressions;
