@@ -190,7 +190,7 @@ class FormulaExpression {
   }
 
   print(PC) {
-    this.printContent(PC);
+    ShapeParsing.printNormalShape(this, PC); //this.printContent(PC);
   }
 }
 
@@ -710,7 +710,7 @@ class OperatorExpression {
     
     print(PC) {
       this.mLeft.print(PC);
-      PC.res.push(this.mOperator.value);
+      PC.res.push(' ' + this.mOperator.value + ' ');
       this.mRight.print(PC);
     }
   }

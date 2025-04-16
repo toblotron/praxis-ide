@@ -1147,6 +1147,9 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         // unify the last, modified, parent with the update-variable
         var eqTokens = Lexer.GetTokens("=");
         var eqToken = eqTokens[0];
+        // in case there was no sequence of parents
+        if(parent == null)
+            parent = currTarget;
         pathExpressions.push(new OperatorExpression(new VariableExpression(data.updateVar),eqToken,new VariableExpression(parent.var.name)));
 
 
