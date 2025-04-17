@@ -1112,6 +1112,19 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     var newParent = {var:valueExpression, field:fieldExpression, level: level};
                     parents.push(newParent);  // push the new parent object on the stack
                     break;
+                case 5: // array index
+                    var valueExpression = null;    
+                    if(child.value != undefined)
+                        valueExpression = new VariableExpression("VAR_" + rpc.idCounter++);
+                    else
+                        valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + i, child.value);
+                    
+                    var indexExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Index", child.index); // each such row MUST have an index
+                    var newValueExpression = new VariableExpression(parent.var.name); // create new, so it will register the new occurence of the variable, and not cause singelton error
+                    childExpression = new RuleExpression(null, "praxis_array_in", [valueExpression, indexExpression, newValueExpression]); // pick out the target object
+                    var newParent = {var:valueExpression, index:indexExpression, level: level};
+                    parents.push(newParent);  // push the new parent object on the stack
+                    break;
             }
             pathExpressions.push(childExpression);
         }
@@ -1130,12 +1143,21 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 case 2: // expanded class
                 case 4: // expanded array
                     // praxis_field_update(Parent, targetFieldName:targetVar,NewParentContent)
-                    var valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + i, currTarget.var.name); // all children of this type must have a value
+                    var valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + i, currTarget.var.name); 
                     var fieldExpression = currTarget.field;
                     var matchExpression = new OperatorExpression(fieldExpression, opToken, valueExpression);
                     var newTargetExpression = new VariableExpression("VAR_" + rpc.idCounter++);
                     var parentExpression = new VariableExpression(parent.var.name);
                     childExpression = new RuleExpression(null, "praxis_field_update", [parentExpression,matchExpression,newTargetExpression]);
+                    parent.var = newTargetExpression; // now, THIS is the variable we will pass upwards; it's the updated parent
+                    break;
+                case 5: // array index
+                    // praxis_array_update(Old, Value, Pos, New)
+                    var valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + i, currTarget.var.name); 
+                    var indexExpression = currTarget.index;
+                    var newTargetExpression = new VariableExpression("VAR_" + rpc.idCounter++);
+                    var parentExpression = new VariableExpression(parent.var.name);
+                    childExpression = new RuleExpression(null, "praxis_array_update", [parentExpression,valueExpression, indexExpression,newTargetExpression]);
                     parent.var = newTargetExpression; // now, THIS is the variable we will pass upwards; it's the updated parent
                     break;
             }
