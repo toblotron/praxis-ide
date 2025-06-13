@@ -251,9 +251,10 @@ praxis.BottomBar = Class.extend({
 		//this.recursiveImportPackages(["https://raw.githubusercontent.com/toblotron/Trafo/master/Prolog/my_module.js"],[],this.loadingFinishedTest);
 		
 		// check if there are compilation errors
-		if(this.validateNoErrors() == false)
-			return;
-			
+		///if(this.validateNoErrors() == false)
+		///	return;
+		nextAnswer();
+		/*
 		var session = this.session;
 	
 		session.answer({
@@ -275,7 +276,7 @@ praxis.BottomBar = Class.extend({
 			limit:   function() { // Limit exceeded 
 				app.bottombar.addToConsole("Limit exceeded" + '\n');
 			}
-		})
+		})*/
 	},
 	
 	onExecutionLimitChanged:function(event){
@@ -396,10 +397,31 @@ praxis.BottomBar = Class.extend({
 
 	onQueryButtonClick:function(){
 		
-		if(this.session == null)
-			this.recompile();
-				
-		this.makeFirstCall([]);	
+		/*if(this.session == null)
+			this.recompile();*/
+		// this.makeFirstCall([]);	
+
+
+		if(this.validateNoErrors() == false)
+			return;
+
+		// get query
+		var queryText = app.bottombar.queryCode.getValue();//document.getElementById("queryField").value;
+		app.bottombar.addToConsole("> " + queryText);
+
+		app.view.calculatePageGroupContainment();
+			
+		var self = app.bottombar;
+
+		self.errorList = [];
+		var code = ShapeParsing.generateAST();
+		self.updateErrorTable();
+
+		console.log(code);
+
+		runner(queryText, code);
+
+
 	},
 
 	clearConsole:function(){

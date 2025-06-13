@@ -308,5 +308,201 @@
         
     </div>
     <!--<div class="ui-layout-west">West</div>-->
+    <script type="module">
+        import { load, Prolog, toJSON, FORMATS } from 'https://esm.sh/trealla@0.27.0?target=es2022';
+        
+        try {
+            load().then(init);
+        } catch(err) {
+            alert(err);
+        }
+        
+        let pl = null;
+        
+        function init() {
+            try {
+                pl = new Prolog();
+            } catch(err) {
+                alert(err);
+                throw err;
+            }           
+        }
+        
+                
+        window.resetProlog = function() {
+            prevSrc = undefined;
+            init();
+        }
+        
+        window.runner = async function runner(query,code){
+            const format = "prolog";
+            const toplevel = format == "prolog" ? new Toplevel(1) : format;
+    
+            let n = 0;
+            const encode = format == "prolog" ? {dot: false} : undefined;
+            const q = pl.query(query, {program: code === prevSrc ? undefined : code, format: toplevel, encode: encode});
+            QUERIES[1] = q;
+        
+            await next(1);
+            prevSrc = code;
+        }
+
+        window.nextAnswer = async function nextAnswer(){
+            await next(1);
+        }
+
+        window.ask = async function ask() {
+            try {
+                await run();
+            } catch(error) {
+                alert(error);
+                console.error(error);
+            }
+        }
+        
+        class Toplevel {
+            id;
+            dec;
+            constructor(id) {
+                this.id = id;
+                this.dec = new TextDecoder();
+            }
+            query(_, goal, bind) {
+                return FORMATS.prolog.query(null, goal, bind);
+            }
+            parse(pl, status, stdout, stderr, options) {
+                return {
+                    '$format': 'custom',
+                    id: this.id,
+                    status,
+                    stdout: FORMATS.prolog.parse(pl, status, stdout, stderr, options),
+                    stderr: this.dec.decode(stderr)
+                };
+            }
+            truth(pl, status, stderr, options) {
+                return {'$format': 'custom', id: this.id, status, stdout: status ? "true" : "false", stderr: this.dec.decode(stderr)};
+            }
+        }
+        
+        let ID = 0;
+        let prevSrc;
+        async function run() {
+            const id = ++ID;
+            const query = "asserta(app(a)),findall(A,app(A),AS),length(AS,L)."; //getQuery();
+            const src = ":- dynamic app/1."; // document.getElementById("src").value;
+            //const format = document.getElementById("format").value;
+            const format = "prolog";
+            const toplevel = format == "prolog" ? new Toplevel(id) : format;
+            //const src = "";
+            /*const elem = document.getElementById("query-tmpl").content.cloneNode(true);
+            const box = elem.querySelector(".query-box");
+            box.id = `query-${id}`;
+            box.dataset.id = id;
+            box.dataset.format = format;
+            elem.querySelector(".query-result").textContent = "?- " + query + "\n";
+            elem.querySelector(".query-next").onmousedown = next.bind(elem, id);
+            elem.querySelector(".query-all").onmousedown = all.bind(elem, id);
+            elem.querySelector(".query-stop").onmousedown = stop.bind(elem, id);
+            document.getElementById("queries").prepend(elem);
+        */
+            //let text = "?- " + query + "\n";
+            let n = 0;
+            const encode = format == "prolog" ? {dot: false} : undefined;
+            const q = pl.query(query, {program: src === prevSrc ? undefined : src, format: toplevel, encode: encode});
+            QUERIES[id] = q;
+        
+            await next(id);
+            prevSrc = src;
+        }
+        
+        function getQuery() {
+            return document.getElementById("query").value.replaceAll(`“`, `"`).replaceAll(`”`, `"`).replaceAll(`‘`, `'`).replaceAll(`’`, `'`);
+        }
+        
+        const QUERIES = {};
+        
+        async function next(id) {
+            //const elem = document.getElementById("query-" + id);
+            //if (!elem) return;
+            const ok = await redo(id, null);
+            if (!ok) {
+                //elem.dataset.state = "done";
+            }
+        }
+        
+        async function all(id) {
+            const elem = document.getElementById("query-" + id);
+            if (!elem) return;
+            const limit = 10000;
+            for (var i = 0; i <= limit && await redo(id, elem); i++) {};
+            if (i > limit) {
+                elem.querySelector(".query-result").textContent += `\n% paused after ${limit} results`
+            } else {
+                elem.dataset.state = "done";
+            }
+        }
+        
+        async function redo(id, elem) {
+            const q = QUERIES[id];
+            if (!q) return false;
+            let result;
+            try {
+                console.time("query");
+                result = (await q.next()).value;
+            } catch(error) {
+                alert(error);
+                console.error(error);
+                return false;
+            } finally {
+                console.timeEnd("query");
+            }
+            var res = ""; //const stdout = elem.querySelector(".query-result");
+            if (!result) {
+                delete QUERIES[id];
+                if (elem.dataset.format !== "json")
+                    res += ".";
+                return false;
+            }
+            const n = 0;//Number(elem.dataset.n ?? 0);
+            if (typeof result === "string")
+                res += (n > 0 ? "\n;  " : "   ") + result;
+            else if ('$format' in result) {
+                res += `${(n > 0 ? "\n" : "") + result.stderr.trim()}${(!!result.stderr ? "\n" : "") + (n > 0 ? ";  " : "   ") + result.stdout.trim()}`;
+            } else {
+                res += toJSON(result, " ") + "\n";
+            }
+            console.log(res);
+            app.bottombar.addToConsole(res + '\n');
+            //elem.dataset.n = n+1;
+            return true;
+        }
+        
+        function stop(id) {
+            const elem = document.getElementById("query-" + id);
+            if (!elem) return;
+            const q = QUERIES[id];
+            if (!q) return false;
+            delete QUERIES[id];
+            q.return();
+            elem.querySelector(".query-result").textContent += ".\n% stopped"
+            elem.dataset.state = "done";
+        }
+        
+        window.updateURL = function() {
+            const query = document.getElementById("query");
+            const src = document.getElementById("src");
+            const url = new URL(document.URL);
+            if (src.value.length < 10 * 1024) {
+                url.searchParams.set("src", src.value);
+            } else {
+                url.searchParams.delete("src");
+            }
+            url.searchParams.set("q", query.value);
+            url.searchParams.set("v", "0");
+            history.replaceState(query.value, "", url.toString());
+        }
+        
+        
+        </script>
 </body>
 </html>
