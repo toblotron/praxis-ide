@@ -57,6 +57,7 @@ function getTauPrologLibraries(){
                 external: true
             }]
         },*/
+        {name:"clpz", external:true,predicates:[]},
         {name:"", external: false, predicates:[
             // For now - do not list the builtins - it will mess up the user-space, and there's a heck of a lot of them to write in
             /*{

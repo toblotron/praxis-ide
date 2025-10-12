@@ -102,12 +102,12 @@ praxis.ProjectSettings = Class.extend({
         libCheckHTML += "</fieldset>";
         lib += libCheckHTML;
 
-        // Online libraries - "Add URL to .js-file containing a Tau-Prolog package (possibly containing several modules)"
+        // Online libraries - "Add URL to .pl-file containing a Traella-Prolog module (possibly containing several modules)"
         var oLibs = 
         "<fieldset class='settingsSection'>" +
             "<legend class='settingsSection'>Import online packages, select libraries</legend>" +
-            "<div class='comment'>Add URL to .js-file containing a Tau-Prolog package (possibly containing several modules)</div>"+
-            "<div class='onlinePackageList'><b>URL:</b> <input type='text' id='newImportUrl' value='https://raw.githubusercontent.com/toblotron/Trafo/master/Prolog/dcg-basic.js'> <button id='newImportButton'>Add</button></div>";
+            "<div class='comment'>Add URL to .pl-file containing a Traella-Prolog module</div>"+
+            "<div class='onlinePackageList'><b>URL:</b> <input type='text' id='newImportUrl' value='https://raw.githubusercontent.com/toblotron/Trafo/master/Prolog/hello_traella.pl'> <button id='newImportButton'>Add</button></div>";
 
         // go through all the online packages that are included by the model
         if(Model.settings.onlinePackages == undefined)
@@ -214,42 +214,23 @@ praxis.ProjectSettings = Class.extend({
     parseModuleDefinitions:function(packageText){
         var moduleDefinitions = [];
         var pos = 0; // why no 0 work??
-        var searchString = "var name = \'";
+        var searchString = "module(";
         while((pos = packageText.indexOf(searchString,pos)) > -1){
             var moduleDefinition = {};
             // first get the name
-            var endPos = packageText.indexOf("\';", pos);
+            var endPos = packageText.indexOf(",", pos);
             var moduleName = packageText.substring(pos+searchString.length, endPos);
-            pos = endPos + 3;
+            pos = endPos + 1;
             moduleDefinition.name = moduleName
 
-            // get start of the predicate definitions
-            var predicatesSearchString = "var predicates = ";
-            // get where we should start finding predicate definitions
-            var predicateDefStart = packageText.indexOf(predicatesSearchString,pos)+predicatesSearchString.length;
-
             // get start of export-part
-            var exportsSearchString = "var exports =";
-            var exportsDefStart = packageText.indexOf(exportsSearchString, predicateDefStart); 
-
-            var predicateDefStop = packageText.lastIndexOf(";",exportsDefStart);
-
-            // get predicate definitions
-            //var predicateDefinitions = packageText.substring(predicateDefStart, predicateDefStop);
-            
-            // get the JSON-ifyable part
-            //var predJSONStart = packageText.indexOf("return", predicateDefStart);
-            //var predJSONStop = packageText.lastIndexOf(";", predicateDefStop-1);
-            //var predJSON = packageText.substring(predJSONStart, predJSONStop);
-            
-            
-            // don't save this - we don't use it right now, and we don't want it polluting the Model file where this will be saved
-            // moduleDefinition.predicates = new Function("(function (){"+predJSON+"})");
+            var exportsSearchString = "[";
+            var exportsDefStart = packageText.indexOf(exportsSearchString, pos); 
 
             // get exports-definition
-            var exportsDefStop = packageText.indexOf(";", exportsDefStart);
+            var exportsDefStop = packageText.indexOf("]", exportsDefStart);
             var exportsDefinitionText = packageText.substring(exportsDefStart+exportsSearchString.length,exportsDefStop);
-            var exportsDefinitionList = JSON.parse(exportsDefinitionText);
+            var exportsDefinitionList = exportsDefinitionText.split(",");
             var predicateDefinitions = []; // will store predicates in the same way used for other libraries
             for(predicateSignature of exportsDefinitionList)
             {
@@ -261,16 +242,6 @@ praxis.ProjectSettings = Class.extend({
                 }
                 predicateDefinitions.push(predicateDefinition);
             }
-            /*{
-                name:"test",
-                arity: 2,
-                arguments: [
-                    {name: "Num"},
-                    {name: "Svar"}
-                ],
-                description: "Is Num liten or stor?",
-                external: true
-            }]*/
 
             moduleDefinition.external = true;
             moduleDefinition.predicates = predicateDefinitions;   // make it into a valid list, immediately
@@ -318,13 +289,12 @@ praxis.ProjectSettings = Class.extend({
                 // try to parse the file - and get a list of the module definitions
                 var moduleDefinitions = app.projectSettings.parseModuleDefinitions(result);
 
-                // eval the code of the tau-prolog package, loading it into the global dom
-                // Yes, yes, I know it's bad practice, but it will have to do for now, until someone tells me a better way of loading it :)
-                window.eval(result);   // use the WINDOW.eval - otherwise we won't get access to the pl-namespace variable
                 console.log("PIMPORT: PACKAGE IMPORTED");
-                //console.log("PIMPORT: testeval:" + testeval);
-                
-                // we succeeded in loading and (basically) parsing the (presumed!) package-js-file 
+
+                if(app.session != undefined)
+                    app.session.fs.open(moduleDefinitions.name + ".pl", { write: true, create: true }).writeString(result);
+
+                // we succeeded in loading and (basically) parsing the (presumed!) module-file 
                 // runtime-cache it in the closest singleton app-object, so we can avoid loading it again
                 var runtimeCache = {url:url, packageText: result};
                 app.projectSettings.runtimeCachedPackageFiles.push(runtimeCache);

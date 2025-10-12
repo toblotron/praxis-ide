@@ -169,6 +169,7 @@ class PrattParser {
         
         this.registerPrefixOperatorParselet("-", 500, true);
         this.registerPrefixOperatorParselet("+", 500, true);
+        this.registerPrefixOperatorParselet("..", 500, true);
 
         /*
         register(TokenType.ASSIGN,     new AssignParselet());

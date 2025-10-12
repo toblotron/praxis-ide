@@ -84,14 +84,8 @@ class Lexer {
       var pos = 0;
       do {
           var c = text[i];
-          if(c == "."){
-            i++;
-            elem = new PrologToken(TokenType.FullStop, text.substring(from,i));
-            from = i;
-            elements.push(elem);
-            pos += elem.value.length;
-          }
-          else if(c == "|"){
+          
+          if(c == "|"){
             i++;
             elem = new PrologToken(TokenType.Pipe, text.substring(from,i));
             from = i;
@@ -147,12 +141,15 @@ class Lexer {
             elements.push(elem);
             pos += elem.value.length;
           }
-          else if("[],.-/+*:<>\\=@.|".includes(c)){
+          else if("[],.-/+*:<>\\=@.|#".includes(c)){
               do {
                   i++;
                   var c = text[i];
-              } while (i<length && "[],.-/+*:<>\\=@.|".includes(c));
-              elem = new PrologToken(TokenType.Operator, text.substring(from,i));
+              } while (i<length && "[],.-/+*:<>\\=@.|#".includes(c));
+              if(length == 1 && c == ".")
+                elem = new PrologToken(TokenType.FullStop, text.substring(from,i));
+              else
+                elem = new PrologToken(TokenType.Operator, text.substring(from,i));
               from = i;
               elements.push(elem);
               pos += elem.value.length;
@@ -197,7 +194,7 @@ class Lexer {
                     fullstops++;
                     latestFullstopPos = i;
                   }
-              } while (i<length && (c.match(/[0-9.]/) || c == "."));
+              } while (i<length-1 && (c.match(/[0-9.]/) || c == "."));
 
               // accept as integer or float, or not?
               if(fullstops == 0)
