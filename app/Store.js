@@ -1293,11 +1293,9 @@ function ruleDefSetupOnModelLoad(){
     // also add the modules from online packages, that we have selected that we want to include
     if(Model.settings.onlinePackages != undefined){
         Model.settings.onlinePackages.forEach(package => {
-            package.modules.forEach(module => {
-                if(Model.settings.includedLibraries.includes(module.name)){
-                    tauPrologLibraries.push(module);
-                }
-            })
+            if(Model.settings.includedLibraries.includes(package.module.name)){
+                tauPrologLibraries.push(package.module);
+            }
         });
         // ifall man gör som nedan funkar det INTE!.. orättvist!
         /*for(package of Model.settings.onlinePackages){

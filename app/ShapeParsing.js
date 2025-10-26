@@ -67,7 +67,10 @@ var ShapeParsing = {
 
         // include all included libraries
         for(lib of Model.settings.includedLibraries){
-            res += ":- use_module(library(" + lib + ")).\n";
+            if(Model.settings.onlinePackages.find((p) => p.module.name == lib))
+                res += ":- use_module(" + lib + ").\n";
+            else
+                res += ":- use_module(library(" + lib + ")).\n";
         }
         res += "\n";
 

@@ -244,28 +244,76 @@ praxis.BottomBar = Class.extend({
 		}
 	},
 
-	onResetButtonClick:function(){
-		
-		// just check that all packages that are supposed to be imported for this model are imported into the DOM, or already have been
+	getExternalModuleDefinitionList: function(){
 		var url_list = [];
-		// clear console
-		$("#output")[0].innerHTML = "";
-		this.nextButton[0].disabled = true;
 		if(Model.settings.onlinePackages != undefined){
 			for(package of Model.settings.onlinePackages){
-				// either load package, or verify that it has been loaded
-				// app.projectSettings.importPackage(package.url);
+				// construct a list of urls to be loaded..?
 				url_list.push(package.url);
 			}
 		}
-		if(url_list.length > 0){
-			app.projectSettings.recursiveImportPackages(url_list,[],this.makeFirstCall);
-		} else {
-			this.recompile();
-		}
-		
+		return url_list;
 	},
 
+	// after possible recursive loading of external modules.. run stuff!
+	runQuery: async function(){
+
+		var self = app.bottombar;
+		self.errorList = [];
+
+		var code = await self.preparePrologRuntime(); // may return null, if no compile demanded
+
+		self.updateErrorTable();
+
+		// get query
+		var queryText = app.bottombar.queryCode.getValue();//document.getElementById("queryField").value;
+		app.bottombar.addToConsole("> " + queryText);
+		
+		runner(queryText, code);
+
+	},
+
+	preparePrologRuntime : async function(){
+		
+		var shouldRecompile = false;
+
+		// 1. check if we need to recompile - pl may be set to null as a signal to recompile/ reset the prolog instance
+		if(app.pl == null){
+			app.pl = resetProlog(); // defined in index.html - creates new prolog engine
+			shouldRecompile = true;
+		}
+
+		// 2. check if possible cached external modules are loaded into the prolog. - once we get here they should already have been cached
+		app.projectSettings.runtimeCachedPackageFiles.forEach(async cache => {
+			if(!app.pl.cachedExternalModuleURLs.includes(cache.url)){
+				// load it into virtual filesystem of prolog
+				app.pl.fs.open("/tmp/" + cache.name + ".pl", { write: true, create: true }).writeString(cache.text);
+				app.pl.cachedExternalModuleURLs.push(cache.url);
+				shouldRecompile = true;
+				await app.pl.consult("/tmp/" + cache.name + ".pl");
+			}
+		});
+			
+		// 3. compile if needed - only done when reset has been done, or first time
+		if(shouldRecompile){
+			
+			app.view.calculatePageGroupContainment();
+			
+			var code = ShapeParsing.generateAST();
+			
+			console.log(code);
+
+			return code;
+		}
+
+		return null;
+	},
+
+	onResetButtonClick:function(){
+		app.pl = null; // resetProlog(); // null prolog engine, causing future recompile when query is run
+	},
+
+	/*
 	recompile:function(){
 		// recalculate which shapes are contained by groups
 		app.view.calculatePageGroupContainment();
@@ -282,7 +330,7 @@ praxis.BottomBar = Class.extend({
 		if(executionLimit == undefined)
 			executionLimit = 500;
 
-		var session = pl.create(executionLimit);
+		var session = new Prolog(); //pl.create(executionLimit);
 		
 		// direct output
 		session.streams.user_output = new pl.type.Stream({
@@ -301,7 +349,7 @@ praxis.BottomBar = Class.extend({
 
 		session.consult(code, {
 			success: function() { 
-				/* Program parsed correctly */ 
+				// /* Program parsed correctly  
 				console.log("LOADING SUCCESSFUL");
 				//$("#codeConsole")[0].value = "";
 				app.bottombar.clearConsole();
@@ -330,15 +378,15 @@ praxis.BottomBar = Class.extend({
 						console.log("parsing error: " + err);
 						$("#codeConsole")[0].innerHTML += "parsing error: " + err + '\n';
 					}
-				});*/
+				});
 			},
 			error: function(err) { 
-				/* Error parsing program */ 
+				/* Error parsing program 
 				console.log("ERROR LOADING PROGRAM: " + err);
 				app.bottombar.addToConsole("error = " + err);
 			}
 		});
-	},
+	},*/
 
 	new_message:function(msg) {
 		msg = msg.replace(/\n/g, "<br />");
@@ -346,33 +394,22 @@ praxis.BottomBar = Class.extend({
 		this.addToConsole(msg,false);
 	},
 
+	// The start of all initial calls; those who are not "next" calls
 	onQueryButtonClick:function(){
+				
+		// clear console
+		$("#output")[0].innerHTML = "";
+		this.nextButton[0].disabled = true;
 		
-		if(this.session == null)
-			this.recompile();
-		this.makeFirstCall([]);	
+		// possibly start download of externally defined modules
+		var url_list = this.getExternalModuleDefinitionList();
+		if(url_list.length > 0){
+			app.projectSettings.recursiveImportPackages(url_list,[],this.runQuery);
+		} else {
+			this.runQuery();
+		}
 
-
-		if(this.validateNoErrors() == false)
-			return;
-
-		// get query
-		var queryText = app.bottombar.queryCode.getValue();//document.getElementById("queryField").value;
-		app.bottombar.addToConsole("> " + queryText);
-
-		app.view.calculatePageGroupContainment();
-			
-		var self = app.bottombar;
-
-		self.errorList = [];
-		var code = ShapeParsing.generateAST();
-		self.updateErrorTable();
-
-		console.log(code);
-
-		runner(queryText, code);
-
-
+		// "runQuery" is the method that will get called after possible external modules have been loaded, and start running the query
 	},
 
 	clearConsole:function(){
@@ -434,7 +471,7 @@ praxis.BottomBar = Class.extend({
 		app.bottombar.addToConsole("> " + queryText);
 		if(app.session == null)
 		{
-			var session = pl.create();
+			var session = new Prolog(); //pl.create();
 			app.session = session;
 		}
 		var session = app.session;
@@ -524,7 +561,7 @@ praxis.BottomBar = Class.extend({
 	downloadModule:function(){
 
 		var code = ShapeParsing.generateAST();
-		var session = pl.create();
+		var session = new Prolog(); //pl.create();
 		
 		session.consult(code, {
 			success: function() { 

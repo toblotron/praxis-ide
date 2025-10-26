@@ -117,17 +117,17 @@ praxis.ProjectSettings = Class.extend({
             oLibs += "<div class='onlinePackageList'>";
             oLibs += "<div class='onlinePackageUrl'>" + oLib.url + "</div><button id='" + oLib.url + "' onclick='app.projectSettings.handleDeletePackage(this)'>Remove</button>"; 
             // add all modules, with checkboxes, like the normal modules above
-            oLib.modules.forEach(module =>{
-                var moduleCode = 
-                "<div>" +
-                    "<input type='checkbox' id='" + module.name + "' name='online_modules'  onclick='app.projectSettings.handleOnlineModuleClick(this)' value='" + module.name + "'";
-                if(Model.settings.includedLibraries.includes(module.name))
-                    moduleCode += " checked";
-                
-                    moduleCode += "><label for='" + module.name + "'>" + module.name +"</label>" +
-                "</div></div>";
-                oLibs += moduleCode;
-            })
+            
+            var module = oLib.module;
+            var moduleCode = 
+            "<div>" +
+                "<input type='checkbox' id='" + module.name + "' name='online_modules'  onclick='app.projectSettings.handleOnlineModuleClick(this)' value='" + module.name + "'";
+            if(Model.settings.includedLibraries.includes(module.name))
+                moduleCode += " checked";
+            
+                moduleCode += "><label for='" + module.name + "'>" + module.name +"</label>" +
+            "</div></div>";
+            oLibs += moduleCode;
         })
 
         oLibs += "<br></fieldset>";
@@ -211,12 +211,13 @@ praxis.ProjectSettings = Class.extend({
         //this.validationErrorMessage.style.display = "hidden";
     },
 
-    parseModuleDefinitions:function(packageText){
-        var moduleDefinitions = [];
+    // ps - only exports one (moduleDefinition), but returns a list
+    parseModuleDefinition:function(packageText){
+        var moduleDefinition = {};
         var pos = 0; // why no 0 work??
         var searchString = "module(";
-        while((pos = packageText.indexOf(searchString,pos)) > -1){
-            var moduleDefinition = {};
+        if((pos = packageText.indexOf(searchString,pos)) > -1){
+
             // first get the name
             var endPos = packageText.indexOf(",", pos);
             var moduleName = packageText.substring(pos+searchString.length, endPos);
@@ -234,7 +235,7 @@ praxis.ProjectSettings = Class.extend({
             var predicateDefinitions = []; // will store predicates in the same way used for other libraries
             for(predicateSignature of exportsDefinitionList)
             {
-                // "test/2"
+                // "ex: test/2"
                 var parts = predicateSignature.split("/");  // Number below to get int of arity
                 var predicateDefinition = {name:parts[0], arity:Number(parts[1]),arguments:[]};
                 for(argIndex=0; argIndex<predicateDefinition.arity; argIndex++){
@@ -245,11 +246,9 @@ praxis.ProjectSettings = Class.extend({
 
             moduleDefinition.external = true;
             moduleDefinition.predicates = predicateDefinitions;   // make it into a valid list, immediately
-
-            moduleDefinitions.push(moduleDefinition);
         }
 
-        return moduleDefinitions;
+        return moduleDefinition;
     },
 
     onNewImportButton:function(){
@@ -265,11 +264,11 @@ praxis.ProjectSettings = Class.extend({
     // get a package, identified by URL - make sure it is loaded into the DOM
     // if we have it cached, there's not much to do, but otherwise load and process it
     // should return a package-definition, containing module-definitions
-    recursiveImportPackages:function(url_list, packageDefinitions, whenDone){
+    recursiveImportPackages:function(url_list, packageDefinitions, whenDoneMethod){
 
         if(url_list.length == 0)
         {
-            whenDone(packageDefinitions); // perform the exit-action - always pass along the packageDefinitions
+            whenDoneMethod(packageDefinitions); // perform the exit-action - always pass along the packageDefinitions
             return;
         }
 
@@ -284,21 +283,17 @@ praxis.ProjectSettings = Class.extend({
             // try importing this library as text -- "https://raw.githubusercontent.com/toblotron/Trafo/master/Prolog/my_module.js"
             $.ajax({url: url, async: true, success: function(result){
                 
-                console.log("PIMPORT: IMPACKAGE FINISHED LOADING");
+                console.log("IMPORT: MODULE FINISHED LOADING");
 
                 // try to parse the file - and get a list of the module definitions
-                var moduleDefinitions = app.projectSettings.parseModuleDefinitions(result);
-
-                console.log("PIMPORT: PACKAGE IMPORTED");
-
-                if(app.session != undefined)
-                    app.session.fs.open(moduleDefinitions.name + ".pl", { write: true, create: true }).writeString(result);
+                var moduleDefinition = app.projectSettings.parseModuleDefinition(result);
 
                 // we succeeded in loading and (basically) parsing the (presumed!) module-file 
                 // runtime-cache it in the closest singleton app-object, so we can avoid loading it again
-                var runtimeCache = {url:url, packageText: result};
+                var runtimeCache = {url:url, name: moduleDefinition.name, text: result};
                 app.projectSettings.runtimeCachedPackageFiles.push(runtimeCache);
 
+                
                 // construct the packageInfoStructure that is to be stored (and saved) in the Model
                 if(Model.settings.onlinePackages == undefined)
                     Model.settings.onlinePackages = [];
@@ -306,24 +301,27 @@ praxis.ProjectSettings = Class.extend({
                 // only put into the model if it isn't already there 
                 var cachedPackageDefinition = Model.settings.onlinePackages.find(p=>p.url == url);
                 if(cachedPackageDefinition == undefined){
-                    packageDefinition = {url:url, modules: moduleDefinitions};
+                    packageDefinition = {url:url, module: moduleDefinition};
                     Model.settings.onlinePackages.push(packageDefinition);
                 } else {
                     packageDefinition = cachedPackageDefinition;
                 }
-
-                packageDefinitions.push(packageDefinition);
-                app.projectSettings.recursiveImportPackages(url_list,packageDefinitions,whenDone);
+                //packageDefinitions.push(packageDefinition);
+                app.projectSettings.recursiveImportPackages(url_list,packageDefinitions,whenDoneMethod);
             }});
         } else {
+            // it seems this has already been cached - continue processing the list through recursion
+            /*
             // get packageDefinition from Model - it should be there, in this case
             packageDefinition = Model.settings.onlinePackages.find(p=>p.url == url);
 
-            // eval the code of the tau-prolog package, loading it into the global dom
-            // NOPE! When we get here, it should alreday have been loaded by the case above
+            // load it into virtual filesystem of prolog
+            if(app.session != undefined)
+                app.session.fs.open(cachedPackage.name + ".pl", { write: true, create: true }).writeString(cachedPackage.text);
 
             packageDefinitions.push(packageDefinition);
-            app.projectSettings.recursiveImportPackages(url_list, packageDefinitions,whenDone);
+            */
+            app.projectSettings.recursiveImportPackages(url_list, packageDefinitions,whenDoneMethod);
         }
     },
 
