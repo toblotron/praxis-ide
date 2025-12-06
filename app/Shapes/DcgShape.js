@@ -409,7 +409,7 @@ var DcgShape = fabric.util.createClass(fabric.Group, {
             '			<button id="plus_push" tabIndex="'+ taborder+row+4+'">+</button>');
 
         view.append(
-        '			<button id="cancel_button">parse</button>'+
+        '			<hr><button id="list_grammar_button">list</button>'+
         '			<hr><button id="ok_button" tabIndex="'+ taborder+row+4+'">Ok</button>'+
         '   </div>'+
         ' </div>'+
@@ -514,6 +514,18 @@ var DcgShape = fabric.util.createClass(fabric.Group, {
             //app.view.canvas.renderAll();
         });
 
+
+        // list definitions of this rule in search-table, and change tab to show the table
+        $("#list_grammar_button").on("click", function(){
+            var userData = app.view.getShapeModel(figure.id).data;
+            // find all instances from the latest parsing - but where are they?
+            app.bottombar.searchResultList = figure.listPredicateDefinitions(userData);
+            app.bottombar.updateSearchResultTable();
+            
+        });
+
+
+        // ACTUALLY does.. some parsing - for development testing
         $("#cancel_button").on("click", function(){
             var userData = app.view.getShapeModel(figure.id).data;
             var errorList =  [];
@@ -600,6 +612,40 @@ var DcgShape = fabric.util.createClass(fabric.Group, {
         this.updatePredicateList(userData);
 
     },
+
+    listPredicateDefinitions: function(userData){
+        var hitList = [];
+
+        var libNames = app.libraries.map(x=>x.name);
+        // if there is a library like the currently selected text
+        var selectedLibraryName = $("#libraryListing").val();
+        // use entered text, if it differs from what is in userData (current text in shape)
+        var selectedPredicateName = $("#predicateListing").val();
+
+        if(libNames.includes(selectedLibraryName)){
+            var library = app.libraries.find(l=>l.name == selectedLibraryName);
+
+            if(library.predicates != undefined){
+                var predicate = library.predicates.find(pred => pred.name == selectedPredicateName && pred.isDcg == true);
+                var index = 1;
+                predicate.references.forEach(ref => {
+                    var hit = {
+                        title:"Definition # '" + index + "'",
+                        resourceType: "rules",
+                        resourceId: ref.page,
+                        targetType: "shape",
+                        targetId: ref.shape // shape id
+                    }
+                    hitList.push(hit)
+                    index++;
+                });
+                
+            }
+        } 
+
+        return hitList;
+    },
+
 
     updatePredicateList: function(userData){
         // fill predicateList datalist with appropriate values
@@ -770,23 +816,25 @@ var DcgShape = fabric.util.createClass(fabric.Group, {
         var library = data.libraryName;
         var name = data.ruleName;
         var args = [];
-        if(data.arguments.length > 0)
+        if(data.arguments.length > 0){
             var argIndex = 1;
             data.arguments.forEach(element => {
                 var res = ShapeParsing.parseShapePrologText(rpc, shapeData, "Argument #" + argIndex, element);
                 args.push(res);
                 argIndex ++;
             });
-        
+        }
         var pushbackExpressions = [];
         var argIndex = 1;
-        data.pushback.forEach(a=>{
-            // experimental parsing-code - later, make it so we don't have to create a new parser for each argument :) 
-            // - store a parser in rpc
-            var res = ShapeParsing.parseShapePrologText(rpc, shapeData, "Pushback #" + argIndex, a);
-            pushbackExpressions.push(res);
-            argIndex++;
-        });
+        if(data.pushback != undefined){
+            data.pushback.forEach(a=>{
+                // experimental parsing-code - later, make it so we don't have to create a new parser for each argument :) 
+                // - store a parser in rpc
+                var res = ShapeParsing.parseShapePrologText(rpc, shapeData, "Pushback #" + argIndex, a);
+                pushbackExpressions.push(res);
+                argIndex++;
+            });
+        }
         var body = ShapeParsing.parseAllBelow(shapeData, rpc);
         return new DcgRuleExpression(library,name,args,pushbackExpressions,body);
     }

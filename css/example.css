@@ -234,6 +234,16 @@ input.editor-text{
     outline-style: none;
     border-style: none;
 }
+#searchField{
+    background-color: #000000;
+    height: auto;
+    line-height: normal;
+    padding: 5px;
+    padding-left:14px;
+    border-radius: 0px;
+    outline-style: none;
+    border-style: none;
+}
 
 #queryField:focus{
     background-color: #80e1ff;
@@ -410,6 +420,18 @@ label {
 }
 
 #MyOtherTable td{
+    font-size: 11;
+}
+
+#SearchResultTable {
+    width:100%;
+    height:100%;
+    position: relative;
+    background-color: #737178;
+    font-size: 12;
+}
+
+#SearchResultTable td{
     font-size: 11;
 }
 

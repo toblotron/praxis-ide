@@ -52,12 +52,11 @@ class Lexer {
     {
       var i = 0;
       var length = string.length;
-      do {
-        var c = string[i];
+      while(i<length && this.isOperatorChar(string[i])){
         i++;
-      } while (i<length && this.isOperatorChar(c));
+      }
 
-      return i == length; // return success if all the chars counted as operators
+      return i == length // return success if all the chars counted as operators
     }
   }
 
@@ -194,7 +193,7 @@ class Lexer {
                     fullstops++;
                     latestFullstopPos = i;
                   }
-              } while (i<length-1 && (c.match(/[0-9.]/) || c == "."));
+              } while (i<length && (c.match(/[0-9.]/) || c == "."));
 
               // accept as integer or float, or not?
               if(fullstops == 0)

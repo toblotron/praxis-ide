@@ -45,6 +45,18 @@ praxis.BottomBar = Class.extend({
 			//autofocus: true,
 			mode: "prolog"
 		});
+
+		document.getElementById("searchField").innerHTML = "";
+	    queryCode = CodeMirror(document.getElementById("searchField"), {
+			//value: value,
+			lineNumbers: false,
+			theme: "tau",
+			viewportMargin:5,
+			lineWrapping: true,
+			placeholder: "Your search here...",
+			//autofocus: true,
+			mode: "text"
+		});
 		this.queryCode = queryCode;
 		//queryCode.setSize("400px", queryCode.defaultTextHeight() + 2 * 2);
 
@@ -124,8 +136,9 @@ praxis.BottomBar = Class.extend({
 		this.output = $("#output");
 
 		this.errorList =[];
+		this.searchResultList =[];
 
-		this.setupErrorTable();
+		this.setupTables();
 	},
 	
 /*
@@ -199,35 +212,7 @@ praxis.BottomBar = Class.extend({
 	},
 
 	onNextButtonClick:function(){
-		//this.recursiveImportPackages(["https://raw.githubusercontent.com/toblotron/Trafo/master/Prolog/my_module.js"],[],this.loadingFinishedTest);
-		
-		// check if there are compilation errors
-		///if(this.validateNoErrors() == false)
-		///	return;
 		nextAnswer();
-		/*
-		var session = this.session;
-	
-		session.answer({
-			success: function(answer) { 
-				console.log(session.format_answer(answer)); 
-				//var oldText = app.bottombar.codeConsole.getValue();
-				var newText = session.format_answer(answer);
-				app.bottombar.addToConsole(newText);//$("#codeConsole")[0].value += session.format_answer(answer)+ '\n'; 
-					
-				//$("#codeConsole")[0].value += session.format_answer(answer) + '\n';
-			},
-			error:   function(err) { // Uncaught error
-				console.log("Execution error: " + err);
-				app.bottombar.addToConsole("Execution error: " + err + '\n');
-			},
-			fail:    function() { // Fail  
-				app.bottombar.addToConsole("false");
-			},
-			limit:   function() { // Limit exceeded 
-				app.bottombar.addToConsole("Limit exceeded" + '\n');
-			}
-		})*/
 	},
 	
 	onExecutionLimitChanged:function(event){
@@ -269,6 +254,7 @@ praxis.BottomBar = Class.extend({
 		var queryText = app.bottombar.queryCode.getValue();//document.getElementById("queryField").value;
 		app.bottombar.addToConsole("> " + queryText);
 		
+		app.bottombar.nextButton[0].disabled = false;
 		runner(queryText, code);
 
 	},
@@ -311,6 +297,7 @@ praxis.BottomBar = Class.extend({
 
 	onResetButtonClick:function(){
 		app.pl = null; // resetProlog(); // null prolog engine, causing future recompile when query is run
+		app.bottombar.nextButton[0].disabled = true;
 	},
 
 	/*
@@ -673,6 +660,26 @@ praxis.BottomBar = Class.extend({
 		}
 	},
 
+	// re-initialize searchresult-table, with the data from errorList
+	updateSearchResultTable:function(){
+		var data = [];
+		for(row of this.searchResultList){
+			var newRow = [];
+			newRow.push(row.title);
+			if(row.resourceType == "rules")
+				newRow.push(app.getRulePage(row.resourceId).name); //row.targetIndex);
+			else 
+				newRow.push("n/a");;
+			data.push(newRow);
+		}
+		this.searchResultTable.setData(data);
+
+		// + set focus to this tab..?
+		//var elem = $("#bottomtab-4")[0];
+		$( "#bottomtabs" ).tabs({ active: 1 });
+		// elem.innerHTML = "Errors (" + this.errorList.length + ")";
+	},
+
 	// re-initialize error-table, with the data from errorList
 	updateErrorTable:function(){
 		var data = [];
@@ -694,7 +701,7 @@ praxis.BottomBar = Class.extend({
 		elem.innerHTML = "Errors (" + this.errorList.length + ")";
 	},
 
-	onMessageClicked:function(rowNr){
+	onErrorMessageClicked:function(rowNr){
 		var message = this.errorList[rowNr-1];
 		
 		if(message.resourceType == "rules"){
@@ -704,12 +711,68 @@ praxis.BottomBar = Class.extend({
 		//alert("row nr " + rowNr);
 	},
 
+	onSearchResultClicked:function(rowNr){
+		var message = this.searchResultList[rowNr-1];
+		
+		if(message.resourceType == "rules"){
+			app.view.showMessageTarget(message);
+			app.treemenu.selectFromMessage(message);
+		}
+		//alert("row nr " + rowNr);
+	},
 	// create table for error/warning-listings
-	setupErrorTable:function()
+	setupTables:function()
 	{
 		var data = [
 		];
 		 
+		var customColumnSearch = {
+			// Methods
+			closeEditor : function(cell, save) {
+				return cell.innerHTML;
+			},
+			openEditor : function(cell) {
+				// Create input
+				var element = document.createElement('input');
+				element.value = cell.innerHTML;
+				//alert(cell.innerHTML); // dummy to catch click-event
+				var r = app.bottombar.searchResultTable.getSelectedRows()[0].rowIndex;
+				app.bottombar.onSearchResultClicked(r);
+			},
+			getValue : function(cell) {
+				return cell.innerHTML;
+			},
+			setValue : function(cell, value) {
+				cell.innerHTML = value;
+			}
+		};
+
+		this.searchResultTable = jspreadsheet(document.getElementById('SearchResultTable'), {
+			data:data,
+			allowInsertRow: false,
+			allowManualInsertRow: false,
+			allowDeleteRow: false,
+			allowDeleleColumn: false,
+			defaultColAlign:"left",
+			allowInsertColumn:false,
+			allowManualInsertColumn: false,
+
+			columns: [
+				{
+					type: 'text',
+					title:'Type',
+					width:100,
+					editor:customColumnSearch
+				},
+				{
+					type: 'text',
+					title:'Where',
+					width:900,
+					editor:customColumnSearch
+				}
+			 ]
+		});
+
 		var customColumn = {
 			// Methods
 			closeEditor : function(cell, save) {
@@ -721,7 +784,7 @@ praxis.BottomBar = Class.extend({
 				element.value = cell.innerHTML;
 				//alert(cell.innerHTML); // dummy to catch click-event
 				var r = app.bottombar.errorTable.getSelectedRows()[0].rowIndex;
-				app.bottombar.onMessageClicked(r);
+				app.bottombar.onErrorMessageClicked(r);
 			},
 			getValue : function(cell) {
 				return cell.innerHTML;
@@ -745,7 +808,7 @@ praxis.BottomBar = Class.extend({
 				{
 					type: 'text',
 					title:'Type',
-					width:60,
+					width:100,
 					editor:customColumn
 				},
 				{

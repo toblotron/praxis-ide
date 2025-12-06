@@ -214,6 +214,7 @@
             <div id="bottomtabs" style="font-size: 11px;height:calc(100% - 7px)">
                 <ul>
                   <li><a id="bottomtab-2" tabindex="-1" class="small_tab" href="#bottomtabs-2">Test</a></li>
+                  <li><a id="bottomtab-4" tabindex="-1" class="small_tab" href="#bottomtabs-4">Search</a></li>
                   <li><a id="bottomtab-3" tabindex="-1" class="small_tab" href="#bottomtabs-3">Errors</a></li>
                   <li><a id="bottomtab-1" tabindex="-1" class="small_tab" href="#bottomtabs-1">Files</a></li>
                 </ul>
@@ -272,6 +273,23 @@
                 </div>
                 <div id="bottomtabs-3" tabindex="-1" style="font-size:11px; height:100px; padding: 0px 0px 0px 7em">
                     <div id="MyOtherTable" style="margin-left:25px; width:calc(100% -25px)"></div>
+                </div>
+                <div id="bottomtabs-4"  tabindex="-1" style="font-size:11px; min-height:100%; height:calc(100% - 5px); padding: 0px 0px 0px 5em">
+                    <table style=" font-size:11px; height:calc(100%);width:-webkit-fill-available;">
+                        <tr>
+                            <td style="height: auto; width:400px;padding-left:25px; min-width:30%; vertical-align: top;">
+                                <div style="background-color: #676472; padding:3px">
+                                    <button id='searchButton'  class="action_button" z-index="999" tabindex="101">Search</button>
+                                </div>
+                                <div id='searchField' tabindex="100"></div>
+                            </td>
+                            <td style="width:-webkit-fill-available; height:100%; vertical-align: top;">
+                                <div id="SearchResultTable" style="margin-left:25px; width:calc(100% -25px)"></div>
+                            </td>
+                        </tr>
+                        </table>
+                        <br><br>
+                    </table>
                 </div>
               </div>
             
@@ -479,7 +497,7 @@ await pl.consult("/greeting.pl");
             var res = ""; //const stdout = elem.querySelector(".query-result");
             if (!result) {
                 delete QUERIES[id];
-                if (elem.dataset.format !== "json")
+                //if (elem.dataset.format !== "json")
                     res += ".";
                 return false;
             }
