@@ -1142,7 +1142,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 case 0: // root
                 case 2: // expanded class
                 case 4: // expanded array
-                    // praxis_field_update(Parent, targetFieldName:targetVar,NewParentContent)
+                    // praxis_field_update(Parent, targetFieldName:targetVar, NewParentContent)
                     var valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + i, currTarget.var.name); 
                     var fieldExpression = currTarget.field;
                     var matchExpression = new OperatorExpression(fieldExpression, opToken, valueExpression);
@@ -1199,6 +1199,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
         var parentExpression = new VariableExpression(parentString);
 
+        var parents = []; // keep a stack of overlying parent objects - the one last down is the one we are manipulating
+        // add rootvar
+        parents.push(new VariableExpression(data.value));
+
         data.children.forEach(a=>{
 
             var level = parseInt(a.level);
@@ -1231,6 +1235,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     
                     parentString = valueString;
                     parentExpression = new VariableExpression(parentString);
+                    parents.push(parentExpression);  // push the new parent object on the stack
                     break;
                 case 5: // array index
                     // ?type of instance - should this be subclass? 
@@ -1241,6 +1246,9 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     indexExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Array index", indexString);
                     
                     res = new RuleExpression(null, "praxis_array_in", [valueExpression, indexExpression, parentExpression]);
+                    // what was picked out is the new parent, for underlying rows
+                    parentExpression = valueExpression;
+                    parents.push(parentExpression);  // push the new parent object on the stack
                     break;
             }
 
@@ -1248,6 +1256,13 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
             pathExpressions.push(res);
         });
+
+        // go through all the encountered parent-object-lists, and close them.
+        parents.forEach(parentExpression => {
+            var closeExpression = new RuleExpression(null,"close_list",[parentExpression]);
+            pathExpressions.push(closeExpression);     
+        });
+
 
         return pathExpressions;
     }

@@ -47,7 +47,7 @@ praxis.BottomBar = Class.extend({
 		});
 
 		document.getElementById("searchField").innerHTML = "";
-	    queryCode = CodeMirror(document.getElementById("searchField"), {
+	    /*queryCode = CodeMirror(document.getElementById("searchField"), {
 			//value: value,
 			lineNumbers: false,
 			theme: "tau",
@@ -56,7 +56,8 @@ praxis.BottomBar = Class.extend({
 			placeholder: "Your search here...",
 			//autofocus: true,
 			mode: "text"
-		});
+		});*/
+
 		this.queryCode = queryCode;
 		//queryCode.setSize("400px", queryCode.defaultTextHeight() + 2 * 2);
 
