@@ -1,6 +1,15 @@
 var ShapeParsing = {
     // store found variables during parsing of a rule
     variableMap:new Map(),
+    registerVariableUse:function(name){
+        if(name != '_') {
+            var found = ShapeParsing.variableMap.get(name);
+            if(found == undefined)
+                found = [];
+            found.push(name); // add a copy of the name to the list..
+            ShapeParsing.variableMap.set(name, found);
+        }
+    },
     // start parsing of an individual rule/dcg-shape as the head of a rule
     parseRuleHead:function(shapeData, page, errorList){
         if(shapeData != undefined && (shapeData.type == "RuleShape" || shapeData.type == "DcgShape")){
@@ -215,7 +224,7 @@ var ShapeParsing = {
 
     printNormalShape(shapeExpression, PC) {
         // check if this shape has else-connections outgoing
-        if(shapeExpression.body != null && shapeExpression.body.elseExpressions != null && 
+        if(shapeExpression.ignoreIfThenArrows == undefined && shapeExpression.body != null && shapeExpression.body.elseExpressions != null && 
             shapeExpression.body.elseExpressions.length > 0){
             // in that case we wrap the whole thing in an if-then-else structure
 
@@ -255,8 +264,9 @@ var ShapeParsing = {
             PC.res.push(")");
         } else {
             shapeExpression.printContent(PC);
-            if(shapeExpression.body != null && shapeExpression.body.cojunctionExpressions != null && shapeExpression.body.cojunctionExpressions.length > 0) {
+            if(shapeExpression.ignoreIfThenArrows == undefined && shapeExpression.body != null && shapeExpression.body.cojunctionExpressions != null && shapeExpression.body.cojunctionExpressions.length > 0) {
                 PC.res.push(",\n");
+                // Do NOT do this for shapes that ignore ifThenArrows (like FINDALL)
                 this.printChildren(PC,shapeExpression.body.cojunctionExpressions);
             }
         }

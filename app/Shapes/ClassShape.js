@@ -1165,6 +1165,11 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 currTarget = parent;
 
             pathExpressions.push(childExpression);
+
+            // make sure the parent-var-list is closed
+            var closeExpression = new RuleExpression(null,"close_list",[parent.var]);
+            pathExpressions.push(closeExpression);
+
         }
         // unify the last, modified, parent with the update-variable
         var eqTokens = Lexer.GetTokens("=");
@@ -1222,6 +1227,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 case 3: // array
                     var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
                     res = new RuleExpression(null, "praxis_field_in", [matchExpression, parentExpression]);
+                    // make sure parentexpression is listed as used var
+                    ShapeParsing.registerVariableUse(parentExpression.name)
                     break;
                 case 2: // expanded class
                 case 4: // expanded array
@@ -1232,7 +1239,9 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     }
                     var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
                     res = new RuleExpression(null, "praxis_field_in", [matchExpression, parentExpression]);
-                    
+                    // make sure parentexpression is listed as used var
+                    ShapeParsing.registerVariableUse(parentExpression.name)
+
                     parentString = valueString;
                     parentExpression = new VariableExpression(parentString);
                     parents.push(parentExpression);  // push the new parent object on the stack
@@ -1245,7 +1254,16 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     
                     indexExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Array index", indexString);
                     
+                    var valueString = a.value;
+                    if(valueString == undefined || valueString == '' || valueString == '_'){
+                        valueString = "VAR_" + rpc.idCounter++;
+                        valueExpression = new VariableExpression(valueString);
+                    }
+
                     res = new RuleExpression(null, "praxis_array_in", [valueExpression, indexExpression, parentExpression]);
+                    // make sure parentexpression is listed as used var
+                    ShapeParsing.registerVariableUse(parentExpression.name)
+                    
                     // what was picked out is the new parent, for underlying rows
                     parentExpression = valueExpression;
                     parents.push(parentExpression);  // push the new parent object on the stack

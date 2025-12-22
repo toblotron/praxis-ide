@@ -235,6 +235,7 @@ class FindallExpression {
     this.capturePatternExpression = capturePatternExpression;
     this.body = body;
     this.captureListExpression = captureListExpression;
+    this.ignoreIfThenArrows = true; // special case; this
   }
 
   printContent(PC) {
@@ -279,8 +280,11 @@ class FindallExpression {
   }
 
   print(PC) {
+    
+    // PS - this shape does not handle else-expressions; it gets too weird - and besides, the rule should always succeed
+
     // This demands special handling of else-arrows vs then-arrows; they must be treated in a special way (?)
-    if(this.body.elseExpressions != null){
+    /*if(this.body.elseExpressions != null){
       var disjunctionSign = ";";
       if(PC.isDcgRule)
         disjunctionSign = "|";
@@ -297,16 +301,16 @@ class FindallExpression {
       PC.res.push("-> true " + disjunctionSign + "\n");
       
       // print the else-branches
-      ShapeParsing.printChildren(PC, this.body.elseExpressions);
+      //ShapeParsing.printChildren(PC, this.body.elseExpressions);
       
       PC.indentation--;
       PC.res.push("\n");
       ShapeParsing.indent(PC);
       PC.res.push(")");
     } 
-    else {
+    else {*/
       this.printContent(PC);
-    }
+    //}
   }
 }
 
@@ -634,13 +638,7 @@ class VariableExpression {
   constructor(name) {
     this.name = name;
     // add this instance to the collection in this map
-    if(this.name[0] != '_') {
-      var found = ShapeParsing.variableMap.get(this.name);
-      if(found == undefined)
-        found = [];
-      found.push(this.name); // add a copy of the name to the list..
-      ShapeParsing.variableMap.set(this.name, found);
-    }
+    ShapeParsing.registerVariableUse(this.name);
   }
   
   print(PC) {
