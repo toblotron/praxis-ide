@@ -1100,7 +1100,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 case 4: // expanded array
                     // praxis_field_in(Parent, FieldName:Instance)
                     var valueExpression = null;    
-                    if(child.value != undefined)
+                    if(child.value == undefined)
                         valueExpression = new VariableExpression("VAR_" + rpc.idCounter++);
                     else
                         valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + i, child.value);
@@ -1114,7 +1114,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     break;
                 case 5: // array index
                     var valueExpression = null;    
-                    if(child.value != undefined)
+                    if(child.value == undefined)
                         valueExpression = new VariableExpression("VAR_" + rpc.idCounter++);
                     else
                         valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + i, child.value);
@@ -1263,7 +1263,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     res = new RuleExpression(null, "praxis_array_in", [valueExpression, indexExpression, parentExpression]);
                     // make sure parentexpression is listed as used var
                     ShapeParsing.registerVariableUse(parentExpression.name)
-                    
+
                     // what was picked out is the new parent, for underlying rows
                     parentExpression = valueExpression;
                     parents.push(parentExpression);  // push the new parent object on the stack
