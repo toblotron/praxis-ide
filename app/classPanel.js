@@ -27,8 +27,9 @@ praxis.ClassPanel = Class.extend({
             ' <div class="panel-body" id="rule_panel">'+
             '   <div class="form-group">'+
             '       <div  class="panel-heading ">Class</div> ' +
-            '       <input id="class_name" type="text" class="form-control" value="'+treeNode.title+'"/>');
-    
+            '       <input id="class_name" type="text" class="form-control" value="'+treeNode.title+'"/>' +
+            '        <div  class="panel-heading ">Superclass</div> ' +
+            '       <input id="superclass_name" type="text" class="form-control" value="' + classData.superClass +'"/>');
         this.html.append(
         '			<button id="class_ok_button">Ok</button>'+
         '   </div>'+
@@ -40,6 +41,8 @@ praxis.ClassPanel = Class.extend({
             
             var newTitle=$("#class_name").val();
             classData.name = newTitle;
+            var newSuperClass=$("#superclass_name").val();
+            classData.superClass = newSuperClass;
             treeNode.setTitle(newTitle);
             app.treemenu.copyStructureFromTree();
         });

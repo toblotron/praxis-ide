@@ -418,6 +418,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         {
             var rowNr = 0
             var usedClass = classRefs.find(t=>t.id == usedClassId); // this is the class where we expect to find fields
+            usedClass = this.getFullClass(usedClass.name);
 
             // show the path of the (possible) children ("path") //////////////////////////////////////////////////
             var lastParentRowOfPath = -1;
@@ -614,6 +615,22 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         return htmlCode;
     },
 
+    // return temporary class, with all inheritances added
+    getFullClass:function(className){
+        var targetClass = Model.classes.find(c => c.name == className);
+        if(targetClass != undefined){
+            if(targetClass.superClass != undefined){
+                var newTargetClass = JSON.parse(JSON.stringify(targetClass));
+                var parentClass = this.getFullClass(targetClass.superClass);
+                for(field of parentClass.fields){
+                    newTargetClass.fields.push(field);
+                }
+                return newTargetClass;
+            }
+        }
+        return targetClass;
+    },
+
     rebuildPanelUI: function(view, figure, externalClassNr){
         // bygg HTML för panel
         var userData = app.view.getShapeModel(figure.id).data;
@@ -712,14 +729,19 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         var currentParentClass = null;
         var parentRowIndex = parseInt(clickedRowNr);
         while(currentParentClass == null && parentRowIndex > -1){
-            if(rowsModel[parentRowIndex].level == 2 || rowsModel[parentRowIndex].level == 4 || rowsModel[parentRowIndex].level == 5 || rowsModel[parentRowIndex].level == -1) // only look after expanded rows/ root-row
+            if(rowsModel[parentRowIndex].level == 2 || rowsModel[parentRowIndex].level == 4 || rowsModel[parentRowIndex].level == 5 || rowsModel[parentRowIndex].level == -1){
+                // only look after expanded rows/ root-row
                 currentParentClass = Model.classes.find(t=>t.name == rowsModel[parentRowIndex].type);
+                currentParentClass = self.getFullClass(currentParentClass.name);
+            }
             else 
                 parentRowIndex--;
         }
         // was one found? in other case, take the root class
-        if(currentParentClass == undefined)
+        if(currentParentClass == undefined){
             currentParentClass = Model.classes.find(t=>t.id == usedClassId);
+            currentParentClass = self.getFullClass(currentParentClass.name);
+        }
 
         // is clicked row expandable?
         var clickedClass = Model.classes.find(t=>t.name == rowsModel[clickedRowNr].type);
@@ -772,7 +794,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
             // add leaves of newly expanded parent
             // show the fields of the currently expanded class /////////////////////////////////
-            var newParentClass = Model.classes.find(t=>t.name == newParentRow.type);
+            var newParentClass = self.getFullClass(newParentRow.type);
+            
             for(field of newParentClass.fields){
                 var rowModel = {};
                 rowModel.type = field.type;
@@ -857,6 +880,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         }
     },
 
+    
     
     buildInputPanel: function(view, figure, externalClassNr){
         self = figure; // try storing? :E
