@@ -178,7 +178,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         
         var valueIndex = 0;
 
-        // TODO: This doesn't work properly when the number of columns is LESS
+        // ..?.. // TODO: This doesn't work properly when the number of columns is LESS
         // than that in the shape.. figure out complete solution later 
 
         // create controls and gather maxwidths ()
@@ -232,7 +232,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 if(Field.field != undefined){        
                     var fieldText = Field.field;
                     if(levelInt == 3 || levelInt == 4)
-                        fieldText += " []";           
+                        fieldText += " []";
                     colName = new fabric.Text(fieldText,{fill:textCol,fontSize:10, objectCaching: false,fontFamily:'arial'});
                 }
                 else{ 
@@ -244,9 +244,17 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 colRect.height = colName.height + padding * 2;
                 totHeight += colName.height + padding *2;
 
-                var valueText = new PrologText(Field.value,{fontSize:10, fontFamily:'arial',isPreview:isPreview});
-                if(valueText.width > rightMax)
-                    rightMax = valueText.width;
+                // for expanded classes with subclassing, don't show value on that row - when setting size - stretch the fieldname-box
+                // row with subclassname and value will (somehow!) be put below this row.. 
+                var valueText = null;
+                var addSubClassRow = false;
+
+                if(levelInt != 2 || Field.type == undefined) {
+                    valueText = new PrologText(Field.value,{fontSize:10, fontFamily:'arial',isPreview:isPreview});
+                    if(valueText.width > rightMax)
+                        rightMax = valueText.width;
+                } else 
+                    addSubClassRow = true;
 
                 if(isPreview){
                     colRect.set({opacity:0.5});
@@ -262,6 +270,31 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     controlRow.expansionRect = new RoundedRect({fill:sideCol, bottomLeft:[0,0]});
 
                 this.childRows.push(controlRow);
+
+                // if we should have a subclass-row - add that row here! :E
+                if(addSubClassRow){
+                    backgroundCol = '#000000';
+                    colRect = new RoundedRect({fill:backgroundCol,bottomLeft:bottomLeft}); // color COULD be used to show some extra info..? 
+                    colName = new fabric.Text(" ("+Field.type+")",{fill:'white',fontSize:10, objectCaching: false,fontFamily:'arial'});
+                    
+                    if(colName.width > leftMax)
+                        leftMax = colName.width;
+                    colRect.height = colName.height + padding * 2;
+                    totHeight += colName.height + padding *2;
+
+                    valueText = null;
+                    
+                    valueText = new PrologText(Field.value,{fontSize:10, fontFamily:'arial',isPreview:isPreview});
+                    if(valueText.width > rightMax)
+                        rightMax = valueText.width;
+                    
+                    var subclassRow = {
+                        colRect:colRect,
+                        colName:colName,
+                        valueText:valueText};
+
+                    this.childRows.push(subclassRow);
+                }
             }
             valueIndex++;
         };
@@ -371,9 +404,13 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             c.colName.left = expansionWidth + c.colRect.left + padding;
             c.colName.top = starty + top + padding;
 
-            c.valueText.left = c.colRect.left + c.colRect.width + padding;
-            c.valueText.top = starty + top + padding;
-            
+            if(c.valueText != null){
+                c.valueText.left = c.colRect.left + c.colRect.width + padding;
+                c.valueText.top = starty + top + padding;
+            } else {
+                // otherwise, stretch the field-box
+                c.colRect.width = totWidth;
+            }
             top += c.colRect.height
  
             this.addWithUpdate(c.colRect);  
@@ -455,6 +492,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             rowNr++;
 
             var childRow = 0;
+            var previousType = "";
+
             if(userData.children != undefined && userData.children.length > 0){
                 while(lastParentRowOfPath >= childRow){
                     var rowModel = {};
@@ -462,11 +501,16 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     var child = userData.children[childRow];
                     // find the typename of this field, from the current usedClass
                     var fieldTypeName = null;
-                    if(child.level != 5){
+                    if(child.level != 5 && child.level != 2){ // neither index row or expanded class
                         fieldTypeName = usedClass.fields.find(f=>f.name == child.field).type;
                     } else
-                        fieldTypeName = child.type; // for indexrows we expect the child to have a type, for possible subclassing
-
+                    {
+                        fieldTypeName = child.type; // for indexrows and open classes we expect the child to have a type, for possible subclassing
+                        if(child.level == 5)
+                            rowModel.origType = previousType; // above this row there must be an open array-row, which has a type
+                        else // should be 2; expanded class
+                            rowModel.origType = usedClass.fields.find(f=>f.name == child.field).type // get the original from the type
+                    }
                     rowModel.type = fieldTypeName;
                     if(child.field) // indexrows do not have field-properties
                         rowModel.field = child.field;
@@ -483,8 +527,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                         // if it is an array, object or an index-row
                         var newClass = classRefs.find(t=>t.name == fieldTypeName);
                         if(newClass != undefined)
-                            usedClass = newClass;
+                            usedClass = this.getFullClass(newClass.name);
                     }
+
+                    previousType = fieldTypeName; // a crooked way of getting the type of the previous row
 
                     rowsModel.push(rowModel);
                     rowNr++;
@@ -579,19 +625,66 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             htmlCode += '<td style="' + sideTypeStyle + '; width=10px">&nbsp;</td>' +
             '<td width="*" style="' + typeStyle + '">' 
 
-            if(levelInt == 5){
-                htmlCode += 
-                '# '+ this.getIndexString(rowNr, row.index) +
-                '</td>'+'<td style="' + fieldTypeStyle + '">'+
-                '<label style="' + fieldTypeStyle + ';width:70%">(' + row.type + ')</label>' + 
-                '<label hidden id=level_' + rowNr + '>'+row.level+'</label>'+
-                '<label hidden id=fieldType_' + rowNr + '>'+row.type+'</label>';
-            } else if(levelInt == 3 || levelInt == 4) {
+            if(levelInt == 5){ // indexrow
+                htmlCode += '# '+ this.getIndexString(rowNr, row.index) + '</td>' +
+                '<td style="' + fieldTypeStyle + '">';
+                // check if there are subclasses
+                var baseClassName = row.type;
+                if(row.origType != undefined)
+                    baseClassName = row.origType;
+                var classList = this.getClassList(baseClassName);
+                if(classList.length == 1){
+                    htmlCode += '<label style="' + fieldTypeStyle + ';width:70%">(' + row.type + ')</label>'
+                }
+                else{ 
+                    // show a combo
+                    var comboString = '<SELECT class="subclass_selector" id="subclassRow_' + rowNr + '">';
+                    // available classes
+                    for(className of classList){
+                        comboString +='<option value="' + className + '" ';
+                        if(className == row.type)
+                            comboString += "selected";
+                        comboString += ">" + className + '</option>';
+                    }
+                    comboString +='</SELECT>';
+                    htmlCode +='<label hidden id=fieldType_' + rowNr + '>' + row.type + '</label>';
+                    htmlCode +='<label style="' + typeStyle + '" >' + comboString + '</label>'; 
+                }
+                htmlCode += '</td>' + 
+                '<label hidden id=level_' + rowNr + '>'+row.level+'</label>';
+                htmlCode +='<label hidden id=origType_' + rowNr + '>' + row.origType + '</label>';
+            } else if(levelInt == 3 || levelInt == 4) { // unexpanded/expanded array
                 htmlCode += '<label style="' + typeStyle + '" class="classrow" id=fieldType_' + rowNr + '>' + row.type + '</label>' + 
                 '</td>'+'<td style="' + fieldTypeStyle + '">'+
                 '<label style="' + fieldTypeStyle + '">' + row.field + ' []</label>' + 
                 '<label hidden id=level_' + rowNr + '>'+ row.level+'</label>'+
                 '<label hidden id=fieldName_' + rowNr + '>' + row.field+'</label>';  
+            } else if(levelInt == 2) { // expanded class
+                // check if there are subclasses
+                var baseClassName = row.type;
+                if(row.origType != undefined)
+                    baseClassName = row.origType;
+                var classList = this.getClassList(baseClassName);
+                if(classList.length == 1)
+                    htmlCode +='<label style="' + typeStyle + '" id=fieldType_' + rowNr + '>' + row.type + '</label>'; 
+                else{
+                    // show a combo
+                    var comboString = '<SELECT class="subclass_selector" id="subclassRow_' + rowNr + '">';
+                    // available classes
+                    for(className of classList){
+                        comboString +='<option value="' + className + '" ';
+                        if(className == row.type)
+                            comboString += "selected";
+                        comboString += ">" + className + '</option>';
+                    }
+                    comboString +='</SELECT>';
+                    htmlCode +='<label hidden id=fieldType_' + rowNr + '>' + row.type + '</label>';
+                    htmlCode +='<label style="' + typeStyle + '" >' + comboString + '</label>'; 
+                }
+                htmlCode += '</td>'+'<td style="' + fieldTypeStyle + '">'+
+                '<label style="' + fieldTypeStyle + '" id=fieldName_' + rowNr + '>' + row.field + '</label>' + 
+                '<label hidden id=level_' + rowNr + '>'+row.level+'</label>';
+                htmlCode +='<label hidden id=origType_' + rowNr + '>' + row.origType + '</label>';
             } else {
                 htmlCode += '<label style="' + typeStyle + '" class="classrow" id=fieldType_' + rowNr + '>' + row.type + '</label>' + 
                 '</td>'+'<td style="' + fieldTypeStyle + '">'+
@@ -673,7 +766,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 tableString += "selected";
             tableString += '></option>';
             
-            // available tables
+            // available classes
             for(classRef of classRefs){
                 tableString +='<option value="' + classRef.id + '" ';
                 if(usedClassId == classRef.id)
@@ -721,10 +814,14 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         '</div>');
     },
 
-    onClickClassRow : function () {
-        var clickedRowNr = this.id.split("_")[1]; // pickout "X" from "fieldName_X"
+    onClickClassRow : function (clickedRowNr, rowsModel) {
+        // can get value submitted, or take value from event - if event, below check will succeed
+        if(isNaN(parseInt(clickedRowNr)))
+            clickedRowNr = this.id.split("_")[1]; // pickout "X" from "fieldName_X"
 
-        var rowsModel = self.harvestRowData();
+        if(rowsModel == undefined)
+            rowsModel = self.harvestRowData();
+
         // find the closest expanded class above the clicked row
         var currentParentClass = null;
         var parentRowIndex = parseInt(clickedRowNr);
@@ -760,7 +857,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         if(clickedRowNr > parentRowIndex && clickedRowNr > lastParentRowOfPath  && clickedClass != undefined && (clickedRowLevel == 1 || clickedRowLevel == 3)) // 1 = expandable unexpanded, 3 = array unexpanded
         {
             // gather all the visible data from DOM
-            var newModel = self.harvestRowData();
+            var newModel = rowsModel // self.harvestRowData();
             
             // save the clicked parent row
             var newParentRow = newModel[clickedRowNr];
@@ -775,8 +872,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             }
             newModel = newModel.filter(e => !toBeRemoved.includes(e));
             // add clicked row as expanded parent
-            if(clickedRowLevel == 1)
+            if(clickedRowLevel == 1){
                 newParentRow.level = 2; // mark it as expanded parent
+                newParentRow.origType = newParentRow.type; // copy the original type, in case of subclassing
+            }
             else if(clickedRowLevel == 3)
                 newParentRow.level = 4; // mark it as expanded array
 
@@ -818,10 +917,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         }
         // 2 - clicking an unexpandable field-row; take the closest above expanded parent, and list its fields
         // or: click an already opened parent, or rootrow, and go "back" up to showing them as lowest parent
-        else if(rowsModel[clickedRowNr].level == 0 || rowsModel[clickedRowNr].level == 1 || (clickedClass != undefined && (rowsModel[clickedRowNr].level == 2 ||rowsModel[clickedRowNr].level == 4 || rowsModel[clickedRowNr].level == -1)))
+        else if(rowsModel[clickedRowNr].level == 0 || rowsModel[clickedRowNr].level == 1 || (clickedClass != undefined && (rowsModel[clickedRowNr].level == 2 ||rowsModel[clickedRowNr].level == 4 ||rowsModel[clickedRowNr].level == 5|| rowsModel[clickedRowNr].level == -1)))
         {
             // gather all the visible data from DOM
-            var newModel = self.harvestRowData();
+            var newModel = rowsModel; //self.harvestRowData();
         
             // if clicking an expanded parent array- count as if the indexrow below was clicked, instead - should save some bother
             if(rowsModel[clickedRowNr].level == 4) // expanded array
@@ -859,13 +958,16 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 
                 var rowModel = {};
                 rowModel.type = field.type;
+                
                 rowModel.field = field.name;
                 rowModel.level = 0;  // the fields of the last class are never expanded, and thus never parents                    
                 if(field.fieldType == "Array")
                     rowModel.level = 3; // unexpanded array
                 else if(Model.classes.find(t=>t.name == field.type) != undefined)
-                    rowModel.level = 1;
-                
+                    rowModel.level = 1; // "builtin" types are not stored in classes - are always fields
+                else
+                    rowModel.origType = field.type; // has a class-type; put the original type here
+
                 if(foundValueString != undefined && foundValueString != '')
                     rowModel.value = foundValueString;
 
@@ -894,6 +996,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         $(document.body).off();
         $(document.body).on("click", '.classrow', this.onClickClassRow);
         $(document.body).on("change", '#class_selector', this.onChangeClassSelector);
+        $(document.body).on("change", '.subclass_selector', this.onChangeSubClassSelector);
         $(document.body).on("change", '#checkbox_update', this.onChangeUpdateCheckbox);
         $(document.body).on("click", '#ok_button', this.onClickOkButton);
    
@@ -978,10 +1081,11 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     };
                     if(row.field)
                         childRow.field = row.field;
-                    if(row.index){
+                    if(row.index)
                         childRow.index = row.index;
+                    if(row.type) // only save Selected type, if any. - is either original type or subclassed type
                         childRow.type = row.type;
-                    }
+
                     children.push(childRow);
                 }
             }
@@ -997,6 +1101,27 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         //$("#class_selector").on("change", function(){
         var externalClassNr =  this.value;
         self.rebuildPanelUI(myView,self,externalClassNr);
+    },
+
+    onChangeSubClassSelector : function(event)
+    {
+        var rowNr = event.target.id.split("_")[1];
+        if(rowNr != undefined){
+            var target = document.getElementById("subclassRow_"+rowNr); // so.. this is how we get the SELECT control.. :E :)
+            if(target != undefined){
+                var externalClassName =  target.value;
+                var rowsModel = self.harvestRowData();
+                // only update if there has been a change - so we don't get infinite recursion
+                if(rowsModel[rowNr].type != externalClassName){
+                    rowsModel[rowNr].type = externalClassName;
+                    // trigger fake-click on row - can be called as event/function
+                    self.onClickClassRow(rowNr, rowsModel); // pass on rowsModel - we will lose set values otherwise
+                    //var rowsTableHTML = self.renderRowsModel(rowsModel);
+                    //var rowsTableBodyElem = $("#rowstable_body")[0];
+                    //rowsTableBodyElem.innerHTML = rowsTableHTML;   
+                } 
+            }
+        }    
     },
 
     // harvest the row-data from the DOM
@@ -1025,6 +1150,11 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             var className = undefined;
             if(fieldTypeLabel != undefined) 
                 className = fieldTypeLabel.innerText;
+
+            var origTypeLabel = document.getElementById('origType_'+row);
+            var origTypeName = undefined;
+            if(origTypeLabel != undefined) 
+                origTypeName = origTypeLabel.innerText;
             
             var matchInput = document.getElementById('value_'+row);
             var matchValue = undefined;
@@ -1040,6 +1170,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             {
                 newRow.index = rowIndex;
             }
+            if(origTypeName != undefined)
+                newRow.origType = origTypeName;
             if(matchValue != undefined)
                 newRow.value = matchValue;
             if(className != undefined)
@@ -1073,7 +1205,30 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             printString = htmlPrologEncode(index);
         return '<input id="index_' + rowNr + '" style="width:70%" type="text" value="'+ printString +'"/>';
     },
-
+    // get this classname + a list of subclasses, if any exist
+    getClassList: function(className){
+        var classList = [];
+        var classDef = Model.classes.find(c=>c.name == className);
+        if(classDef != undefined){
+            classList.push(className);
+            // find all subclasses - recursively
+            var subclasses = this.findSubClasses(className);
+            // only take the names
+            var subClassNames = subclasses.map(c=>c.name);
+            classList = classList.concat(subClassNames);
+        }
+        return classList;
+    },
+    // returns full classes
+    findSubClasses:function(className){
+        var subClasses = Model.classes.filter(c=>c.superClass == className);
+        var collectedSubclasses = [];
+        for(subClass of subClasses){
+            var newSubclasses = this.findSubClasses(subClass.name); 
+            collectedSubclasses = collectedSubclasses.concat(newSubclasses);
+        }
+        return subClasses.concat(collectedSubclasses);
+    },
     parseToExpression:function(shapeData, rpc){
         
         var pathExpressions = null;

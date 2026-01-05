@@ -714,7 +714,7 @@ praxis.View = Class.extend({
         {
             var oldx = vpt[4];
             vpt[4] = -this.panLimit.right*zoom;
-            console.log("panning x due to limit - from " + oldx + " to " + vpt[4]);
+            // console.log("panning x due to limit - from " + oldx + " to " + vpt[4]);
             this.canvas.renderAll();
         }
         if(-(vpt[5]/zoom) > this.panLimit.bottom)
@@ -772,10 +772,10 @@ praxis.View = Class.extend({
         this.panLimit.right = this.shapesLimit.right-100/zoom;
         this.panLimit.bottom = this.shapesLimit.bottom-100/zoom;
 
-        console.log("new view.panLimit:" + this.panLimit.left + "/" + this.panLimit.top + "/" + this.panLimit.right + "/" + this.panLimit.bottom);
+        //console.log("new view.panLimit:" + this.panLimit.left + "/" + this.panLimit.top + "/" + this.panLimit.right + "/" + this.panLimit.bottom);
        
         
-        console.log("pan limits recalculated");
+        // console.log("pan limits recalculated");
     },
 
     getDistance : function(x1, y1, x2, y2){
