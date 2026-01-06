@@ -147,7 +147,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             totHeight += this.updateName.height + 2*padding;
             bgStartY = totHeight;
             topWidth = this.updateName.width + 2*padding;
-
+            if(this.updateValue.width > rightMax)
+                rightMax = this.updateValue.width;
             topLeftVal = [0,0];
             topRightVal = [0,0];
         }
@@ -164,6 +165,9 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             this.classValueRect.set({fill:'#ffffff', opacity:0.5});
             this.classValue.set({opacity:0.5, fontStyle:'italic'});
         }
+
+        if(this.classValue.width > rightMax)
+            rightMax = this.classValue.width;
 
         left2Max = this.className.width + padding * 2;
         if(left2Max > leftMax)
