@@ -1278,7 +1278,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 case 4: // expanded array
                     // praxis_field_in(Parent, FieldName:Instance)
                     var valueExpression = null;    
-                    if(child.value == undefined)
+                    if(child.value == undefined || child.value == "_" || child.value == '')
                         valueExpression = new VariableExpression("VAR_" + rpc.idCounter++);
                     else
                         valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + i, child.value);
@@ -1286,20 +1286,20 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     var fieldExpression = new AtomExpression("'" + child.field + "'");
                     var matchExpression = new OperatorExpression(fieldExpression, opToken, valueExpression);
                     var newValueExpression = new VariableExpression(parent.var.name); // create new, so it will register the new occurence of the variable, and not cause singelton error
-                    childExpression = new RuleExpression(null, "praxis_field_in", [matchExpression, newValueExpression]); // pick out the target object
+                    childExpression = new RuleExpression(null, "praxis_field_update_in", [matchExpression, newValueExpression]); // pick out the target object
                     var newParent = {var:valueExpression, field:fieldExpression, level: level};
                     parents.push(newParent);  // push the new parent object on the stack
                     break;
                 case 5: // array index
                     var valueExpression = null;    
-                    if(child.value == undefined)
+                    if(child.value == undefined  || child.value == "_" || child.value == '')
                         valueExpression = new VariableExpression("VAR_" + rpc.idCounter++);
                     else
                         valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + i, child.value);
                     
                     var indexExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Index", child.index); // each such row MUST have an index
                     var newValueExpression = new VariableExpression(parent.var.name); // create new, so it will register the new occurence of the variable, and not cause singelton error
-                    childExpression = new RuleExpression(null, "praxis_array_in", [valueExpression, indexExpression, newValueExpression]); // pick out the target object
+                    childExpression = new RuleExpression(null, "praxis_array_update_in", [valueExpression, indexExpression, newValueExpression]); // pick out the target object
                     var newParent = {var:valueExpression, index:indexExpression, level: level};
                     parents.push(newParent);  // push the new parent object on the stack
                     break;
@@ -1335,7 +1335,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     var indexExpression = currTarget.index;
                     var newTargetExpression = new VariableExpression("VAR_" + rpc.idCounter++);
                     var parentExpression = new VariableExpression(parent.var.name);
-                    childExpression = new RuleExpression(null, "praxis_array_update", [parentExpression,valueExpression, indexExpression,newTargetExpression]);
+                    childExpression = new RuleExpression(null, "praxis_array_update", [valueExpression,parentExpression, indexExpression,newTargetExpression]);
                     parent.var = newTargetExpression; // now, THIS is the variable we will pass upwards; it's the updated parent
                     break;
             }
