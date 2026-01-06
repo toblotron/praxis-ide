@@ -650,9 +650,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     htmlCode +='<label hidden id=fieldType_' + rowNr + '>' + row.type + '</label>';
                     htmlCode +='<label style="' + typeStyle + '" >' + comboString + '</label>'; 
                 }
-                htmlCode += '</td>' + 
-                '<label hidden id=level_' + rowNr + '>'+row.level+'</label>';
-                htmlCode +='<label hidden id=origType_' + rowNr + '>' + row.origType + '</label>';
+                htmlCode +='<label hidden id=level_' + rowNr + '>'+row.level+'</label>';
+                htmlCode +='<label hidden id=origType_' + rowNr + '>' + row.origType + '</label></td>';
             } else if(levelInt == 3 || levelInt == 4) { // unexpanded/expanded array
                 htmlCode += '<label style="' + typeStyle + '" class="classrow" id=fieldType_' + rowNr + '>' + row.type + '</label>' + 
                 '</td>'+'<td style="' + fieldTypeStyle + '">'+
@@ -751,9 +750,9 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         // If there are classes, let user select
         if(Model.classes.length > 0) {
 
-            tableString += 
-            '<table id="class_table" cellPadding="0">'+
-            '	<tbody>';
+            //tableString += 
+            //'<table id="class_table" cellPadding="0">'+
+            //'	<tbody>';
 
 
             tableString += '<SELECT id="class_selector" tabIndex="1001">';
