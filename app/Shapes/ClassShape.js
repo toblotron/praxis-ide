@@ -138,8 +138,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         var topLeftVal = [5,5];
         var topRightVal = [5,5];
 
+        var isUpdate = shapeData.updateVar != undefined;
+
         // add UPDATE-row?
-        if(!isPreview && shapeData.updateVar != undefined){
+        if(!isPreview && isUpdate){
             this.updateNameRect = new RoundedRect({fill:'orange',topLeft:topLeftVal});
             this.updateName = new fabric.Text("UPDATE",{fontSize:11, fill: 'black', objectCaching: false, fontFamily:'arial'});
             this.updateValueRect = new RoundedRect({fill:'#ffffff',topRight:topRightVal});
@@ -1339,6 +1341,21 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                         valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + i, child.value);
                     
                     var indexExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Index", child.index); // each such row MUST have an index
+                    // CHECK that there is a specified index
+                    if(!(indexExpression instanceof VariableExpression || indexExpression instanceof IntegerExpression)){
+                        // add an error
+                        var report = {
+                            classification: "error",
+                            occasion: "compilation",
+                            title: "Argument error",
+                            description: "An index in an Update shape must always contain either an Integer or a Variable",
+                            resourceType: "rules",
+                            resourceId: rpc.page.id,
+                            targetType: "shape",
+                            targetId: shapeData.id
+                        };
+                        rpc.errorList.push(report);
+                    }
                     var newValueExpression = new VariableExpression(parent.var.name); // create new, so it will register the new occurence of the variable, and not cause singelton error
                     childExpression = new RuleExpression(null, "praxis_array_update_in", [valueExpression, indexExpression, newValueExpression]); // pick out the target object
                     var newParent = {var:valueExpression, index:indexExpression, level: level};
