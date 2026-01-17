@@ -1,7 +1,7 @@
 prologStyles = {
     "Atom": {fill: 'green'},
     "String": {fill: 'green'},
-    "Variable": {fill: 'blue'},
+    "Variable": {fill: '#3e3efcff', fontWeight: 'bold'},
     "Operator": {fill:'black', fontWeight: 'bold'},
     "Pipe": {fill:'black', fontWeight: 'bold'},
     "Comma": {fill:'black', fontWeight: 'bold'},

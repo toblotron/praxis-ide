@@ -65,6 +65,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             if(f.colRect != undefined) this.remove(f.colRect); 
             if(f.valueText!=undefined) this.remove(f.valueText);
             if(f.expansionRect != undefined) this.remove(f.expansionRect);
+            if(f.indexSign != undefined) this.remove(f.indexSign);
+            if(f.indexText != undefined) this.remove(f.indexText);
         }
         
         this.childRows = [];
@@ -233,6 +235,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 var colRect = new RoundedRect({fill:backgroundCol,bottomLeft:bottomLeft}); // color COULD be used to show some extra info..? 
                 
                 var colName;
+                var indexSign = undefined; // the # used for indexrows
+                var indexText = undefined; // the syntax-highlighted prolog text for the index
                 if(Field.field != undefined){        
                     var fieldText = Field.field;
                     if(levelInt == 3 || levelInt == 4)
@@ -240,11 +244,26 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     colName = new fabric.Text(fieldText,{fill:textCol,fontSize:10, objectCaching: false,fontFamily:'arial'});
                 }
                 else{ 
-                    colName = new fabric.Text(Field.index + " ("+Field.type+")",{fill:'white',fontSize:10, objectCaching: false,fontFamily:'arial'});
+                    colName = new fabric.Text(" ("+Field.type+")",{fill:'white',fontSize:10, objectCaching: false,fontFamily:'arial'});
+                    
+                    if(levelInt == 5){ // indexrow!
+                        indexSign = new fabric.Text("#",{fill:'white',fontSize:10, objectCaching: false,fontFamily:'arial'});
+                        var indexDisplay = Field.index;
+                        if(indexDisplay != "_" && indexDisplay != "")
+                        {
+                            // show syntax highlighted index code
+                            indexText = new PrologText(Field.index,{fontSize:10, fontFamily:'arial',isPreview:isPreview});
+                        }
+                        else 
+                            indexText = new fabric.Text("?",{fill:'blue',fontSize:10, objectCaching: false,fontFamily:'arial'});
+                    }
                 }
-
-                if(colName.width > leftMax)
-                    leftMax = colName.width;
+                var thisColWidth = colName.width;
+                if(indexText != undefined)
+                    thisColWidth += indexSign.width + indexText.width;
+            
+                if(thisColWidth > leftMax)
+                    leftMax = thisColWidth;
                 colRect.height = colName.height + padding * 2;
                 totHeight += colName.height + padding *2;
 
@@ -268,14 +287,17 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 var controlRow = {
                     colRect:colRect,
                     colName:colName,
-                    valueText:valueText};
+                    valueText:valueText,
+                    indexSign:indexSign,
+                    indexText:indexText
+                };
 
                 if(Field.level == 2 || Field.level== 4)
                     controlRow.expansionRect = new RoundedRect({fill:sideCol, bottomLeft:[0,0]});
 
                 this.childRows.push(controlRow);
 
-                // if we should have a subclass-row - add that row here! :E
+                // if we should have a (dynamically added - not in the original datastructure) subclass-row - add that row here! :E
                 if(addSubClassRow){
                     backgroundCol = '#000000';
                     colRect = new RoundedRect({fill:backgroundCol,bottomLeft:bottomLeft}); // color COULD be used to show some extra info..? 
@@ -392,7 +414,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         this.addWithUpdate(this.classValue);
 
 
-
+        // add all the entities in the childrows - adjusted to sizes
         for(c of this.childRows) {
             c.colRect.left = startx;
             c.colRect.top = starty + top;
@@ -405,7 +427,18 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 c.expansionRect.height = c.colRect.height;
             }
 
-            c.colName.left = expansionWidth + c.colRect.left + padding;
+            var indexWidth = 0; // added width for possible "#Var" of indexrow indices
+            if(c.indexSign != undefined){
+                c.indexSign.left = startx + expansionWidth + colRect.left + padding;
+                c.indexSign.top = starty + top + padding;
+                
+                c.indexText.left = startx + expansionWidth + colRect.left + padding + c.indexSign.width;
+                c.indexText.top = starty + top + padding;
+
+                indexWidth = c.indexSign.width + c.indexText.width;
+            }
+
+            c.colName.left = expansionWidth + indexWidth + c.colRect.left + padding;
             c.colName.top = starty + top + padding;
 
             if(c.valueText != null){
@@ -422,6 +455,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             this.addWithUpdate(c.valueText);
             if(c.expansionRect != undefined)
                 this.addWithUpdate(c.expansionRect);
+            if(c.indexSign != undefined){
+                this.addWithUpdate(c.indexSign);
+                this.addWithUpdate(c.indexText);
+            }
         };
         
         // finally - set proper dimensions of bg - should just be background
