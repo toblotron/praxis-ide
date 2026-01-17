@@ -558,7 +558,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 
                 // set level of new row - if it is expandable or not
                 rowModel.level = 0
-                if(field.fieldType == "Array")
+                if(field.fieldType == "Array" || field.fieldType == true)
                     rowModel.level = 3; // unexpanded array
                 else if(Model.classes.find(t=>t.name == field.type) != undefined)
                     rowModel.level = 1; // expandable class/array..?
@@ -903,7 +903,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 rowModel.type = field.type;
                 rowModel.field = field.name;
                 rowModel.level = 0;  // the fields of the last class are never expanded, and thus never parents                    
-                if(field.fieldType == "Array")
+                if(field.fieldType == "Array" || field.fieldType == true)
                     rowModel.level = 3; // unexpanded array
                 else if(Model.classes.find(t=>t.name == field.type) != undefined)
                     rowModel.level = 1; // unexpanded object
@@ -964,7 +964,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 
                 rowModel.field = field.name;
                 rowModel.level = 0;  // the fields of the last class are never expanded, and thus never parents                    
-                if(field.fieldType == "Array")
+                if(field.fieldType == "Array" || field.fieldType == true)
                     rowModel.level = 3; // unexpanded array
                 else if(Model.classes.find(t=>t.name == field.type) != undefined)
                     rowModel.level = 1; // "builtin" types are not stored in classes - are always fields

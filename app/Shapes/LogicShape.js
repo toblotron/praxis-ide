@@ -55,7 +55,8 @@ var LogicShape = fabric.util.createClass(fabric.Group, {
             {op:"OR", background_col:"yellow",text_col:"black"},
             {op:"1ST", background_col:"orange",text_col:"black"},
             {op:"NOT", background_col:"red",text_col:"white"},
-            {op:"CUT", background_col:"purple",text_col:"white"}
+            {op:"CUT", background_col:"purple",text_col:"white"},
+            {op:"ONCE", background_col:"purple",text_col:"white"}
         ];
 
         var style = styles.find(s => s.op == shapeData.operator);
@@ -147,7 +148,7 @@ var LogicShape = fabric.util.createClass(fabric.Group, {
             '   <div class="form-group">'+
             '       <div class="input-group" ></div> ');
 
-        var options = ["AND", "OR", "1ST","NOT","CUT"];
+        var options = ["AND", "OR", "1ST","NOT","CUT","ONCE"];
         var radiohtml = "";
         for(option of options){
             radiohtml += '<input type="radio" id="logic_' + option + '" name="' + figure.id + '" value="' + option + '"';

@@ -35,6 +35,13 @@ praxis.ClassView = Class.extend({
         this.elem.style.display = "block";
     },
 
+    formatter_d:function(row, cell, value, columnDef, dataContext) {
+      var ret = "✓";
+      if(!value)
+        ret = "";
+      return ret;
+    },
+
     table_options : {
         editable: true,
         enableCellNavigation: true,
@@ -45,18 +52,18 @@ praxis.ClassView = Class.extend({
 
     default_columns: [
       {
-        "id": "fieldType",
-        "name": "",
-        "field": "fieldType",
-        "content": "atom",
-        "width": 50
-      },
-      {
         "id": "type",
         "name": "Type",
         "field": "type",
         "content": "atom",
         "width": 80
+      },
+      {
+        "id": "fieldType",
+        "name": "Array",
+        "field": "fieldType",
+        "content": "bool",
+        "width": 50
       },
       {
         "id": "name",
@@ -137,9 +144,11 @@ praxis.ClassView = Class.extend({
         app.classView.classData = classData;
 
         // to get custom column data from Dom
+        // - some parts not used for classes right now - all columns are predetermined
         var size = copiedColumns.length-1; // classData.columns.length; - minus one to avoid drag-column
         for(i = 0; i < size; i++)
         {
+            /*
             var colname = $("#col_"+i+"_name").val();
             var coltype = $("#col_"+i+"_type").val();
     
@@ -148,16 +157,29 @@ praxis.ClassView = Class.extend({
                 copiedColumns[i+1].id = colname.toLowerCase();
                 copiedColumns[i+1].field = colname.toLowerCase();
             }
-    
+            
+
             // ps - add 1 to never target the added dragrow-column
             copiedColumns[i+1].name = colname;
             copiedColumns[i+1].content = coltype;
-            copiedColumns[i+1].editor = Slick.Editors.Text;
+            */
+            var column = copiedColumns[i+1];
+            if(column.content == "bool"){
+              copiedColumns[i+1].editor = Slick.Editors.Checkbox;
+              copiedColumns[i+1].formatter = this.formatter_d; //Slick.Formatters.YesNoFormatter;
+            }
+            else
+              copiedColumns[i+1].editor = Slick.Editors.Text;
     
             // {id: "name", name: "Name", field: "name", content:"string"},
         }
         
      
+          // repeat.. to make custom renderers of cells work?
+        grid = new Slick.Grid("#classView", classData.fields, copiedColumns, options);
+        app.classView.grid = grid;
+        app.classView.classData = classData;
+
           grid.setSelectionModel(new Slick.CellSelectionModel());
           var moveRowsPlugin = new Slick.RowMoveManager({
             cancelEditOnDrag: true
@@ -232,6 +254,7 @@ praxis.ClassView = Class.extend({
           });
         
           grid.registerPlugin(moveRowsPlugin);
+
 
         grid.onAddNewRow.subscribe(function (e, args) {
             var item = args.item;
