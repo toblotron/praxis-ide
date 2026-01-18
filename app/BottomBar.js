@@ -546,18 +546,21 @@ praxis.BottomBar = Class.extend({
 
 	// download an entire Tau-prolog package, in JS-form, possibly containing several modules
 	// (right now Praxis only works with One, though)
-	downloadModule:function(){
+	downloadModule:async function(){
 
+		
+
+		/*
 		var code = ShapeParsing.generateAST();
 		var session = new Prolog(); //pl.create();
 		
 		session.consult(code, {
 			success: function() { 
-				/* Program parsed correctly */ 
+				// Program parsed correctly  
 				console.log("LOADING SUCCESSFUL");
 			},
 			error: function(err) { 
-				/* Error parsing program */ 
+				// Error parsing program  
 				console.log("ERROR LOADING PROGRAM: " + err);
 			}
 		});
@@ -600,6 +603,8 @@ praxis.BottomBar = Class.extend({
 		.appendTo( "body" )
 		.get(0)
 		.click()
+
+		*/
 	},
 
 	onProxyUploadButton:function(){

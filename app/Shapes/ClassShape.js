@@ -431,10 +431,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
             var indexWidth = 0; // added width for possible "#Var" of indexrow indices
             if(c.indexSign != undefined){
-                c.indexSign.left = startx + expansionWidth + colRect.left + padding;
+                c.indexSign.left = expansionWidth + c.colRect.left + padding;
                 c.indexSign.top = starty + top + padding;
                 
-                c.indexText.left = startx + expansionWidth + colRect.left + padding + c.indexSign.width;
+                c.indexText.left = expansionWidth + c.colRect.left + padding + c.indexSign.width;
                 c.indexText.top = starty + top + padding;
 
                 indexWidth = c.indexSign.width + c.indexText.width;
@@ -633,6 +633,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             var sideTypeStyle = "";
             var typeStyle ="";
 
+            var arrowchar ="&nbsp;";
             var levelInt = parseInt(row.level);
             switch(levelInt){
                 case 0: // normal field
@@ -643,16 +644,23 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 case 1: // unexpanded class
                 case 3: // unexpanded array
                     fieldTypeStyle = "background: #7282c8; color:black";
-                    sideTypeStyle = "background:#f3e7c9; color:black";
+                    sideTypeStyle = "background:black; color:gray";
                     typeStyle = "background:black; color:white";
+                    arrowchar = "🞂";
                     break;
                 case 2: // expanded class
                 case 4: // expanded array
                     fieldTypeStyle = "background:#7282c8; color:black";
-                    sideTypeStyle = "background:black; color:white";
+                    sideTypeStyle = "background:black; color:gray";
                     typeStyle = "background:black; color:white";
+                    arrowchar ="🞃";
                     break;
                 case 5: // indexrow of array
+                    arrowchar ="🞃";
+                    sideTypeStyle = "background:black; color:gray";
+                    fieldTypeStyle = "background:black; color:white";
+                    typeStyle = "background:black; color:white";
+                    break;
                 case -1: // root-row
                     fieldTypeStyle = "background:black; color:white";
                     sideTypeStyle = "background:black; color:white";
@@ -665,7 +673,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     break;
             }
                
-            htmlCode += '<td style="' + sideTypeStyle + '; width=10px">&nbsp;</td>' +
+            htmlCode += '<td style="' + sideTypeStyle + '; width=10px">' + arrowchar +'</td>' +
             '<td width="*" style="' + typeStyle + '">' 
 
             if(levelInt == 5){ // indexrow
@@ -838,7 +846,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
         var rowsCode = figure.renderRowsModel(rowsModel);
 
-        tableString += '<table cellPadding="0"><tbody id="rowstable_body">';
+        tableString += '<table cellspacing="1"><tbody id="rowstable_body">';
         tableString += rowsCode;
         tableString += '</tbody></table>';
 

@@ -375,6 +375,17 @@
             await next(1);
         }
 
+        window.testProlog = async function testProlog(){
+            // test retrieval of prolog json format answers
+            const pl = new Prolog();
+
+            const result = await pl.queryOnce('User = {"id": 123,"name": "Alice","active": true,"tags": ["prolog", "logic"]}.',{ format: "prolog" });
+            
+            var res = result.substring(result.indexOf('{'),result.lastIndexOf('.'));
+            var jsss = JSON.parse(res);
+
+        }
+
         window.ask = async function ask() {
             try {
                 await run();
