@@ -81,6 +81,27 @@ var ShapeParsing = {
             else
                 res += ":- use_module(library(" + lib + ")).\n";
         }
+
+        // generate class information
+        var classCode = "";
+        for(var currClass of Model.classes){
+            classCode += "praxis_classInfo({\"name\":\"" + currClass.name + "\",[";
+            var firstField = true;
+            for(var f of currClass.fields){
+                
+                if(!firstField)
+                    classCode += ",";
+
+                classCode += "{\"name\":\""+f.name+"\",\"type\":\"" + f.type + "\"";
+                if(f.fieldType == "Array")
+                    classCode += ",\"fieldType\":\""+f.fieldType+"\"";
+                classCode += "}"; 
+                firstField = false;
+            }
+            classCode += "]}).\n"
+        }
+        res += "\n" + classCode;
+
         res += "\n";
 
         // declare dynamics
