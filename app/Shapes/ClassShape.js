@@ -685,7 +685,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     baseClassName = row.origType;
                 var classList = this.getClassList(baseClassName);
                 if(classList.length == 1){
-                    htmlCode += '<label style="' + fieldTypeStyle + ';width:70%">(' + row.type + ')</label>'
+                    htmlCode += '<label style="' + fieldTypeStyle + ';width:70%">(' + row.type + ')</label>';
+                    htmlCode +='<label hidden id=fieldType_' + rowNr + '>' + row.type + '</label>';
                 }
                 else{ 
                     // show a combo

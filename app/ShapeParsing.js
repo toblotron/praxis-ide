@@ -85,20 +85,21 @@ var ShapeParsing = {
         // generate class information
         var classCode = "";
         for(var currClass of Model.classes){
-            classCode += "praxis_classInfo({\"name\":\"" + currClass.name + "\",[";
+            var fullClass = ClassShape.prototype.getFullClass(currClass.name);
+            classCode += "praxis_classInfo([\"name\":\"" + currClass.name + "\",\"fields\":[";
             var firstField = true;
-            for(var f of currClass.fields){
+            for(var f of fullClass.fields){
                 
                 if(!firstField)
                     classCode += ",";
 
-                classCode += "{\"name\":\""+f.name+"\",\"type\":\"" + f.type + "\"";
-                if(f.fieldType == "Array")
-                    classCode += ",\"fieldType\":\""+f.fieldType+"\"";
-                classCode += "}"; 
+                classCode += "[\"name\":\""+f.name+"\",\"type\":\"" + f.type + "\"";
+                if(f.fieldType == "Array" || f.fieldType == true)
+                    classCode += ",\"fieldType\":\"Array\"";
+                classCode += "]"; 
                 firstField = false;
             }
-            classCode += "]}).\n"
+            classCode += "]]).\n"
         }
         res += "\n" + classCode;
 
