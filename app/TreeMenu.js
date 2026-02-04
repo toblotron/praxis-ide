@@ -154,6 +154,7 @@ praxis.TreeMenu = Class.extend({
                             'add_table': {'name': 'Add data table', 'icon': 'addtable'},
                             'import_csv': {'name': 'Import CSV table', 'icon': 'addtable'},
                             'add_class': {'name': 'Add class', 'icon': 'addclass'},
+                            'add_enum': {'name': 'Add enum', 'icon': 'addenum'},
                             'add_folder': {'name': 'Add folder', 'icon': 'folder'},
                             'delete': {'name': 'Delete', 'icon': 'delete'}
                           };
@@ -165,6 +166,7 @@ praxis.TreeMenu = Class.extend({
                                 'add_table': {'name': 'Add data table', 'icon': 'addtable'},
                                 'import_csv': {'name': 'Import CSV table', 'icon': 'addtable'},
                                 'add_class': {'name': 'Add class', 'icon': 'addclass'},
+                                'add_enum': {'name': 'Add enum', 'icon': 'addenum'},
                                 'add_folder': {'name': 'Add folder', 'icon': 'folder'}
                             }
                          }
@@ -174,6 +176,7 @@ praxis.TreeMenu = Class.extend({
                                 'add_table': {'name': 'Add data table', 'icon': 'addtable'},
                                 'import_csv': {'name': 'Import CSV table', 'icon': 'addtable'},
                                 'add_class': {'name': 'Add class', 'icon': 'addclass'},
+                                'add_enum': {'name': 'Add enum', 'icon': 'addenum'},
                                 'add_folder': {'name': 'Add folder', 'icon': 'folder'},
                                 'delete': {'name': 'Delete', 'icon': 'delete'}
                              };
@@ -243,6 +246,18 @@ praxis.TreeMenu = Class.extend({
                         {
                             var newPage = app.treemenu.addNewClass();
                             var newNode = {title:newPage.name, type:'class', page:newPage.id,icon: "tree_class"}
+                            node.addChildren(newNode);
+
+                            // select the new page in the menu-tree
+                            app.treemenu.selectFromMessage({resourceType:'class',resourceId:newPage.id});
+                            
+                            // go edit it in the drawing page
+                            app.enterClass(newPage.id, newNode);
+                        }
+                        else if(action == "add_enum")
+                        {
+                            var newPage = app.treemenu.addNewClass("enum");
+                            var newNode = {title:newPage.name, type:'class', page:newPage.id,icon: "tree_enum"}
                             node.addChildren(newNode);
 
                             // select the new page in the menu-tree
@@ -414,7 +429,7 @@ addNewDataTable:function(table){
 },
 
 // returns id nr
-addNewClass:function(){
+addNewClass:function(type){ // "enum", if empty, it means class
     var newId = 0;
     
     if(Model.classes == undefined)
@@ -429,17 +444,18 @@ addNewClass:function(){
 
     var newClass = {
         id: newId,
-        nameSpace: "",
-        version:"1.0.0",
-        name: "New Class #" + newId,
-        inherits: "",
-        implements:[],
-        fields:[
-            { name:"FieldName", array:false,namespace:"Namespace",type:"TypeName",nullable:false},
-            { name:"Cat", array:false,namespace:"Namespace",type:"TypeName",nullable:false},
-            { name:"Platypus", array:false,namespace:"Namespace",type:"TypeName",nullable:false}
-        ]
+        name: "New Struct #" + newId,
     };
+
+    if(type != undefined && type == "enum"){
+        newClass.type = "enum";
+        newClass.fields = [];
+    }
+    else
+    {
+        newClass.type = "class";
+        newClass.fields = [];
+    }
 
     Model.classes.push(newClass);
 

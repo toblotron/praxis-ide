@@ -74,12 +74,29 @@ praxis.ClassView = Class.extend({
       }
     ],
 
+    enum_columns:[
+      {
+        "id": "value",
+        "name": "Value",
+        "field": "value",
+        "content": "atom",
+        "width":100
+      }
+    ],
+
     showClass: function(classData){
         
         var options = app.classView.table_options;
     
+        var column_definitions = [];
+        
+        if(classData.type == "enum"){
+          column_definitions = this.enum_columns;
+        } else {
+          column_definitions = this.default_columns;
+        }
         // make deep copy of columns to avoid the table putting a lot of extra stuff there
-        var copiedColumns = JSON.parse(JSON.stringify(this.default_columns)); // classData.columns));
+        var copiedColumns = JSON.parse(JSON.stringify(column_definitions)); // classData.columns));
        
         var undoRedoBuffer = {
           commandQueue : [],

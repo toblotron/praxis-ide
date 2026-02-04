@@ -475,6 +475,7 @@ Model =
     classes:[
         {
             id:0,
+            type:"class",
             name:"Person",
             fields:[
                 {type:"string", name:"FirstName"},
@@ -487,6 +488,7 @@ Model =
         },
         {
             id:1,
+            type:"class",
             name:"Address",
             fields:[
                 {type:"string", name:"StreetName"},
@@ -498,6 +500,7 @@ Model =
         },
         {
             id:2,
+            type:"class",
             name:"Date",
             fields:[
                 {type:"int", name:"Year"},
@@ -507,6 +510,7 @@ Model =
         },
         {
             id:3,
+            type:"class",
             name:"PrivatePerson",
             super:"Person",
             fields:[

@@ -86,17 +86,23 @@ var ShapeParsing = {
         var classCode = "";
         for(var currClass of Model.classes){
             var fullClass = ClassShape.prototype.getFullClass(currClass.name);
-            classCode += "praxis_classInfo([\"name\":\"" + currClass.name + "\",\"fields\":[";
+            classCode += "praxis_classInfo([\"type\":\"" + currClass.type + "\",\"name\":\"" + currClass.name + "\",\"fields\":[";
             var firstField = true;
             for(var f of fullClass.fields){
                 
                 if(!firstField)
                     classCode += ",";
 
-                classCode += "[\"name\":\""+f.name+"\",\"type\":\"" + f.type + "\"";
-                if(f.fieldType == "Array" || f.fieldType == true)
-                    classCode += ",\"fieldType\":\"Array\"";
-                classCode += "]"; 
+                if(currClass.type == "class"){
+                    classCode += "[\"name\":\""+f.name+"\",\"type\":\"" + f.type + "\"";
+                    if(f.fieldType == "Array" || f.fieldType == true)
+                        classCode += ",\"fieldType\":\"Array\"";
+                    classCode += "]"; 
+                } else {
+                    classCode += "\"" + f + "\""; // just an enum value
+                }         
+
+
                 firstField = false;
             }
             classCode += "]]).\n"

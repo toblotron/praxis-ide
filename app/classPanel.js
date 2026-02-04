@@ -26,13 +26,16 @@ praxis.ClassPanel = Class.extend({
         if(classData.superClass != undefined)
             superClassName = classData.superClass;
 
+        var panelTitle = classData.type == "class" ? "Class" : "Enum";
+        
         this.html.html("");
         this.html.append('<div id="rule_property_container" class="panel panel-default">'+
             ' <div class="panel-body" id="rule_panel">'+
             '   <div class="form-group">'+
-            '       <div  class="panel-heading ">Class</div> ' +
-            '       <input id="class_name" type="text" class="form-control" value="'+treeNode.title+'"/>' +
-            '        <div  class="panel-heading ">Superclass</div> ' +
+            '       <div  class="panel-heading ">' + panelTitle + '</div> ' +
+            '       <input id="class_name" type="text" class="form-control" value="'+treeNode.title+'"/>');
+        if(classData.type == "class")
+            this.html.append('        <div  class="panel-heading ">Superclass</div> ' +
             '       <input id="superclass_name" type="text" class="form-control" value="' + superClassName +'"/>');
         this.html.append(
         '			<button id="class_ok_button">Ok</button>'+
@@ -45,10 +48,13 @@ praxis.ClassPanel = Class.extend({
             
             var newTitle=$("#class_name").val();
             classData.name = newTitle;
-            var newSuperClass=$("#superclass_name").val();
-            if(newSuperClass != undefined && newSuperClass != "")
-                classData.superClass = newSuperClass;
+            if(classData.type == "class"){
+                var newSuperClass=$("#superclass_name").val();
+                if(newSuperClass != undefined && newSuperClass != "")
+                    classData.superClass = newSuperClass;
+            }
             treeNode.setTitle(newTitle);
+            app.updateHeading(treeNode);
             app.treemenu.copyStructureFromTree();
         });
 
