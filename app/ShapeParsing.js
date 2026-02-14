@@ -99,7 +99,7 @@ var ShapeParsing = {
                         classCode += ",\"fieldType\":\"Array\"";
                     classCode += "]"; 
                 } else {
-                    classCode += "\"" + f + "\""; // just an enum value
+                    classCode += "\"" + f.value + "\""; // just an enum value
                 }         
 
 
