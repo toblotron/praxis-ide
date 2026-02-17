@@ -597,11 +597,14 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 
                 // set level of new row - if it is expandable or not
                 rowModel.level = 0
+                var classOfField = Model.classes.find(t=>t.name == field.type);
                 if(field.fieldType == "Array" || field.fieldType == true)
                     rowModel.level = 3; // unexpanded array
-                else if(Model.classes.find(t=>t.name == field.type) != undefined)
+                else if(classOfField != undefined){
                     rowModel.level = 1; // expandable class/array..?
-
+                    if(classOfField.type == "enum")
+                        rowModel.level = 7;
+                }
                 // can we take a value from the incoming path?
                 var thisChild = finalChildren.find(c=>c.field == field.name);
                 if(thisChild != undefined)
@@ -637,6 +640,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             var levelInt = parseInt(row.level);
             switch(levelInt){
                 case 0: // normal field
+                case 7: // enum
                     fieldTypeStyle = "background:#f3e7c9; color:black";
                     sideTypeStyle = "background:#f3e7c9; color:black";
                     typeStyle = "background:#f3e7c9; color:black";
@@ -747,7 +751,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
             htmlCode += 
             '<td>' +
-                this.getValueString(rowNr, row.value);
+                this.getValueString(rowNr, row);
             +'</td>';
 
 
@@ -950,11 +954,15 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 var rowModel = {};
                 rowModel.type = field.type;
                 rowModel.field = field.name;
-                rowModel.level = 0;  // the fields of the last class are never expanded, and thus never parents                    
+                rowModel.level = 0;  // the fields of the last class are never expanded, and thus never parents  
+                var classOfField = Model.classes.find(t=>t.name == field.type);                  
                 if(field.fieldType == "Array" || field.fieldType == true)
                     rowModel.level = 3; // unexpanded array
-                else if(Model.classes.find(t=>t.name == field.type) != undefined)
+                else if(classOfField != undefined){
                     rowModel.level = 1; // unexpanded object
+                    if(classOfField.type == "enum")
+                        rowModel.level = 7; // enum
+                }
                 newModel.push(rowModel);
                 //rowNr++;
             }
@@ -1061,6 +1069,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 4 - expanded array
 5 - index-row of expanded array
 6 - update-row
+7 - enum row
 */
 
     // toggle if shape should be about update or set/get
@@ -1206,7 +1215,14 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             var origTypeName = undefined;
             if(origTypeLabel != undefined) 
                 origTypeName = origTypeLabel.innerText;
-            
+
+            var enumList = document.getElementById('enum_'+row);
+            var enumName = undefined;
+            if(enumList != undefined) {
+                enumName = enumList.value;
+                if(enumName == '')
+                    enumName = undefined;
+            }
             var matchInput = document.getElementById('value_'+row);
             var matchValue = undefined;
             if(matchInput != undefined && matchInput.value != undefined)    
@@ -1227,6 +1243,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 newRow.value = matchValue;
             if(className != undefined)
                 newRow.type = className;
+            if(enumName != undefined)
+                newRow.value = enumName;
 
             newRow.level = level;
             newRow.rowNr = row;
@@ -1244,11 +1262,30 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         return rows;
     },
 
-    getValueString: function(rowNr, value){
-        var printString = "";
-        if(value != "" && value != undefined)
-            printString = htmlPrologEncode(value);
-        return '<input id="value_' + rowNr + '" tabIndex="' + (1002 + rowNr) + '" type="text" value="'+ printString +'"/>';
+    getValueString: function(rowNr, row){
+
+        if(row.level == 7) // enum - special input
+        {
+            var usedEnum = this.getFullClass(row.type);
+            var enum_id = 'enum_' + rowNr;
+            var enumValue = row.value;
+            if (enumValue == undefined)
+                enumValue = ""
+            var ret = '<input list="' + enum_id + '_options" id="' + enum_id + '" value="' + enumValue +'">' + 
+                '<datalist id="' + enum_id + '_options">';
+            for(value of usedEnum.fields) {
+                ret += '<option value="\'' + value.value + '\'">';
+            }
+            ret += '</datalist>';
+            return ret;
+
+        } else {
+            var value = row.value;
+            var printString = "";
+            if(value != "" && value != undefined)
+                printString = htmlPrologEncode(value);
+            return '<input id="value_' + rowNr + '" tabIndex="' + (1002 + rowNr) + '" type="text" value="'+ printString +'"/>';
+        }
     },
     getIndexString: function(rowNr, index){
         var printString = "";
@@ -1318,6 +1355,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 case 0: // field
                 case 1: // object
                 case 3: // array
+                case 7: // enum
                     var valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + i, child.value); // all children of this type must have a value
                     var fieldExpression = new AtomExpression("'" + child.field + "'");
                     var matchExpression = new OperatorExpression(fieldExpression, opToken, valueExpression);
@@ -1470,6 +1508,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 case 0: // field
                 case 1: // object
                 case 3: // array
+                case 7: // enum
                     var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
                     res = new RuleExpression(null, "praxis_field_in", [matchExpression, parentExpression]);
                     // make sure parentexpression is listed as used var
