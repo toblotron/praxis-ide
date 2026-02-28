@@ -1249,8 +1249,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             newRow.level = level;
             newRow.rowNr = row;
             
-            // when both these are undefined, the row was invalid
-            endReached = rowIndex == undefined && className == undefined;
+            // is this an invalid row? if no index and (no class OR this is en enum-row without value)
+            endReached = rowIndex == undefined && (className == undefined || (enumList != undefined && enumName == undefined));
 
             if(!endReached)
                 rows.push(newRow);
