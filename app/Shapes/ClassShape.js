@@ -588,8 +588,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             for(field of usedClass.fields){
                 var valueString = "";
                 //if(externalTableNr != undefined && 
-                if(userData.children.length > rowNr)
-                    valueString = userData.children[rowNr].value;
+                //if(userData.children.length > rowNr)
+                //    valueString = userData.children[rowNr].value;
 
                 var rowModel = {};
                 rowModel.type = field.type;
@@ -610,7 +610,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 if(thisChild != undefined)
                     valueString = thisChild.value;
 
-                if(valueString != "")
+                if(valueString != "" && valueString != undefined)
                     rowModel.value = valueString;
                 
                 rowsModel.push(rowModel);
@@ -1134,7 +1134,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             for(i = 0; i < saveModel.length; i++){
                 var row = saveModel[i];
                 // remove rootrow and updaterow
-                if(row.level != -1 && row.level != 6 && (row.level == 2 || row.level == 4 || row.level == 5 || row.value != '')){
+                if(row.level != -1 && row.level != 6 && (row.level == 2 || row.level == 4 || row.level == 5 || (row.value != '' && row.value != undefined))){
                     var childRow = {    
                         level: row.level,
                         value: row.value
@@ -1250,7 +1250,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             newRow.rowNr = row;
             
             // is this an invalid row? if no index and (no class OR this is en enum-row without value)
-            endReached = rowIndex == undefined && (className == undefined || (enumList != undefined && enumName == undefined));
+            endReached = rowIndex == undefined && className == undefined && fieldName == null; // || (enumList != undefined && enumName == undefined));
 
             if(!endReached)
                 rows.push(newRow);
@@ -1489,8 +1489,13 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
         var parents = []; // keep a stack of overlying parent objects - the one last down is the one we are manipulating
         // add rootvar
-        parents.push(new VariableExpression(data.value));
+        parents.push(parentExpression);
 
+        // get the class definition
+        var classDef = app.getClass(data.classId);//#subclassing
+        res = new RuleExpression(null,"praxis_type_in", [new AtomExpression("'" + classDef.name + "'"), parentExpression]);
+        pathExpressions.push(res);
+       
         data.children.forEach(a=>{
 
             var level = parseInt(a.level);
@@ -1505,8 +1510,18 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             var res = null; 
 
             switch(level){
-                case 0: // field
                 case 1: // object
+                    var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
+                    res = new RuleExpression(null, "praxis_field_in", [matchExpression, parentExpression]);
+                    // make sure parentexpression is listed as used var
+                    ShapeParsing.registerVariableUse(parentExpression.name)
+                    var typeName = a.type; //#subclassing
+                    if(typeName != undefined){
+                        pathExpressions.push(res);
+                        res = new RuleExpression(null,"praxis_type_in", [new AtomExpression("'" + typeName + "'"), valueExpression]);
+                    }
+                    break;
+                case 0: // field
                 case 3: // array
                 case 7: // enum
                     var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
@@ -1514,7 +1529,28 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     // make sure parentexpression is listed as used var
                     ShapeParsing.registerVariableUse(parentExpression.name)
                     break;
-                case 2: // expanded class
+                case 2: // expanded class - check class property
+                    var valueString = a.value;
+                    if(valueString == undefined || valueString == '' || valueString == '_'){
+                        valueString = "VAR_" + rpc.idCounter++;
+                        valueExpression = new VariableExpression(valueString);
+                    }
+                    var matchExpression = new OperatorExpression(field, opToken, valueExpression); 
+                    res = new RuleExpression(null, "praxis_field_in", [matchExpression, parentExpression]);
+                    
+                    var typeName = a.type; //#subclassing
+                    if(typeName != undefined){
+                        pathExpressions.push(res); // push previous
+                        res = new RuleExpression(null,"praxis_type_in", [new AtomExpression("'" + typeName + "'"), valueExpression]);    
+                    }
+
+                    // make sure parentexpression is listed as used var
+                    ShapeParsing.registerVariableUse(parentExpression.name)
+
+                    parentString = valueString;
+                    parentExpression = new VariableExpression(parentString);
+                    parents.push(parentExpression);  // push the new parent object on the stack
+                    break;
                 case 4: // expanded array
                     var valueString = a.value;
                     if(valueString == undefined || valueString == '' || valueString == '_'){
@@ -1550,6 +1586,13 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
                     // what was picked out is the new parent, for underlying rows
                     parentExpression = valueExpression;
+                    
+                    var typeName = a.type; //#subclassing
+                    if(typeName != undefined){
+                        res = new RuleExpression(null,"praxis_type_in", [new AtomExpression("'" + typeName + "'"), parentExpression]);
+                        pathExpressions.push(res);
+                    }
+
                     parents.push(parentExpression);  // push the new parent object on the stack
                     break;
             }

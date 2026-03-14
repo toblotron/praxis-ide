@@ -514,13 +514,13 @@ class LogicExpression {
         break;
       case "ONCE":
         ShapeParsing.indent(PC);
-        PC.res.push("once(\n");
+        PC.res.push("once((\n");
         PC.indentation++;
         ShapeParsing.printChildren(PC, this.childBranchExpressions);
         PC.indentation--;
         PC.res.push("\n");
         ShapeParsing.indent(PC);  
-        PC.res.push(")");
+        PC.res.push("))");
         break;
       case "OR":
         var disjunctionSign = ";";

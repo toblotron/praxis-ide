@@ -86,26 +86,32 @@ var ShapeParsing = {
         var classCode = "";
         for(var currClass of Model.classes){
             var fullClass = ClassShape.prototype.getFullClass(currClass.name);
-            classCode += "praxis_classInfo([\"type\":\"" + currClass.type + "\",\"name\":\"" + currClass.name + "\",\"fields\":[";
+            classCode += "praxis_classInfo([\'type\':\'" + currClass.type + "\',\'name\':\'" + currClass.name + "\',\'fields\':[";
             var firstField = true;
+            
             for(var f of fullClass.fields){
                 
                 if(!firstField)
                     classCode += ",";
 
                 if(currClass.type == "class"){
-                    classCode += "[\"name\":\""+f.name+"\",\"type\":\"" + f.type + "\"";
+                    classCode += "[\'name\':\'"+f.name+"\',\'type\':\'" + f.type + "\'";
                     if(f.fieldType == "Array" || f.fieldType == true)
-                        classCode += ",\"fieldType\":\"Array\"";
+                        classCode += ",\'fieldType\':\'Array\'";
                     classCode += "]"; 
                 } else {
-                    classCode += "\"" + f.value + "\""; // just an enum value
+                    classCode += "\'" + f.value + "\'"; // just an enum value
                 }         
-
-
                 firstField = false;
             }
-            classCode += "]]).\n"
+
+            classCode += "]" 
+        
+            // add superclass info?
+            if(currClass.superClass != undefined)
+                classCode += ", 'superClass':'" + currClass.superClass + "'";
+
+            classCode += "]).\n"
         }
         res += "\n" + classCode;
 
