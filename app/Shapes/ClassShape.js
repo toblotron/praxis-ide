@@ -941,6 +941,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 var indexRow = {
                     index: "_",
                     level: 5, // index-row
+                    origType: newParentRow.type,
                     type: newParentRow.type // to begin with, indexrows always have the same type/subclass as their parent array-row (it's the default, even if subclassing can occur later)
                 };
                 newModel.push(indexRow); // insert index-row
@@ -1589,8 +1590,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     
                     var typeName = a.type; //#subclassing
                     if(typeName != undefined){
-                        res = new RuleExpression(null,"praxis_type_in", [new AtomExpression("'" + typeName + "'"), parentExpression]);
                         pathExpressions.push(res);
+                        res = new RuleExpression(null,"praxis_type_in", [new AtomExpression("'" + typeName + "'"), parentExpression]);
                     }
 
                     parents.push(parentExpression);  // push the new parent object on the stack
