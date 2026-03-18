@@ -158,8 +158,11 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         }
 
         // create class name row
+        var classTitle = classDef.name;
+        if(shapeData.isArray)
+            classTitle += " [ ]";
         this.classNameRect = new RoundedRect({fill:'#000000',topLeft:topLeftVal});
-        this.className = new fabric.Text(classDef.name,{fontSize:11, fill: 'white', objectCaching: false, fontFamily:'arial'});
+        this.className = new fabric.Text(classTitle,{fontSize:11, fill: 'white', objectCaching: false, fontFamily:'arial'});
         this.classValueRect = new RoundedRect({fill:'#ffffff',topRight:topRightVal});
         this.classValue = new fabric.Text(shapeData.value,{fontSize:11, fill: 'blue', objectCaching: false, fontFamily:'arial'});
 
@@ -524,6 +527,9 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 rowNr++;
             }
 
+            if(userData.isArray)
+                this.isArray = true;
+
             var rootRow = {
                 type: usedClass.name,
                 field: "{root}",
@@ -531,6 +537,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 value: htmlPrologEncode(userData.value),
                 rowNr: rowNr
             };
+
+            
             rowsModel.push(rootRow);
             rowNr++;
 
@@ -635,7 +643,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             var fieldTypeStyle = "";
             var sideTypeStyle = "";
             var typeStyle ="";
-
+            var styleSpan = 1;
             var arrowchar ="&nbsp;";
             var levelInt = parseInt(row.level);
             switch(levelInt){
@@ -669,6 +677,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     fieldTypeStyle = "background:black; color:white";
                     sideTypeStyle = "background:black; color:white";
                     typeStyle = "background:black; color:white";
+                    styleSpan = 2;
                     break;
                 case 6: // update-row
                     fieldTypeStyle = "background:orange; color:black";
@@ -678,7 +687,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             }
                
             htmlCode += '<td style="' + sideTypeStyle + '; width=10px">' + arrowchar +'</td>' +
-            '<td width="*" style="' + typeStyle + '">' 
+            '<td width="*" colSpan="'+ styleSpan +'" style="' + typeStyle + '">' 
 
             if(levelInt == 5){ // indexrow
                 htmlCode += '# '+ this.getIndexString(rowNr, row.index) + '</td>' +
@@ -740,6 +749,14 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 '<label style="' + fieldTypeStyle + '" id=fieldName_' + rowNr + '>' + row.field + '</label>' + 
                 '<label hidden id=level_' + rowNr + '>'+row.level+'</label>';
                 htmlCode +='<label hidden id=origType_' + rowNr + '>' + row.origType + '</label>';
+            } else if(levelInt == -1){ // root row
+                var heading = row.type;
+                if(this.isArray)
+                    heading += " [ ]";
+                htmlCode += '<label style="' + typeStyle + '" class="classrow">' + heading + '</label>' + 
+                '<label hidden id=level_' + rowNr + '>'+row.level+'</label>'+
+                '<label hidden id=fieldType_' + rowNr + '>'+row.type+'</label>'+
+                '</td>';  
             } else {
                 htmlCode += '<label style="' + typeStyle + '" class="classrow" id=fieldType_' + rowNr + '>' + row.type + '</label>' + 
                 '</td>'+'<td style="' + fieldTypeStyle + '">'+
@@ -753,7 +770,6 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             '<td>' +
                 this.getValueString(rowNr, row);
             +'</td>';
-
 
             htmlCode += '</tr>';
 
@@ -836,7 +852,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             //tableString += '<INPUT id="classValue" value="' + classVarName + '" />';
             
             // show checkbox for get/update
-            tableString += "<div>Update: <input type='checkbox' id='checkbox_update' value='" + (userData.updateVar != undefined ? 'checked' : '') + "' /></div>";
+            tableString += "<div>Update: <input type='checkbox' id='checkbox_update' " + (userData.updateVar != undefined ? 'checked' : '') + " /></div>";
+
+            // show checkbox for isArray
+            tableString += "<div>Array: <input type='checkbox' id='checkbox_array' " + (userData.isArray != undefined ? 'checked' : '') + " /></div>";
 
             // if no table is selected, show comment with instructions
             if(usedClassId == -1)
@@ -1058,6 +1077,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         $(document.body).on("change", '#class_selector', this.onChangeClassSelector);
         $(document.body).on("change", '.subclass_selector', this.onChangeSubClassSelector);
         $(document.body).on("change", '#checkbox_update', this.onChangeUpdateCheckbox);
+        $(document.body).on("change", '#checkbox_array', this.onChangeArrayCheckbox);
         $(document.body).on("click", '#ok_button', this.onClickOkButton);
    
     },
@@ -1091,8 +1111,44 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         }
         else 
         {
-            self.updateVar = null;
+            self.updateVar = undefined;
             newModel.shift();
+        }
+
+        // redraw the control, to update
+        var rowsTableHTML = self.renderRowsModel(newModel);
+        var rowsTableBodyElem = $("#rowstable_body")[0];
+        rowsTableBodyElem.innerHTML = rowsTableHTML;
+    },
+
+    // toggle if shape should be about an array
+    onChangeArrayCheckbox : function(event){
+        var newModel = self.harvestRowData();
+
+        var newIndex = 1;
+        if(self.updateVar != undefined)
+            newIndex = 2;
+
+        var usedClass = Model.classes.find(t=>t.id == usedClassId);
+
+        if(event.currentTarget.checked){
+            // add update row
+            self.isArray = true;
+            
+            var indexRow = {
+                index: "_",
+                level: 5, // index-row
+                value: "_",
+                origType: usedClass.name,
+                type: usedClass.name // to begin with, indexrows always have the same type/subclass as their parent array-row (it's the default, even if subclassing can occur later)
+            };
+
+            newModel.splice(newIndex,0,indexRow);
+        }
+        else 
+        {
+            self.isArray = null;
+            newModel.splice(newIndex,1);
         }
 
         // redraw the control, to update
@@ -1127,6 +1183,11 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             }
             var rootRow = saveModel[index];
             
+            if(self.isArray)
+                shapeModel.data.isArray = true;
+            else 
+                shapeModel.data.isArray = null;
+
             shapeModel.data.name = usedClass.name;
             shapeModel.data.value = rootRow.value;
             shapeModel.data.classId = usedClassId;
@@ -1198,7 +1259,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 fieldName = fieldNameLabel.innerText;
 
             var levelLabel = document.getElementById('level_'+row);
-            var level = false;
+            var level = undefined;
             if(levelLabel != undefined)
                 level = levelLabel.innerText;
 
@@ -1494,9 +1555,12 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
         // get the class definition
         var classDef = app.getClass(data.classId);//#subclassing
-        res = new RuleExpression(null,"praxis_type_in", [new AtomExpression("'" + classDef.name + "'"), parentExpression]);
-        pathExpressions.push(res);
-       
+        // if this is an array, don't expect it to be an object of this type
+        if(!data.isArray == true){
+            res = new RuleExpression(null,"praxis_type_in", [new AtomExpression("'" + classDef.name + "'"), parentExpression]);
+            pathExpressions.push(res);
+        }
+
         data.children.forEach(a=>{
 
             var level = parseInt(a.level);
