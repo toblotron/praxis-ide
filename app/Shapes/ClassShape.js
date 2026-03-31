@@ -1398,10 +1398,23 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         var pathExpressions = [];
         var parents = []; // keep a stack of overlying parent objects - the one last down is the one we are manipulating
 
-        // Add update-var first
-        //parents.push({var:new VariableExpression(data.updateVar)});
-        // add rootvar
-        parents.push({var:new VariableExpression(data.value), level:0});
+        // ----- First, make sure we have the specified type-info in the object 
+        
+        // get the class definition
+        var classDef = app.getClass(data.classId);//#subclassing
+
+        var rootVarExpression = new VariableExpression(data.value);
+
+        // if this is an array, don't expect it to be an object of this type
+        if(!data.isArray == true){
+            // make new var for class-updated structure
+            var varExpression = rootVarExpression;
+            rootVarExpression = new VariableExpression("VAR_" + rpc.idCounter++);
+            res = new RuleExpression(null,"praxis_class_update", [new AtomExpression("'" + classDef.name + "'"), varExpression, rootVarExpression]);
+            pathExpressions.push(res);
+        }
+
+        parents.push({var:rootVarExpression, level:0});
 
         var tokens = Lexer.GetTokens(":");
         var opToken = tokens[0];
@@ -1427,6 +1440,28 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     parent.var = newTargetExpression; // now, THIS is the variable we will do further updates on, from now
                     break;
                 case 2: // expanded class
+                    var valueExpression = null;    
+                    if(child.value == undefined || child.value == "_" || child.value == '')
+                        valueExpression = new VariableExpression("VAR_" + rpc.idCounter++);
+                    else
+                        valueExpression = ShapeParsing.parseShapePrologText(rpc, shapeData, "Row #" + i, child.value);
+                    
+                    var fieldExpression = new AtomExpression("'" + child.field + "'");
+                    var matchExpression = new OperatorExpression(fieldExpression, opToken, valueExpression);
+                    var newValueExpression = new VariableExpression(parent.var.name); // create new, so it will register the new occurence of the variable, and not cause singelton error
+                    childExpression = new RuleExpression(null, "praxis_field_update_in", [matchExpression, newValueExpression]); // pick out the target object
+                    pathExpressions.push(childExpression);
+
+
+                    // now we've picked out the object that's In this field - time to make sure it is of the specified class
+                    var newValueExpression = new VariableExpression("VAR_" + rpc.idCounter++);
+                    // (this is what will be pushed onto the stack at the end of the loop)
+                    childExpression = new RuleExpression(null,"praxis_class_update", [new AtomExpression("'" + child.type + "'"), valueExpression, newValueExpression]);
+                    
+                    
+                    var newParent = {var:newValueExpression, field:fieldExpression, level: level};
+                    parents.push(newParent);  // push the new parent object on the stack
+                    break;
                 case 4: // expanded array
                     // praxis_field_in(Parent, FieldName:Instance)
                     var valueExpression = null;    
@@ -1467,7 +1502,16 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     }
                     var newValueExpression = new VariableExpression(parent.var.name); // create new, so it will register the new occurence of the variable, and not cause singelton error
                     childExpression = new RuleExpression(null, "praxis_array_update_in", [valueExpression, indexExpression, newValueExpression]); // pick out the target object
-                    var newParent = {var:valueExpression, index:indexExpression, level: level};
+                    pathExpressions.push(childExpression);
+
+
+                    // now we've picked out the object that's In this field - time to make sure it is of the specified class
+                    var newValueExpression = new VariableExpression("VAR_" + rpc.idCounter++);
+                    // (this is what will be pushed onto the stack at the end of the loop)
+                    childExpression = new RuleExpression(null,"praxis_class_update", [new AtomExpression("'" + child.type + "'"), valueExpression, newValueExpression]);
+                    
+                    
+                    var newParent = {var:newValueExpression, index:indexExpression, level: level};
                     parents.push(newParent);  // push the new parent object on the stack
                     break;
             }
