@@ -133,7 +133,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         var bottomPad = 2; // extra padding after last row
         var linePad =3;
         // space for expansion-indication
-        var expansionWidth = 7;
+        var expansionWidth = 15;
 
         var topLeftVal = [5,5];
         var topRightVal = [5,5];
@@ -277,12 +277,21 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 var valueText = null;
                 var addSubClassRow = false;
 
-                if(levelInt != 2 || Field.type == undefined) {
+                if(levelInt == 2 && Field.origType != undefined && Field.origType != Field.type)    // expanded class, subclassed (only time origType occurs)
+                {
+                    addSubClassRow = true;
+                    valueText = new RoundedRect({fill:'#ffffff'});
+                    if(valueText.width > rightMax)
+                        rightMax = valueText.width;
+                }
+                else
+                {
                     valueText = new PrologText(Field.value,{fontSize:10, fontFamily:'arial',isPreview:isPreview});
                     if(valueText.width > rightMax)
                         rightMax = valueText.width;
-                } else 
-                    addSubClassRow = true;
+                }
+
+                
 
                 if(isPreview){
                     colRect.set({opacity:0.5});
@@ -298,7 +307,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 };
 
                 if(Field.level == 2 || Field.level== 4)
-                    controlRow.expansionRect = new RoundedRect({fill:sideCol, bottomLeft:[0,0]});
+                    controlRow.expansionRect = new fabric.Text("🞃",{fill:'black',fontSize:15, objectCaching: false,fontFamily:'arial'}); //new RoundedRect({fill:'#ff0000', bottomLeft:[0,0]});
 
                 this.childRows.push(controlRow);
 
@@ -377,7 +386,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             this.updateNameRect.width = leftMax + padding *2; //totWidth; // this.tableName.width + padding * 2;
             
 
-            this.updateName.left = expansionWidth + startx + padding * 1;
+            this.updateName.left = startx + padding * 1;
             this.updateName.top = starty + top + padding;
 
             this.updateValueRect.height = this.updateName.height + padding * 2;
@@ -401,7 +410,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         this.classNameRect.width = leftMax + padding *2; //totWidth; // this.tableName.width + padding * 2;
         
 
-        this.className.left = expansionWidth + startx + padding * 1;
+        this.className.left = startx + padding * 1;
         this.className.top = starty + top + padding;
 
         this.classValueRect.height = this.className.height + padding * 2;
@@ -425,26 +434,27 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             c.colRect.top = starty + top;
             c.colRect.width = leftMax + padding *2;
             
-            if(c.expansionRect != undefined){
-                c.expansionRect.left = startx;
-                c.expansionRect.top = starty + top;
-                c.expansionRect.width = expansionWidth;
-                c.expansionRect.height = c.colRect.height;
-            }
-
             var indexWidth = 0; // added width for possible "#Var" of indexrow indices
             if(c.indexSign != undefined){
-                c.indexSign.left = expansionWidth + c.colRect.left + padding;
+                c.indexSign.left = c.colRect.left + padding;
                 c.indexSign.top = starty + top + padding;
                 
-                c.indexText.left = expansionWidth + c.colRect.left + padding + c.indexSign.width;
+                c.indexText.left = c.colRect.left + padding + c.indexSign.width;
                 c.indexText.top = starty + top + padding;
 
                 indexWidth = c.indexSign.width + c.indexText.width;
             }
 
-            c.colName.left = expansionWidth + indexWidth + c.colRect.left + padding;
+            c.colName.left = indexWidth + c.colRect.left + padding;
             c.colName.top = starty + top + padding;
+
+            // place possible expansion-marker (eg. expansionText, with arrow-chars)
+            if(c.expansionRect != undefined){
+                c.expansionRect.left = startx + c.colRect.width - expansionWidth;
+                c.expansionRect.top = starty + top;
+                c.expansionRect.width = expansionWidth;
+                c.expansionRect.height = c.colRect.height;
+            }
 
             if(c.valueText != null){
                 c.valueText.left = c.colRect.left + c.colRect.width + padding;
@@ -1207,6 +1217,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                         childRow.index = row.index;
                     if(row.type) // only save Selected type, if any. - is either original type or subclassed type
                         childRow.type = row.type;
+                    if(row.origType)
+                        childRow.origType = row.origType;
 
                     children.push(childRow);
                 }
