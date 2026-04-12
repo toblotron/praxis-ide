@@ -659,21 +659,21 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             switch(levelInt){
                 case 0: // normal field
                 case 7: // enum
-                    fieldTypeStyle = "background:#f3e7c9; color:black";
+                    fieldTypeStyle = "background:#f3e7c9; color:black; text-align:right";
                     sideTypeStyle = "background:#f3e7c9; color:black";
                     typeStyle = "background:#f3e7c9; color:black";
                     break;
                 case 1: // unexpanded class
                 case 3: // unexpanded array
-                    fieldTypeStyle = "background: #7282c8; color:black";
-                    sideTypeStyle = "background:black; color:gray";
+                    fieldTypeStyle = "background: #7282c8; color:black; text-align:right";
+                    sideTypeStyle = "color:black; padding-right:10px";
                     typeStyle = "background:black; color:white";
                     arrowchar = "🞂";
                     break;
                 case 2: // expanded class
                 case 4: // expanded array
-                    fieldTypeStyle = "background:#7282c8; color:black";
-                    sideTypeStyle = "background:black; color:gray";
+                    fieldTypeStyle = "background:#7282c8; color:black; text-align:right";
+                    sideTypeStyle = "color:black; padding-right:10px";
                     typeStyle = "background:black; color:white";
                     arrowchar ="🞃";
                     break;
@@ -692,12 +692,12 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 case 6: // update-row
                     fieldTypeStyle = "background:orange; color:black";
                     sideTypeStyle = "background:orange; color:black";
-                    typeStyle = "background:orange; color:orange";
+                    typeStyle = "background:orange; color:black";
+                    styleSpan = 2;
                     break;
             }
                
-            htmlCode += '<td style="' + sideTypeStyle + '; width=10px">' + arrowchar +'</td>' +
-            '<td width="*" colSpan="'+ styleSpan +'" style="' + typeStyle + '">' 
+            htmlCode += '<td width="*" colSpan="'+ styleSpan +'" style="' + typeStyle + '">' 
 
             if(levelInt == 5){ // indexrow
                 htmlCode += '# '+ this.getIndexString(rowNr, row.index) + '</td>' +
@@ -729,18 +729,20 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 htmlCode +='<label hidden id=origType_' + rowNr + '>' + row.origType + '</label></td>';
             } else if(levelInt == 3 || levelInt == 4) { // unexpanded/expanded array
                 htmlCode += '<label style="' + typeStyle + '" class="classrow" id=fieldType_' + rowNr + '>' + row.type + '</label>' + 
-                '</td>'+'<td style="' + fieldTypeStyle + '">'+
+                '</td>'+'<td class="classrow" id=rowNr_' + rowNr + ' style="' + fieldTypeStyle + '">'+
                 '<label style="' + fieldTypeStyle + '">' + row.field + ' []</label>' + 
                 '<label hidden id=level_' + rowNr + '>'+ row.level+'</label>'+
-                '<label hidden id=fieldName_' + rowNr + '>' + row.field+'</label>';  
+                '<label hidden id=fieldName_' + rowNr + '>' + row.field+'</label>'; 
+                htmlCode +='<label style="' + sideTypeStyle + '">'+arrowchar +'</label>' ;
             } else if(levelInt == 2) { // expanded class
                 // check if there are subclasses
                 var baseClassName = row.type;
                 if(row.origType != undefined)
                     baseClassName = row.origType;
                 var classList = this.getClassList(baseClassName);
-                if(classList.length == 1)
-                    htmlCode +='<label style="' + typeStyle + '" id=fieldType_' + rowNr + '>' + row.type + '</label>'; 
+                if(classList.length == 1){
+                    htmlCode +='<label style="' + typeStyle + '" id=fieldType_' + rowNr + '>' + row.type + '</label>';
+                }
                 else{
                     // show a combo
                     var comboString = '<SELECT class="subclass_selector" id="subclassRow_' + rowNr + '">';
@@ -755,23 +757,31 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                     htmlCode +='<label hidden id=fieldType_' + rowNr + '>' + row.type + '</label>';
                     htmlCode +='<label style="' + typeStyle + '" >' + comboString + '</label>'; 
                 }
-                htmlCode += '</td>'+'<td style="' + fieldTypeStyle + '">'+
+                htmlCode += '</td>'+'<td class="classrow" id=rowNr_' + rowNr + ' style="' + fieldTypeStyle + '">'+
                 '<label style="' + fieldTypeStyle + '" id=fieldName_' + rowNr + '>' + row.field + '</label>' + 
                 '<label hidden id=level_' + rowNr + '>'+row.level+'</label>';
                 htmlCode +='<label hidden id=origType_' + rowNr + '>' + row.origType + '</label>';
+                htmlCode +='<label style="' + sideTypeStyle + '">'+arrowchar +'</label>' ;
+                
             } else if(levelInt == -1){ // root row
                 var heading = row.type;
                 if(this.isArray)
                     heading += " [ ]";
-                htmlCode += '<label style="' + typeStyle + '" class="classrow">' + heading + '</label>' + 
+                htmlCode += '<label style="' + typeStyle + '" id=fieldName_' + rowNr + ' class="classrow">' + heading + '</label>' + 
+                '<label hidden id=level_' + rowNr + '>'+row.level+'</label>'+
+                '<label hidden id=fieldType_' + rowNr + '>'+row.type+'</label>'+
+                '</td>';  
+            } else if(levelInt == 6){ // UPDATE row
+                htmlCode += '<label style="' + typeStyle + '" id=fieldName_' + rowNr + '>' +  row.field  + '</label>' + 
                 '<label hidden id=level_' + rowNr + '>'+row.level+'</label>'+
                 '<label hidden id=fieldType_' + rowNr + '>'+row.type+'</label>'+
                 '</td>';  
             } else {
                 htmlCode += '<label style="' + typeStyle + '" class="classrow" id=fieldType_' + rowNr + '>' + row.type + '</label>' + 
-                '</td>'+'<td style="' + fieldTypeStyle + '">'+
+                '</td>'+'<td class="classrow" id=rowNr_' + rowNr + ' style="' + fieldTypeStyle + '">'+
                 '<label style="' + fieldTypeStyle + '" id=fieldName_' + rowNr + '>' + row.field + '</label>' + 
-                '<label hidden id=level_' + rowNr + '>'+row.level+'</label>';  
+                '<label hidden id=level_' + rowNr + '>'+row.level+'</label>';
+                htmlCode +='<label style="' + sideTypeStyle + '">'+arrowchar +'</label>' ;  
             }
             
             htmlCode += '</td>';
@@ -837,7 +847,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             //'	<tbody>';
 
 
-            tableString += '<SELECT id="class_selector" tabIndex="1001">';
+            tableString += '<div style="display: flex;justify-content: space-evenly"><SELECT id="class_selector" tabIndex="1001">';
             var classRefs = Model.classes;
 
             // empty sel
@@ -862,10 +872,10 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             //tableString += '<INPUT id="classValue" value="' + classVarName + '" />';
             
             // show checkbox for get/update
-            tableString += "<div>Update: <input type='checkbox' id='checkbox_update' " + (userData.updateVar != undefined ? 'checked' : '') + " /></div>";
+            tableString += "Update: <input type='checkbox' id='checkbox_update' " + (userData.updateVar != undefined ? 'checked' : '') + " />";
 
             // show checkbox for isArray
-            tableString += "<div>Array: <input type='checkbox' id='checkbox_array' " + (userData.isArray != undefined ? 'checked' : '') + " /></div>";
+            tableString += "Array: <input type='checkbox' id='checkbox_array' " + (userData.isArray != undefined ? 'checked' : '') + " /></div>";
 
             // if no table is selected, show comment with instructions
             if(usedClassId == -1)
@@ -880,7 +890,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
         var rowsCode = figure.renderRowsModel(rowsModel);
 
-        tableString += '<table cellspacing="1"><tbody id="rowstable_body">';
+        tableString += '<table cellspacing="0"><tbody id="rowstable_body">';
         tableString += rowsCode;
         tableString += '</tbody></table>';
 
@@ -1365,7 +1375,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         var printString = "";
         if(index != "")
             printString = htmlPrologEncode(index);
-        return '<input id="index_' + rowNr + '" style="width:70%" type="text" value="'+ printString +'"/>';
+        return '<input class="indexInput" id="index_' + rowNr + '" style="width:70%" type="text" value="'+ printString +'"/>';
     },
     // get this classname + a list of subclasses, if any exist
     getClassList: function(className){

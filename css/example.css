@@ -32,6 +32,11 @@ body {
     margin-bottom: 2px;
 }
 
+.indexInput{
+    border-radius: 5px !important;
+    height: 20px !important;
+}
+
 #centerPane {
     background-color: #908ba3 !important; 
 }
