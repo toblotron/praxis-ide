@@ -7,12 +7,20 @@ praxis.TreeMenu = Class.extend({
 	init:function(canvas_element_id){
 		
         this.rebuildTree(canvas_element_id);
-
+        this.self = this;
         // handle import of CSV file
         this.fileSelector = document.getElementById('importCSVFile');
 		this.fileSelector.addEventListener('change', $.proxy(this.handleCSVFileSelect,this));
-
+        this.elem = document.getElementById(canvas_element_id);
 	},
+
+    hide: function(){
+        this.elem.style.display = "none";
+    },
+
+    show: function(){
+        this.elem.style.display = "block";
+    },
 
     handleCSVFileSelect:function(event) {
         var fileReader = new FileReader();

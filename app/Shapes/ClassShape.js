@@ -919,8 +919,21 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         // find the closest expanded class above the clicked row
         var currentParentClass = null;
         var parentRowIndex = parseInt(clickedRowNr);
+
+        var clickedExpandedArray = false;
+        // if this is an expanded array, and there is an indexrow below, look at that instead
+        if(rowsModel[parentRowIndex].level == 4 && rowsModel.length > parentRowIndex-1 && rowsModel[parentRowIndex+1].level == 5){
+            parentRowIndex++;
+            clickedRowNr++;
+            clickedExpandedArray = true;
+        }
+
         while(currentParentClass == null && parentRowIndex > -1){
-            if(rowsModel[parentRowIndex].level == 2 || rowsModel[parentRowIndex].level == 4 || rowsModel[parentRowIndex].level == 5 || rowsModel[parentRowIndex].level == -1){
+            if(rowsModel[parentRowIndex].level == 2 
+                || rowsModel[parentRowIndex].level == 4 
+                || rowsModel[parentRowIndex].level == -1
+                || rowsModel[parentRowIndex].level == 5 // indexrow
+            ){
                 // only look after expanded rows/ root-row
                 currentParentClass = Model.classes.find(t=>t.name == rowsModel[parentRowIndex].type);
                 currentParentClass = self.getFullClass(currentParentClass.name);
@@ -941,12 +954,15 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         var lastParentRowOfPath = -1;
         var rowNr = 0;
         rowsModel.forEach(c=> {
-            if(c.level == 2) 
+            if(c.level == 2 || c.level == 5) 
                 lastParentRowOfPath = rowNr; 
             rowNr++;
         });
 
         var clickedRowLevel = rowsModel[clickedRowNr].level;
+        //if(clickedExpandedArray)
+        //    clickedRowLevel = 5; // indexrow
+
         // 1 - go down into an unexpanded class? (the clicked row is the same where we found the closest above class, and that node is unexpanded)
         if(clickedRowNr > parentRowIndex && clickedRowNr > lastParentRowOfPath  && clickedClass != undefined && (clickedRowLevel == 1 || clickedRowLevel == 3)) // 1 = expandable unexpanded, 3 = array unexpanded
         {
@@ -961,7 +977,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             var toBeRemoved = [];
             for(i=0; i<newModel.length; i++)
             {
-                if(newModel[i].rowNr > (parentRowIndex) && newModel[i].value == '') // empty value
+                if(newModel[i].rowNr > (parentRowIndex) && (newModel[i].value == '' || newModel[i].value == undefined)) // empty value
                     toBeRemoved.push(newModel[i]);
             }
             newModel = newModel.filter(e => !toBeRemoved.includes(e));
@@ -1059,11 +1075,15 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 rowModel.type = field.type;
                 
                 rowModel.field = field.name;
-                rowModel.level = 0;  // the fields of the last class are never expanded, and thus never parents                    
+                rowModel.level = 0;  // the fields of the last class are never expanded, and thus never parents   
+                var classOfField = Model.classes.find(t=>t.name == field.type);                 
                 if(field.fieldType == "Array" || field.fieldType == true)
                     rowModel.level = 3; // unexpanded array
-                else if(Model.classes.find(t=>t.name == field.type) != undefined)
-                    rowModel.level = 1; // "builtin" types are not stored in classes - are always fields
+                else if(classOfField != undefined){
+                    rowModel.level = 1; // unexpanded object
+                    if(classOfField.type == "enum")
+                        rowModel.level = 7; // enum
+                }
                 else
                     rowModel.origType = field.type; // has a class-type; put the original type here
 

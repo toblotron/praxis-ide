@@ -498,6 +498,7 @@ praxis.View = Class.extend({
 
             app.drawingPanel.show();
             app.palette.show();
+            app.treemenu.show();
         });
 
         canvas.on('mouse:move', function(options) {
@@ -1289,10 +1290,12 @@ praxis.View = Class.extend({
             app.drawingPanel.hide();
             app.folderPanel.hide();
             app.palette.hide();
+            app.treemenu.hide();
         }
         else
         {
             app.palette.show();
+            app.treemenu.show();
             app.drawingPanel.show();
         }
         // check which shapes are selected
