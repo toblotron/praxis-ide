@@ -43,6 +43,48 @@ praxis.View = Class.extend({
         this.elem = document.getElementsByClassName("canvas-container")[0];
         var canvasElem = document.getElementById("canvaswrapper");
 
+        const menu = document.getElementById("contextMenu");
+
+        // Show custom menu
+        canvasElem.oncontextmenu = function (e) {
+            e.preventDefault();
+            //debugger;
+            console.log("context menu!", e);
+
+            const pointer = canvas.getPointer(e);
+            selectedObject = canvas.findTarget(e);
+
+            if (!selectedObject) {
+                menu.style.display = "none";
+                return;
+            }
+
+            canvas.setActiveObject(selectedObject);
+            canvas.requestRenderAll();
+
+            menu.style.left = `${e.clientX}px`;
+            menu.style.top = `${e.clientY}px`;
+            menu.style.display = "block";
+        };
+
+        menu.addEventListener("click", (e) => {
+            const action = e.target.dataset.action;
+
+            if (!action || !selectedObject) return;
+
+            console.log("Clicked:", action);
+
+            switch (action) {
+                case "exclude":
+                    app.view.toggleExclude(selectedObject);
+                    break;
+            }
+
+            menu.style.display = "none";
+            canvas.requestRenderAll();
+        });
+
+
         // hook these to "canvaswrapper" div
         canvasElem.onkeydown = function(e) {
             //if (objSelected) {
@@ -121,6 +163,8 @@ praxis.View = Class.extend({
                 //document.body.style.cursor = "all-scroll";
 
             } 
+            else 
+                menu.style.display = "none";
             
             // ALWAYS deselect selected connection when clicking on anything? 
             app.view.unmarkSelectedConnection();
@@ -1386,6 +1430,20 @@ praxis.View = Class.extend({
         // delete reference in view
 
     },
+
+    // toggle if a shape should be excluded
+    toggleExclude: function(selectedObject){
+        var shapeId = selectedObject.id;
+        var shapeModel = this.pageModel.shapes.find(s=>s.id == shapeId);
+        if (shapeModel.data.isExcluded != null && shapeModel.data.isExcluded == true){
+            shapeModel.data.isExcluded = false;
+        }
+        else 
+            shapeModel.data.isExcluded = true;
+
+        app.view.updateShapeContents(shapeModel);
+        app.view.canvas.renderAll();
+    }, 
 
     // delete all tings selected (shapes, their ports and their connections)
     deleteSelection: function(){

@@ -24,6 +24,8 @@ var RuleShape = fabric.util.createClass(fabric.Group, {
         this.libraryName = null;
         this.ruleRect = null;
         this.ruleName = null;
+        
+        this.exclusionLines = [];
     },
 
     // gather all ports, with positions relative to the shape left/top (in this case, center)
@@ -72,6 +74,10 @@ var RuleShape = fabric.util.createClass(fabric.Group, {
 
         if(this.bg != null)
             this.remove(this.bg);
+
+        for(e of this.exclusionLines)
+            this.remove(e);
+        this.exclusionLines = [];
 
         var startx = this.left;
         var starty = this.top;
@@ -129,6 +135,23 @@ var RuleShape = fabric.util.createClass(fabric.Group, {
         if(isPreview){
             this.ruleRect.set({opacity:0.5});
             this.ruleName.set({opacity:0.5, fontStyle:'italic'});
+        }
+
+        if(shapeData.isExcluded){
+            this.exclusionLines.push(new fabric.Path(`
+                M  0 12
+                L  12 0 
+                M  0 20 
+                L  20 0`, {
+                stroke: '#ffffff', strokeWidth: 3, strokeLineCap: 'round', left: 40, top: 40
+            })); 
+            this.exclusionLines.push(new fabric.Path(`
+                M  0 16
+                L  16 0 
+                M  0 24 
+                L  24 0`, {
+                stroke: '#000000', strokeWidth: 3, strokeLineCap: 'round', left: 40, top: 40
+            })); 
         }
 
         leftMax = this.ruleName.width + padding * 2;
@@ -250,6 +273,18 @@ var RuleShape = fabric.util.createClass(fabric.Group, {
           }),});*/
 
 
+          // add possible this.exclusionLines
+        
+        var i = 0;
+        for(e of this.exclusionLines){
+            i++;
+            e.top = starty; //bg.top;// + bgStartY;
+            e.height = 15 + i * 5 ; // bgHeight /2;
+            e.left = startx; // + totWidth/2 + 10;
+            e.width = 15 + i * 5; //bgWidth/2;
+            this.addWithUpdate(e)
+        }
+        
         // Finally - change bg so it only covers the arguments
         if(hasArguments){
             bg.top = bg.top + bgStartY;

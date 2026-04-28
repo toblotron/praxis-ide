@@ -78,6 +78,9 @@ var pb = {
     "RuleShape":{
         shouldStartRule: function(shape, pc){
 
+            if(shape.data.isExcluded)
+                return false;
+            
             // to start rule, should have no incoming connections, and not be conatained by group
             var shouldStart = incomingArrows(shape,pc.page) == 0 && getContainer(shape,pc) == undefined &&  
                 !this.isInvalid(shape,pc); // no name, = invalid

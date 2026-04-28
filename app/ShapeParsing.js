@@ -207,6 +207,7 @@ var ShapeParsing = {
         if(elseShapesData.length > 0){
             var elseExpressions = [];
             elseShapesData.forEach(elseShapeId => {
+
                 elseExpressions.push(this.parseShapeExpression(elseShapeId, rpc));
             });
             res.elseExpressions = elseExpressions;
@@ -228,7 +229,7 @@ var ShapeParsing = {
     parseContainedCodes(containedIds, rpc){
         var targets = [];
         for(var childId of containedIds) {
-            target = rpc.page.shapes.find(sh => sh.id == childId && incomingArrows(sh, rpc.page) == 0);
+            target = rpc.page.shapes.find(sh => sh.id == childId && (sh.data.isExcluded == undefined || sh.data.isExcluded == false) && incomingArrows(sh, rpc.page) == 0);
             if(target != undefined) // if has no incoming arrows
                 targets.push(target);
         }
@@ -346,8 +347,10 @@ var ShapeParsing = {
                 )
             ){
                 // return the other shape the connection is involved with - not the source-shape itself :)
-                target = rpc.page.shapes.find(sh => (sh.id == connection.target.shape || sh.id == connection.source.shape) && sh.id != shapeData.id);
-                targets.push(target);
+                // - but only if it is not excluded
+                var target = rpc.page.shapes.find(sh => (sh.id == connection.target.shape || sh.id == connection.source.shape) && (sh.data.isExcluded == undefined || sh.data.isExcluded == false) && sh.id != shapeData.id);
+                if(target != undefined)
+                    targets.push(target);
             }
         }
         return targets.sort(compareXPos);

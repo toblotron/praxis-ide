@@ -12,6 +12,15 @@ body {
     text-rendering: optimizeLegibility;
 }
 
+#contextMenu li {
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+#contextMenu li:hover {
+  background-color: #eee;
+}
+
 #output{
     background-color: #676472;
     margin-left: 25px;
