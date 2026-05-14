@@ -157,6 +157,13 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             topRightVal = [0,0];
         }
 
+        if(isUpdate && (isPreview || shapeData.isExcluded)){
+            this.updateNameRect.set({opacity:0.5});
+            this.updateValueRect.set({opacity:0.5});
+            this.updateName.set({opacity:0.5, fontStyle:'italic'});
+            this.updateValue.set({opacity:0.5, fontStyle:'italic'});
+        }
+
         // create class name row
         var classTitle = classDef.name;
         if(shapeData.isArray)
@@ -296,6 +303,8 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 if(isPreview || shapeData.isExcluded){
                     colRect.set({opacity:0.5});
                     colName.set({opacity:0.5, fontStyle:'italic'});
+                    if(indexText != undefined)
+                        indexText.set({opacity:0.5, fontStyle:'italic'});
                 }
 
                 var controlRow = {
@@ -352,7 +361,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
           });
         var bg = this.bg;
 
-        if(isPreview)
+        if(isPreview || shapeData.isExcluded)
           bg.set({opacity:0.5});
 
         leftMax += expansionWidth;
