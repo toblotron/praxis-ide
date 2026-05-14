@@ -81,7 +81,7 @@ var FindallShape = fabric.util.createClass(fabric.Group, {
         bgStartY = totHeight;   // save for setting final bg location
 
         this.capturePattern = new PrologText(shapeData.capturePattern,{fontSize:11, objectCaching: false,originX: 'center',
-        originY: 'center', fontFamily:'arial', isPreview:isPreview });
+        originY: 'center', fontFamily:'arial', isPreview:isPreview  || shapeData.isExcluded});
         var captureWidth = this.capturePattern.width + padding * 2;
         if(captureWidth > maxWidth)
             maxWidth = captureWidth;
@@ -89,7 +89,7 @@ var FindallShape = fabric.util.createClass(fabric.Group, {
 
 
         this.captureList = new PrologText(shapeData.captureList,{fontSize:11, objectCaching: false, originX: 'center',
-        originY: 'center',fontFamily:'arial', isPreview:isPreview});
+        originY: 'center',fontFamily:'arial', isPreview:isPreview || shapeData.isExcluded});
 
         var captureListWidth = this.captureList.width + padding * 2;
         if(captureListWidth > maxWidth)
@@ -115,7 +115,7 @@ var FindallShape = fabric.util.createClass(fabric.Group, {
           });
         var bg = this.bg;
 
-        if(isPreview){
+        if(isPreview || shapeData.isExcluded){
             this.titleRect.opacity = 0.5;
             
             this.titleName.opacity = 0.5

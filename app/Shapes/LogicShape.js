@@ -93,6 +93,12 @@ var LogicShape = fabric.util.createClass(fabric.Group, {
             originY: 'center', 
             fontFamily:'arial'});
 
+        if(shapeData.isExcluded){
+            this.circle.set({opacity:0.5, fill:'grey'});
+            this.rect.set({opacity:0.5, fill:'grey'});
+            this.operatorText.set({opacity:0.5, fontStyle:'italic'});
+        }
+
         this.circle.top = starty;
         
         this.addWithUpdate(this.circle);

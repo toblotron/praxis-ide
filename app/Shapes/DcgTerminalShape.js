@@ -82,6 +82,11 @@ var DcgTerminalShape = fabric.util.createClass(fabric.Group, {
            });
          var bg = this.bg;
  
+         if(shapeData.isExcluded){
+            this.bg.set({opacity:0.5});
+            this.value.set({opacity:0.5, fontStyle:'italic'});
+         }
+
          totHeight += bottomPad;
  
          // center the bg rect on midpoint

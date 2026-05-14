@@ -95,7 +95,7 @@ var TableShape = fabric.util.createClass(fabric.Group, {
         this.tableNameRect = new RoundedRect({fill:'#99dd88',topLeft:[5,5],topRight:[5,5]});
         this.tableName = new fabric.Text(table.name,{fontSize:11, objectCaching: false, fontFamily:'arial'});
 
-        if(isPreview){
+        if(isPreview || shapeData.isExcluded){
             this.tableNameRect.set({fill:'#555555', opacity:0.5});
             this.tableName.set({opacity:0.5, fontStyle:'italic'});
         }
@@ -133,11 +133,11 @@ var TableShape = fabric.util.createClass(fabric.Group, {
                 colRect.height = colName.height + padding * 2;
                 totHeight += colName.height + padding *2;
 
-                var valueText = new PrologText(TextValue,{fontSize:10, fontFamily:'arial',isPreview:isPreview});
+                var valueText = new PrologText(TextValue,{fontSize:10, fontFamily:'arial',isPreview:isPreview || shapeData.isExcluded});
                 if(valueText.width > rightMax)
                     rightMax = valueText.width;
 
-                if(isPreview){
+                if(isPreview || shapeData.isExcluded){
                     colRect.set({opacity:0.5});
                     colName.set({opacity:0.5, fontStyle:'italic'});
                 }
@@ -165,7 +165,7 @@ var TableShape = fabric.util.createClass(fabric.Group, {
           });
         var bg = this.bg;
 
-        if(isPreview)
+        if(isPreview || shapeData.isExcluded)
           bg.set({opacity:0.5});
 
         var totWidth = leftMax + rightMax + 4*padding;

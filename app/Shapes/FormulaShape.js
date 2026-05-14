@@ -88,7 +88,7 @@ var FormulaShape = fabric.util.createClass(fabric.Group, {
         // create controls and gather maxwidths
         for(rowData of shapeData.rows) {
             //var leftRect = new fabric.Rect({fill:'beige'});
-            var leftText = new PrologText(rowData.left,{isPreview: isPreview});
+            var leftText = new PrologText(rowData.left,{isPreview: isPreview || shapeData.isExcluded});
             if(leftText.width > leftMax)
                 leftMax = leftText.width;
 
@@ -103,7 +103,7 @@ var FormulaShape = fabric.util.createClass(fabric.Group, {
             totHeight += midText.height + padding*2;
             
             //var rightRect = new fabric.Rect({fill:'beige'});
-            var rightText = new PrologText(rowData.right,{isPreview:isPreview});
+            var rightText = new PrologText(rowData.right,{isPreview:isPreview || shapeData.isExcluded});
             if(rightText.width > rightMax)
                 rightMax = rightText.width;
 
@@ -115,7 +115,7 @@ var FormulaShape = fabric.util.createClass(fabric.Group, {
                 //rRect:rightRect, 
                 right:rightText};
             
-            if(isPreview){
+            if(isPreview || shapeData.isExcluded){
                 midRect.set({opacity:0.5});
                 midText.set({opacity:0.5, fontStyle:'italic'});
             }
@@ -135,13 +135,16 @@ var FormulaShape = fabric.util.createClass(fabric.Group, {
             height: 30,
             fill: 'white',
             rx: 5,
-            ry: 5
+            ry: 5,
+            hasBorders :true,
+            borderColor : '#999999',
+            borderSize : 3
           });
         var bg = this.bg;
 
-        if(isPreview)
+        if(isPreview || shapeData.isExcluded){
             bg.set({opacity:0.5});
-
+        }
         // add sidePadding
         totHeight += sidePadding * 2 + bottomPadding;
                 
@@ -150,6 +153,7 @@ var FormulaShape = fabric.util.createClass(fabric.Group, {
         bg.height = totHeight;
         bg.left = this.left - bg.width/2;
         bg.top = this.top - bg.height/2;
+        
         startx = bg.left + sidePadding;
         starty = bg.top;
 

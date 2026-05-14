@@ -147,6 +147,12 @@ var GroupShape = fabric.util.createClass(fabric.Group, {
             this.opBack.height = this.op.height + opPadding *2;
             this.addWithUpdate(this.opBack);
             this.addWithUpdate(this.op);
+
+            if(shapeData.isExcluded){
+                this.bg.set({opacity:0.5, fill:'grey'});
+                this.opBack.set({opacity:0.5, fill:'grey'});
+                this.op.set({opacity:0.5, fontStyle:'italic'});
+            }
         }
         this.scaleX = 1;
         this.scaleY = 1;

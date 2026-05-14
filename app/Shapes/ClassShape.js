@@ -22,7 +22,6 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         this.classValueRect = null;
         this.classValue = null;
         this.isDataShape = true;
-        this.exclusionLines = [];
           
     },
 
@@ -82,12 +81,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             this.remove(this.updateValueRect);
             this.remove(this.updateName);
             this.remove(this.updateValue);
-        }
-
-        for(e of this.exclusionLines)
-            this.remove(e);
-        this.exclusionLines = [];
-          
+        }          
     
         var startx = this.left;
         var starty = this.top;
@@ -172,7 +166,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         this.classValueRect = new RoundedRect({fill:'#ffffff',topRight:topRightVal});
         this.classValue = new fabric.Text(shapeData.value,{fontSize:11, fill: 'blue', objectCaching: false, fontFamily:'arial'});
 
-        if(isPreview){
+        if(isPreview || shapeData.isExcluded){
             this.classNameRect.set({fill:'#000000', opacity:0.5});
             this.className.set({opacity:0.5, fontStyle:'italic'});
             this.classValueRect.set({fill:'#ffffff', opacity:0.5});
@@ -194,23 +188,6 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
             topWidth = top2Width;
         
         var valueIndex = 0;
-
-        if(shapeData.isExcluded){
-            this.exclusionLines.push(new fabric.Path(`
-                M  0 12
-                L  12 0 
-                M  0 20 
-                L  20 0`, {
-                stroke: '#ffffff', strokeWidth: 3, strokeLineCap: 'round', left: 40, top: 40
-            })); 
-            this.exclusionLines.push(new fabric.Path(`
-                M  0 16
-                L  16 0 
-                M  0 24 
-                L  24 0`, {
-                stroke: '#000000', strokeWidth: 3, strokeLineCap: 'round', left: 40, top: 40
-            })); 
-        }
 
         // ..?.. // TODO: This doesn't work properly when the number of columns is LESS
         // than that in the shape.. figure out complete solution later 
@@ -280,7 +257,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                         if(indexDisplay != "_" && indexDisplay != "")
                         {
                             // show syntax highlighted index code
-                            indexText = new PrologText(Field.index,{fontSize:10, fontFamily:'arial',isPreview:isPreview});
+                            indexText = new PrologText(Field.index,{fontSize:10, fontFamily:'arial',isPreview:isPreview|| shapeData.isExcluded});
                         }
                         else 
                             indexText = new fabric.Text("?",{fill:'blue',fontSize:10, objectCaching: false,fontFamily:'arial'});
@@ -309,14 +286,14 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 }
                 else
                 {
-                    valueText = new PrologText(Field.value,{fontSize:10, fontFamily:'arial',isPreview:isPreview});
+                    valueText = new PrologText(Field.value,{fontSize:10, fontFamily:'arial',isPreview:isPreview|| shapeData.isExcluded});
                     if(valueText.width > rightMax)
                         rightMax = valueText.width;
                 }
 
                 
 
-                if(isPreview){
+                if(isPreview || shapeData.isExcluded){
                     colRect.set({opacity:0.5});
                     colName.set({opacity:0.5, fontStyle:'italic'});
                 }
@@ -347,7 +324,7 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
 
                     valueText = null;
                     
-                    valueText = new PrologText(Field.value,{fontSize:10, fontFamily:'arial',isPreview:isPreview});
+                    valueText = new PrologText(Field.value,{fontSize:10, fontFamily:'arial',isPreview:isPreview || shapeData.isExcluded});
                     if(valueText.width > rightMax)
                         rightMax = valueText.width;
                     
@@ -498,18 +475,6 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
                 this.addWithUpdate(c.indexText);
             }
         };
-
-        // add possible this.exclusionLines
-        
-        var i = 0;
-        for(e of this.exclusionLines){
-            i++;
-            e.top = starty; //bg.top;// + bgStartY;
-            e.height = 15 + i * 5 ; // bgHeight /2;
-            e.left = startx; // + totWidth/2 + 10;
-            e.width = 15 + i * 5; //bgWidth/2;
-            this.addWithUpdate(e)
-        }
 
         // finally - set proper dimensions of bg - should just be background
         // for table arguments

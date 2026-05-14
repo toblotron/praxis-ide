@@ -109,7 +109,7 @@ var DcgShape = fabric.util.createClass(fabric.Group, {
             
             this.libraryRect = new RoundedRect({fill:'#000000', topLeft:[5,5], bottomLeft:bottomCorner});
             this.libraryName = new fabric.Text(shapeData.libraryName,{fontSize:12, objectCaching: false, fill:'yellow',fontFamily:'arial'});
-            if(isPreview){
+            if(isPreview || shapeData.isExcluded){
                 this.libraryRect.set({fill:'#555555', opacity:0.5});
                 this.libraryName.set({opacity:0.5, fontStyle:'italic'});
             }
@@ -120,7 +120,7 @@ var DcgShape = fabric.util.createClass(fabric.Group, {
         }
         
         this.ruleName = new fabric.Text(shapeData.ruleName,{fontSize:12,fill:'white', objectCaching: false, fontFamily:'arial'});
-        if(isPreview){
+        if(isPreview || shapeData.isExcluded){
             this.ruleRect.set({opacity:0.5});
             this.ruleName.set({opacity:0.5, fontStyle:'italic'});
         }
@@ -135,7 +135,7 @@ var DcgShape = fabric.util.createClass(fabric.Group, {
         // create controls and gather maxwidths
         for(argText of shapeData.arguments) {
             var leftText = new PrologText(argText,{fontSize:12, 
-                objectCaching: false,fontFamily:'arial',isPreview:isPreview});
+                objectCaching: false,fontFamily:'arial',isPreview:isPreview || shapeData.isExcluded});
 
             if(leftText.width+padding*2 +leftPad > leftMax)
                 leftMax = leftText.width+padding*2+leftPad;
@@ -158,7 +158,7 @@ var DcgShape = fabric.util.createClass(fabric.Group, {
             // add pushback rows
             for(pushText of shapeData.pushback) {
                 var pushbackText = new PrologText(pushText,{fontSize:12, 
-                    objectCaching: false,fontFamily:'arial',isPreview:isPreview});
+                    objectCaching: false,fontFamily:'arial',isPreview:isPreview || shapeData.isExcluded});
     
                 if(pushbackText.width+padding*2 +leftPad > leftMax)
                     leftMax = pushbackText.width+padding*2+leftPad;
@@ -194,7 +194,7 @@ var DcgShape = fabric.util.createClass(fabric.Group, {
           });
         var bg = this.bg;
         
-        if(isPreview)
+        if(isPreview || shapeData.isExcluded)
             bg.set({opacity:0.5});
 
         //this.libraryRect.set({clipPath: this.bg});
