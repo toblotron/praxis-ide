@@ -221,6 +221,10 @@ var pb = {
     },
     "DcgShape":{
         shouldStartRule: function(shape, pc){
+
+            if(shape.data.isExcluded)
+                return false;
+            
             // refuse to build rules for imported libraries
             if(shape.data.libraryName != "" && app.libraries.some(rd=>rd.external == true && rd.name == shape.data.libraryName))
                 return false;

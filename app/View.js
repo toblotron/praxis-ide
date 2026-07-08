@@ -43,7 +43,42 @@ praxis.View = Class.extend({
         this.elem = document.getElementsByClassName("canvas-container")[0];
         var canvasElem = document.getElementById("canvaswrapper");
 
-        const menu = document.getElementById("contextMenu");
+        const menu = document.getElementById("ctxMenu");
+        let selectedObject = null;
+
+        const menuActions = {
+            exclude: {
+                label: "Exclude",
+                run: (obj) => app.view.toggleExclude(obj)
+            },
+            include: {
+                label: "Include",
+                run: (obj) => app.view.toggleExclude(obj)
+            },
+            listDefinitions: {
+                label: "List definitions",
+                run: (obj) => canvas.sendObjectToBack(obj)
+            },
+            listReferences: {
+                label: "List references",
+                run: (obj) => obj.set("fill", "blue")
+            }
+        };
+
+        function getMenuForObject(obj) {
+            if (!obj) {
+                return [];
+            }
+
+            switch (obj.type) {
+                case "commentShape":
+                case "straightConnector":
+                case "port":
+                    return [];
+                default:
+                    return ["exclude", "include"];
+            }
+        }
 
         // Show custom menu
         canvasElem.oncontextmenu = function (e) {
@@ -54,7 +89,26 @@ praxis.View = Class.extend({
             const pointer = canvas.getPointer(e);
             selectedObject = canvas.findTarget(e);
 
+            const actionIds = getMenuForObject(selectedObject);
+
             if (!selectedObject) {
+                menu.style.display = "none";
+                return;
+            }
+
+            menu.innerHTML = "";
+
+            for (const id of actionIds) {
+                const action = menuActions[id];
+
+                const li = document.createElement("li");
+                li.textContent = action.label;
+                li.dataset.action = id;
+
+                menu.appendChild(li);
+            }
+
+            if (actionIds.length === 0) {
                 menu.style.display = "none";
                 return;
             }
@@ -76,6 +130,7 @@ praxis.View = Class.extend({
 
             switch (action) {
                 case "exclude":
+                case "include":
                     app.view.toggleExclude(selectedObject);
                     break;
             }
