@@ -786,6 +786,49 @@ var RuleShape = fabric.util.createClass(fabric.Group, {
         var body = ShapeParsing.parseAllBelow(shapeData, rpc);
         return new RuleExpression(library,name,args,body);
     },*/
+
+    searchFor:function(page, shape, target){
+        var myHits = [];
+        var shapeData = shape.data;
+        if(shapeData.libraryName != undefined && shapeData.libraryName.includes(target)){
+            var hit = {
+                title:"shapeData.library",
+                resourceType: "rules",
+                resourceId: page.id,
+                targetType: "shape",
+                targetId: shape.id // shape id
+            }
+            myHits.push(hit);
+        }
+        if(shapeData.ruleName != undefined && shapeData.ruleName.includes(target)){
+            var hit = {
+                title:"shapeData.rule",
+                resourceType: "rules",
+                resourceId: page.id,
+                targetType: "shape",
+                targetId: shape.id // shape id
+            }
+            myHits.push(hit);
+        }
+        if(shapeData.arguments != undefined && shapeData.arguments != null && shapeData.arguments.length > 0){
+            for(var arg of shapeData.arguments)
+            {
+                if(arg != undefined && arg.includes(target)){
+                    var hit = {
+                        title:"shapeData.argument",
+                        resourceType: "rules",
+                        resourceId: page.id,
+                        targetType: "shape",
+                        targetId: shape.id // shape id
+                    }
+                    myHits.push(hit);
+                }
+            }
+        }
+
+        return myHits;
+    },
+
     parseToExpression:function(shapeData, rpc){
         var data = shapeData.data;
         // parse the rule-shape itself - produce a RuleExpression

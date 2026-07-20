@@ -41,6 +41,29 @@ function listPagesRecursive(pageList, children)
         }
     }
 }
+function modelElementsInTreeOrder()
+{
+    modelElements = [];
+    listModelElementsRecursive(modelElements, Model.pageIndexTree);
+    return modelElements;
+}
+// help function for above
+function listModelElementsRecursive(elementList, children)
+{
+    for(var child of children) {
+        //if(child.type == 'rules' ){
+        //    elementList.push(app.getRulePage(child.index));
+        //}
+        if(child.type == 'folder')
+        {
+            listModelElementsRecursive(elementList, child.children);
+        }
+        else 
+        {
+            elementList.push(child);
+        }
+    }
+}
 
 function getTauPrologLibraries(){
     return [

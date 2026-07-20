@@ -47,18 +47,11 @@ praxis.BottomBar = Class.extend({
 		});
 
 		document.getElementById("searchField").innerHTML = "";
-	    /*queryCode = CodeMirror(document.getElementById("searchField"), {
-			//value: value,
-			lineNumbers: false,
-			theme: "tau",
-			viewportMargin:5,
-			lineWrapping: true,
-			placeholder: "Your search here...",
-			//autofocus: true,
-			mode: "text"
-		});*/
+	    searchText = document.getElementById("searchField");
 
+		this.searchText = searchText;
 		this.queryCode = queryCode;
+
 		//queryCode.setSize("400px", queryCode.defaultTextHeight() + 2 * 2);
 
 		queryCode.setOption("extraKeys", {
@@ -72,8 +65,17 @@ praxis.BottomBar = Class.extend({
 			Down: function(cm){
 				console.log("hit arrow down!");
 			}
-		  });
+		});
 		
+		searchText.onblur = function(){
+			var searchFor = searchText.value;
+			if(searchFor.length < 3)
+				return;
+
+			// search in page-order, so we get the result in a nice order! :E
+			var hits = app.bottombar.getSearchResults(searchFor);
+		};
+
 		queryCode.on("beforeChange", function(instance, change) {
 			var newtext = change.text.join("").replace(/\n/g, ""); // remove ALL \n !
 			change.update(change.from, change.to, [newtext]);
@@ -201,6 +203,37 @@ praxis.BottomBar = Class.extend({
             app.bottombar.recursiveImportPackages(url_list, packageDefinitions,whenDone);
         }
     },*/
+
+	getSearchResults:function(target){
+		
+		var hits = [];
+		var nodes = modelElementsInTreeOrder();
+
+		for(var elem of nodes){
+			switch(elem.type){
+				case "rules": // search shape data
+					var page = app.getRulePage(elem.index);
+					var shapes = page.shapes;
+					for(var shape of shapes)
+					{
+						var myHits = [];
+						switch(shape.type){
+							case "RuleShape":
+								var proto = ShapeParsing.getShapeClass(shape.type);
+								myHits = proto.searchFor(page, shape, target);
+								break;
+						} 
+						hits = hits.concat(myHits);
+					}
+					break;
+			}
+		}
+
+		app.bottombar.searchResultList = hits;
+        app.bottombar.updateSearchResultTable();
+
+
+	},
 
 	loadingFinishedTest:function(packages){
 		console.log("finished loading test");
@@ -671,6 +704,7 @@ praxis.BottomBar = Class.extend({
 		var data = [];
 		for(row of this.searchResultList){
 			var newRow = [];
+			console.log(JSON.stringify(row));
 			newRow.push(row.title);
 			if(row.resourceType == "rules")
 				newRow.push(app.getRulePage(row.resourceId).name); //row.targetIndex);
@@ -762,7 +796,7 @@ praxis.BottomBar = Class.extend({
 			defaultColAlign:"left",
 			allowInsertColumn:false,
 			allowManualInsertColumn: false,
-
+			tableOverflow:true,
 			columns: [
 				{
 					type: 'text',

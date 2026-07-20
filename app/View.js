@@ -55,13 +55,17 @@ praxis.View = Class.extend({
                 label: "Include",
                 run: (obj) => app.view.toggleExclude(obj)
             },
-            listDefinitions: {
+            definitions: {
                 label: "List definitions",
-                run: (obj) => canvas.sendObjectToBack(obj)
+                run: (obj) => app.view.listPredicateDefinitions(obj, undefined)
             },
-            listReferences: {
+            dcg_definitions: {
+                label: "List definitions",
+                run: (obj) => app.view.listPredicateDefinitions(obj, true)
+            },
+            references: {
                 label: "List references",
-                run: (obj) => obj.set("fill", "blue")
+                run: (obj) => app.view.listReferences(obj)
             }
         };
 
@@ -75,6 +79,10 @@ praxis.View = Class.extend({
                 case "straightConnector":
                 case "port":
                     return [];
+                case "ruleShape":
+                    return ["exclude", "include", "definitions"];
+                case "dcgShape":
+                    return ["exclude", "include", "dcg_definitions"];
                 default:
                     return ["exclude", "include"];
             }
@@ -132,6 +140,14 @@ praxis.View = Class.extend({
                 case "exclude":
                 case "include":
                     app.view.toggleExclude(selectedObject);
+                    break;
+                case "definitions":
+                    var shapeData = this.getShapeModel(selectedObject.id);
+                    app.view.listPredicateDefinitions(shapeData, undefined);
+                    break;
+                case "dcg-definitions":
+                    var shapeData = this.getShapeModel(selectedObject.id);
+                    app.view.listPredicateDefinitions(shapeData, true);
                     break;
             }
 
@@ -1484,6 +1500,44 @@ praxis.View = Class.extend({
 
         // delete reference in view
 
+    },
+
+    listPredicateDefinitions: function(shapeData, isDcg){
+        var hitList = [];
+
+        shapeData = shapeData.data;
+
+        var libNames = app.libraries.map(x=>x.name);
+        // if there is a library like the currently selected text
+        var selectedLibraryName = shapeData.libraryName;
+        // use entered text, if it differs from what is in userData (current text in shape)
+        var selectedPredicateName = shapeData.ruleName;
+
+        if(libNames.includes(selectedLibraryName)){
+            var library = app.libraries.find(l=>l.name == selectedLibraryName);
+
+            if(library.predicates != undefined){
+                var predicate = library.predicates.find(pred => pred.name == selectedPredicateName && pred.arity != undefined && shapeData.arguments.length == pred.arity && pred.isDcg == isDcg);
+                var index = 1;
+                predicate.references.forEach(ref => {
+                    var hit = {
+                        title:"Definition # '" + index + "'",
+                        resourceType: "rules",
+                        resourceId: ref.page,
+                        targetType: "shape",
+                        targetId: ref.shape // shape id
+                    }
+                    hitList.push(hit)
+                    index++;
+                });
+                
+            }
+        } 
+
+        app.bottombar.searchResultList = hitList; // figure.listPredicateDefinitions(userData);
+        app.bottombar.updateSearchResultTable();
+
+        //return hitList;
     },
 
     // toggle if a shape should be excluded

@@ -261,7 +261,7 @@ input.editor-text{
     border-style: none;
 }
 #searchField{
-    background-color: #000000;
+    width: 100%;
     height: auto;
     line-height: normal;
     padding: 5px;
@@ -583,11 +583,6 @@ span.tree_class {
     align:center;
     border-radius: 5px;
 }
-#bottomtabs{
-    font-size: 11px;
-    width: auto;
-    background-color: rgb(185, 186, 187);
-}
 
 .ui-tabs-vertical { width: 55em; }
   .ui-tabs-vertical .ui-tabs-nav { padding: .01em .05em .1em .1em; float: left; width: 6em; height: calc(100% - 15px); background-color: grey; }
@@ -607,4 +602,182 @@ span.tree_class {
 
 #projectSettings{
     margin:20px;
+}
+
+
+
+
+#bottomBar {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+#bottomtabs {
+    position: relative;
+    box-sizing: border-box;
+
+    background-color: rgb(185, 186, 187);
+
+    width: 100%;
+    height: 100%;
+
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+#bottomtabs > .ui-tabs-nav {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 0;
+
+    box-sizing: border-box;
+    width: 5em;
+    margin: 0;
+    padding: 0;
+}
+
+#bottomtabs.ui-tabs-vertical > #bottomtabs-4.ui-tabs-panel {
+    box-sizing: border-box;
+
+    float: none;
+
+    width: calc(100% - 5em);
+    height: 100%;
+
+    min-width: 0;
+    min-height: 0;
+
+    margin: 0 0 0 5em;
+    padding: 0 !important;
+
+    overflow: hidden;
+}
+#bottomtabs-4 {
+    box-sizing: border-box;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+#bottomtabs-4 > .search-layout {
+    display: grid;
+    grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+    align-items: start;
+    gap: 25px;
+
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+
+    margin: 0;
+    padding: 0;
+}
+
+#bottomtabs-4 .search-panel {
+    min-width: 0;
+    margin: 0;
+    padding: 0 0 0 25px;
+}
+
+#bottomtabs-4 .search-results {
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    height: 100%;
+}
+
+
+
+
+
+.search-layout {
+    display: grid;
+    grid-template-columns: minmax(180px, 260px) minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
+
+    align-items: stretch;
+    gap: 25px;
+
+    width: 100%;
+    height: 100%;
+    min-width: 0;
+    min-height: 0;
+}
+
+.search-panel {
+    align-self: start;
+}
+
+.search-results {
+    align-self: stretch;
+}
+
+.search-panel__header {
+    padding: 3px;
+    background-color: #676472;
+}
+
+.search-panel__input {
+    display: block;
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+}
+
+.search-results {
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+#SearchResultTable {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+}
+
+/* Jspreadsheet */
+#SearchResultTable .jexcel_content {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0;
+    overflow-y: auto !important;
+    overflow-x: auto;
+    height: 200px !important;
+    overflow-y: scroll !important;
+}
+
+#SearchResultTable table.jexcel {
+    width: 100%;
+    max-width: 100%;
+}
+
+.search-tab {
+    box-sizing: border-box;
+
+    width: calc(100% - 5em);
+    height: 100%;
+
+    min-width: 0;
+    min-height: 0;
+
+    margin: 0 0 0 5em;
+    padding: 0 !important;
+
+    font-size: 11px;
 }

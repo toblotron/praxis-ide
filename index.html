@@ -279,22 +279,53 @@
                 <div id="bottomtabs-3" tabindex="-1" style="font-size:11px; height:100px; padding: 0px 0px 0px 7em">
                     <div id="MyOtherTable" style="margin-left:25px; width:calc(100% -25px)"></div>
                 </div>
-                <div id="bottomtabs-4"  tabindex="-1" style="font-size:11px; min-height:100%; height:calc(100% - 5px); padding: 0px 0px 0px 5em">
-                    <table style=" font-size:11px; height:calc(100%);width:-webkit-fill-available;">
+                <div id="bottomtabs-4"
+                    tabindex="-1"
+                    class="ui-tabs-panel ui-corner-bottom ui-widget-content search-tab"
+                    aria-labelledby="bottomtab-4"
+                    role="tabpanel">
+                    <div class="search-layout">
+                        <section class="search-panel">
+                            <div class="search-panel__header">
+                                <button
+                                    id="searchButton"
+                                    class="action_button"
+                                    tabindex="101">
+                                    Search
+                                </button>
+                            </div>
+
+                            <input
+                                id="searchField"
+                                class="search-panel__input"
+                                tabindex="100">
+                        </section>
+
+                        <section class="search-results">
+                            <div
+                                id="SearchResultTable"
+                                tabindex="1"
+                                class="jexcel_container">
+                                
+                                <!-- Jspreadsheet skapar normalt innehållet här -->
+                            </div>
+                        </section>
+                    </div>
+                    <!--<table style=" font-size:11px; height:calc(100%);width:-webkit-fill-available;">
                         <tr>
                             <td style="height: auto; width:400px;padding-left:25px; min-width:30%; vertical-align: top;">
                                 <div style="background-color: #676472; padding:3px">
                                     <button id='searchButton' class="action_button" z-index="999" tabindex="101">Search</button>
                                 </div>
-                                <div id='searchField' tabindex="100"></div>
+                                <input id='searchField' tabindex="100"></input>
                             </td>
                             <td style="width:-webkit-fill-available; height:100%; vertical-align: top;">
-                                <div id="SearchResultTable" style="margin-left:25px; width:calc(100% -25px)"></div>
+                                <div id="SearchResultTable" style="margin-left:25px; width:calc(70% -25px)"></div>
                             </td>
                         </tr>
                         </table>
                         <br><br>
-                    </table>
+                    </table>-->
                 </div>
               </div>
             
