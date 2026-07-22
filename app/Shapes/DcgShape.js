@@ -808,6 +808,65 @@ var DcgShape = fabric.util.createClass(fabric.Group, {
         return new DcgRuleExpression(library,name,args,pushbackExpressions,body);
     },
 */
+
+    searchFor:function(page, shape, target){
+        var myHits = [];
+        var shapeData = shape.data;
+        if(shapeData.libraryName != undefined && shapeData.libraryName.includes(target)){
+            var hit = {
+                title:"dcgGrammar.library",
+                resourceType: "rules",
+                resourceId: page.id,
+                targetType: "shape",
+                targetId: shape.id // shape id
+            }
+            myHits.push(hit);
+        }
+        if(shapeData.ruleName != undefined && shapeData.ruleName.includes(target)){
+            var hit = {
+                title:"dcgGrammar.rule",
+                resourceType: "rules",
+                resourceId: page.id,
+                targetType: "shape",
+                targetId: shape.id // shape id
+            }
+            myHits.push(hit);
+        }
+        if(shapeData.arguments != undefined && shapeData.arguments != null && shapeData.arguments.length > 0){
+            for(var arg of shapeData.arguments)
+            {
+                if(arg != undefined && arg.includes(target)){
+                    var hit = {
+                        title:"dcgGrammar.argument",
+                        resourceType: "rules",
+                        resourceId: page.id,
+                        targetType: "shape",
+                        targetId: shape.id // shape id
+                    }
+                    myHits.push(hit);
+                }
+            }
+        }
+        if(shapeData.pushback != undefined && shapeData.pushback != null && shapeData.pushback.length > 0){
+            for(var arg of shapeData.pushback)
+            {
+                if(arg != undefined && arg.includes(target)){
+                    var hit = {
+                        title:"dcgGrammar.argument",
+                        resourceType: "rules",
+                        resourceId: page.id,
+                        targetType: "shape",
+                        targetId: shape.id // shape id
+                    }
+                    myHits.push(hit);
+                }
+            }
+        }
+
+        return myHits;
+    },
+
+
     // a dcg rule call/ reference is mostly just the same as a normal rule, except there can be a "pushback" part, and
     // also that it is signified by "-->" instead of ":-"
     parseToExpression:function(shapeData, rpc){

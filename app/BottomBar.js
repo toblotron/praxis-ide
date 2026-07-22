@@ -222,6 +222,10 @@ praxis.BottomBar = Class.extend({
 								var proto = ShapeParsing.getShapeClass(shape.type);
 								myHits = proto.searchFor(page, shape, target);
 								break;
+							case "DcgShape":
+								var proto = ShapeParsing.getShapeClass(shape.type);
+								myHits = proto.searchFor(page, shape, target);
+								break;
 						} 
 						hits = hits.concat(myHits);
 					}
