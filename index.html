@@ -121,9 +121,12 @@
                 size: 350,      // default width in pixels
                 minSize: 150,   // optional
                 maxSize: 500    // optional
+            },
+            south: {
+                size: 140       // ~2.5x the old default (77px), so all bottom tabs are visible
             }
-            
-        });        
+
+        });
 
         // fit canvas to start-size of central pane
         app.canvasFillCenterPane();
@@ -247,34 +250,23 @@
                     <input style='width:0px; visibility: hidden;' id='fileField' type='file' />
 
                 </div>
-                <div id="bottomtabs-2"  tabindex="-1" style="font-size:11px; min-height:100%; height:calc(100% - 5px); padding: 0px 0px 0px 5em">
-                    <table style=" font-size:11px; height:calc(100%);width:-webkit-fill-available;">
-                        <tr>
-                            <td style="height: auto; width:400px;padding-left:25px; min-width:30%; vertical-align: top;">
-                                <div style="background-color: #676472; padding:3px">
-                                    <button id='queryButton'  class="action_button" z-index="999" tabindex="101">Query</button>
-                                    <button id='nextButton' class="action_button" z-index="999"  tabindex="102">Next</button>
-                                    <button id='resetButton' class="action_button" z-index="999"  tabindex="103">Reset</button>
-                                    
-                                    <label style='color: #000000;'>Execution limit</label>
-                                    <input id='executionLimit' tabindex="-1" type='text' value='500'/> 
-                                </div>
-                                <div id='queryField' tabindex="100" onfocus="app.bottombar.setQueryFieldFocus()"></div>
-                                <div id="executionTimer" style="color:white; font-style: italic;"></div>
-                            </td>
-                            <!--<td style="width: 100%; height:100%; vertical-align: top;">
-                                <div id="codeKeeper" style="display:grid; height:calc(100% - 5px);">
-                                    <textarea id='codeConsole' style='height:100%; width:100%; min-height:90px; overflow:auto'></textarea>
-                                </div>
-                            </td>-->
-                            <td style="width:-webkit-fill-available; height:100%; vertical-align: top;">
-                                <div id="output" style="height:calc(100% - 10px); overflow:auto;">
-                                </div>
-                            </td>
-                        </tr>
-                        </table>
-                        <br><br>
-                    </table>
+                <div id="bottomtabs-2"  tabindex="-1" style="font-size:11px; height:calc(100% - 5px); padding: 0px 0px 0px 5em">
+                    <div style="width:400px; min-width:30%; padding-left:25px; height:100%; display:flex; flex-direction:column; vertical-align: top;">
+                        <div style="background-color: #676472; padding:3px; flex:0 0 auto;">
+                            <button id='queryButton'  class="action_button" z-index="999" tabindex="101">Query</button>
+                            <button id='nextButton' class="action_button" z-index="999"  tabindex="102">Next</button>
+                            <button id='resetButton' class="action_button" z-index="999"  tabindex="103">Reset</button>
+
+                            <label style='color: #000000;'>Execution limit</label>
+                            <input id='executionLimit' tabindex="-1" type='text' value='500'/>
+                        </div>
+                        <div id='queryField' tabindex="100" onfocus="app.bottombar.setQueryFieldFocus()" style="flex:1 1 auto; min-height:0;"></div>
+                        <div id="executionTimer" style="color:white; font-style: italic; flex:0 0 auto;"></div>
+                    </div>
+                    <div style="flex:1 1 auto; min-width:0; height:100%; vertical-align: top;">
+                        <div id="output" style="height:100%; overflow-y:auto; overflow-x:hidden;">
+                        </div>
+                    </div>
                 </div>
                 <div id="bottomtabs-3" tabindex="-1" style="font-size:11px; height:100px; padding: 0px 0px 0px 7em">
                     <div id="MyOtherTable" style="margin-left:25px; width:calc(100% -25px)"></div>

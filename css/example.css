@@ -626,7 +626,16 @@ span.tree_class {
   .ui-tabs-vertical .ui-tabs-nav li a { display:block; }
   .ui-tabs-vertical .ui-tabs-nav li.ui-tabs-active { padding-bottom: 0; padding-right: .1em; border-right-width: 1px; }
   .ui-tabs-vertical .ui-tabs-panel { padding: 0px 0px 1em 0px I !important;}
-  
+
+/* Test tab: query box (left) + output console (right) should each fill the
+   tab's full height and scroll internally, never grow past it.
+   !important guards against jQuery UI tabs() re-writing inline display
+   when the tab is hidden/shown. */
+#bottomtabs-2 {
+    display: flex !important;
+    overflow: hidden;
+}
+
 .small_tab{
     padding: 2px !important;
     width: -webkit-fill-available;

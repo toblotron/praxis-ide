@@ -113,15 +113,9 @@ praxis.BottomBar = Class.extend({
 			// change it appealing to your page structure.
 		});
 */		
-		// the following line fixes a bug I've encountered in CodeMirror 3.1
-		$(".CodeMirror-scroll").css('overflow', 'hidden');
-		$(".CodeMirror").css('height', 'auto');
-		var minheight = (queryCode.defaultTextHeight() + 2 * 2);
-		$(".CodeMirror").css('min-height',minheight );
-		$(".CodeMirror").css('max-height',"50px" );
-		
-		$(".CodeMirror-scroll").css('max-height', '50px');
-		$(".CodeMirror-scroll").css('height', 'auto');
+		// fill the #queryField flex column (see #bottomtabs-2 in index.html) and
+		// let CodeMirror's own scroller handle overflow, instead of a hard-coded height
+		queryCode.setSize("100%", "100%");
 		//$(".CodeMirror-vscrollbar").css('overflow-y', 'hidden');
 		//$(".CodeMirror-scroll").css('display', 'contents'); // avoid the overhanging area that stopped buttons from being pressed!
 		//$(".CodeMirror-hscrollbar").css('display', 'none');
@@ -496,7 +490,6 @@ praxis.BottomBar = Class.extend({
 
 		self.output.append(newText);
 		var mydiv = $("#output")[0];
-		mydiv.scrollIntoView(false);
 		mydiv.scrollTop = mydiv.scrollHeight;
 
 		self.previous_break = addNewline;
