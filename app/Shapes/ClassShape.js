@@ -1430,6 +1430,65 @@ var ClassShape = fabric.util.createClass(fabric.Group, {
         }
         return subClasses.concat(collectedSubclasses);
     },
+
+    searchFor:function(page, shape, target){
+        var myHits = [];
+        var shapeData = shape.data;
+        // rootvar
+        if(shapeData.value != undefined && shapeData.value.includes(target)){
+            var hit = {
+                title:"class.var",
+                resourceType: "rules",
+                resourceId: page.id,
+                targetType: "shape",
+                targetId: shape.id // shape id
+            }
+            myHits.push(hit);
+        }
+        // updatevar
+        if(shapeData.updateVar != undefined && shapeData.updateVar.includes(target)){
+            var hit = {
+                title:"class.var",
+                resourceType: "rules",
+                resourceId: page.id,
+                targetType: "shape",
+                targetId: shape.id // shape id
+            }
+            myHits.push(hit);
+        }
+
+        if(shapeData.children != undefined && shapeData.children != null && shapeData.children.length > 0){
+            for(var row of shapeData.children)
+            {
+                if(row != undefined){
+                    if(row.value != undefined && row.value.includes(target)){
+                        var hit = {
+                            title:"class.var",
+                            resourceType: "rules",
+                            resourceId: page.id,
+                            targetType: "shape",
+                            targetId: shape.id // shape id
+                        }
+                        myHits.push(hit);
+                    }
+                    if(row.index != undefined && row.index.includes(target)){
+                        var hit = {
+                            title:"class.index",
+                            resourceType: "rules",
+                            resourceId: page.id,
+                            targetType: "shape",
+                            targetId: shape.id // shape id
+                        }
+                        myHits.push(hit);
+                    }
+                }
+            }
+        }
+
+        return myHits;
+    },
+
+
     parseToExpression:function(shapeData, rpc){
         
         var pathExpressions = null;

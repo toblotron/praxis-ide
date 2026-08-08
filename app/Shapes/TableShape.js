@@ -391,6 +391,40 @@ var TableShape = fabric.util.createClass(fabric.Group, {
         return '<input id="value_' + rowNr + '" tabIndex="' + (1002 + rowNr) + '" "type="text" value="'+ htmlPrologEncode(value) +'"/>';
     },
 
+    searchFor:function(page, shape, target){
+        var myHits = [];
+        var shapeData = shape.data;
+        
+        if(shapeData.name != undefined && shapeData.name.includes(target)){
+            var hit = {
+                title:"table.name",
+                resourceType: "rules",
+                resourceId: page.id,
+                targetType: "shape",
+                targetId: shape.id // shape id
+            }
+            myHits.push(hit);
+        }
+
+        if(shapeData.values != undefined && shapeData.values != null && shapeData.values.length > 0){
+            for(var arg of shapeData.values)
+            {
+                if(arg != undefined && arg.includes(target)){
+                var hit = {
+                        title:"table.value",
+                        resourceType: "rules",
+                        resourceId: page.id,
+                        targetType: "shape",
+                        targetId: shape.id // shape id
+                    }
+                    myHits.push(hit);
+                }
+            }
+        }
+
+        return myHits;
+    },
+
     // a table call/ reference is really just the same as a normal rule, so we make it into a RuleExpression
     parseToExpression:function(shapeData, rpc){
         var data = shapeData.data;

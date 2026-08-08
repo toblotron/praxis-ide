@@ -219,6 +219,34 @@ var FindallShape = fabric.util.createClass(fabric.Group, {
         
     },
 
+    searchFor:function(page, shape, target){
+        var myHits = [];
+        var shapeData = shape.data;
+
+        if(shapeData.capturePattern != undefined && shapeData.capturePattern.includes(target)){
+            var hit = {
+                title:"findall.capturePattern",
+                resourceType: "rules",
+                resourceId: page.id,
+                targetType: "shape",
+                targetId: shape.id // shape id
+            }
+            myHits.push(hit);
+        }
+        if(shapeData.captureList != undefined && shapeData.captureList.includes(target)){
+            var hit = {
+                title:"findall.captureList",
+                resourceType: "rules",
+                resourceId: page.id,
+                targetType: "shape",
+                targetId: shape.id // shape id
+            }
+            myHits.push(hit);
+        }
+        
+        return myHits;
+    },
+
     parseToExpression:function(shapeData, rpc){
         var data = shapeData.data;
         

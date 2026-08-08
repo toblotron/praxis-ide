@@ -48,11 +48,22 @@ praxis.BottomBar = Class.extend({
 
 		document.getElementById("searchField").innerHTML = "";
 	    searchText = document.getElementById("searchField");
+		
+		this.saveButton  = $("#searchButton");
 
 		this.searchText = searchText;
 		this.queryCode = queryCode;
 
 		//queryCode.setSize("400px", queryCode.defaultTextHeight() + 2 * 2);
+
+		function search(){
+			var searchFor = searchText.value;
+			if(searchFor.length < 3)
+				return;
+
+			// search in page-order, so we get the result in a nice order! :E
+			var hits = app.bottombar.getSearchResults(searchFor);
+		};
 
 		queryCode.setOption("extraKeys", {
 			Tab: function(cm) {
@@ -68,13 +79,19 @@ praxis.BottomBar = Class.extend({
 		});
 		
 		searchText.onblur = function(){
-			var searchFor = searchText.value;
-			if(searchFor.length < 3)
-				return;
-
-			// search in page-order, so we get the result in a nice order! :E
-			var hits = app.bottombar.getSearchResults(searchFor);
+			search();
 		};
+
+		searchText.onkeydown = function(event){
+			if (event.key === "Enter") {
+				search();
+			}
+		};
+
+		searchButton.onclick = function() {
+			search();
+		};
+
 
 		queryCode.on("beforeChange", function(instance, change) {
 			var newtext = change.text.join("").replace(/\n/g, ""); // remove ALL \n !
@@ -223,6 +240,26 @@ praxis.BottomBar = Class.extend({
 								myHits = proto.searchFor(page, shape, target);
 								break;
 							case "DcgShape":
+								var proto = ShapeParsing.getShapeClass(shape.type);
+								myHits = proto.searchFor(page, shape, target);
+								break;
+							case "DcgTerminalShape":
+								var proto = ShapeParsing.getShapeClass(shape.type);
+								myHits = proto.searchFor(page, shape, target);
+								break;
+							case "FindallShape":
+								var proto = ShapeParsing.getShapeClass(shape.type);
+								myHits = proto.searchFor(page, shape, target);
+								break;
+							case "FormulaShape":
+								var proto = ShapeParsing.getShapeClass(shape.type);
+								myHits = proto.searchFor(page, shape, target);
+								break;
+							case "TableShape":
+								var proto = ShapeParsing.getShapeClass(shape.type);
+								myHits = proto.searchFor(page, shape, target);
+								break;
+							case "ClassShape":
 								var proto = ShapeParsing.getShapeClass(shape.type);
 								myHits = proto.searchFor(page, shape, target);
 								break;

@@ -335,6 +335,51 @@ var FormulaShape = fabric.util.createClass(fabric.Group, {
         return '<input id="right_' + rowNr + '" tabIndex="' + (1003 + (rowNr*3)) + '" type="text" value="'+ htmlPrologEncode(value) +'"/>';
     },
 
+    searchFor:function(page, shape, target){
+        var myHits = [];
+        var shapeData = shape.data;
+        
+        if(shapeData.rows != undefined && shapeData.rows != null && shapeData.rows.length > 0){
+            for(var arg of shapeData.rows)
+            {
+                if(arg != undefined){
+                    if(arg.left != undefined && arg.left.includes(target)){
+                        var hit = {
+                            title:"formula.left",
+                            resourceType: "rules",
+                            resourceId: page.id,
+                            targetType: "shape",
+                            targetId: shape.id // shape id
+                        }
+                        myHits.push(hit);
+                    }
+                    if(arg.op != undefined && arg.op.includes(target)){
+                        var hit = {
+                            title:"formula.op",
+                            resourceType: "rules",
+                            resourceId: page.id,
+                            targetType: "shape",
+                            targetId: shape.id // shape id
+                        }
+                        myHits.push(hit);
+                    }
+                    if(arg.right != undefined && arg.right.includes(target)){
+                        var hit = {
+                            title:"formula.right",
+                            resourceType: "rules",
+                            resourceId: page.id,
+                            targetType: "shape",
+                            targetId: shape.id // shape id
+                        }
+                        myHits.push(hit);
+                    }
+                }
+            }
+        }
+
+        return myHits;
+    },
+
     parseToExpression:function(shapeData, rpc){
         var data = shapeData.data;
         

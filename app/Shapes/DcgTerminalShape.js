@@ -152,6 +152,25 @@ var DcgTerminalShape = fabric.util.createClass(fabric.Group, {
         });       
     },
 
+    searchFor:function(page, shape, target){
+        var myHits = [];
+        var shapeData = shape.data;
+        var value = data.value
+        
+        if(value != undefined && value.includes(target)){
+            var hit = {
+                title:"comment",
+                resourceType: "rules",
+                resourceId: page.id,
+                targetType: "shape",
+                targetId: shape.id // shape id
+            }
+            myHits.push(hit);
+        }
+        
+        return myHits;
+    },
+
     // a dcg rule call/ reference is mostly just the same as a normal rule, except there can be a "pushback" part, and
     // also that it is signified by "-->" instead of ":-"
     parseToExpression:function(shapeData, rpc){
