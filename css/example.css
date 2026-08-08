@@ -573,6 +573,31 @@ span.tree_class {
    }
    
    
+.ui-layout-east {
+    display: flex !important;
+    flex-direction: column;
+}
+
+/* Tree fills whatever room is left in the sidebar; the panels below it
+   (palette, table/class/folder panels, properties) keep their natural
+   size and are never pushed out - the tree scrolls internally instead. */
+#treeKeeper {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background-color: #676472;
+}
+
+#palette,
+#tablePanel,
+#classPanel,
+#folderPanel,
+#drawingPanel,
+#properties {
+    flex: 0 0 auto;
+}
+
 #palette{
     background-color: #676472;
     text-align: center; /* centers icons horizontally */
