@@ -629,10 +629,10 @@ span.tree_class {
 
 /* Test tab: query box (left) + output console (right) should each fill the
    tab's full height and scroll internally, never grow past it.
-   !important guards against jQuery UI tabs() re-writing inline display
-   when the tab is hidden/shown. */
+   No !important here - jQuery UI tabs() hides/shows this panel via an
+   inline display style, and !important would defeat that toggle. */
 #bottomtabs-2 {
-    display: flex !important;
+    display: flex;
     overflow: hidden;
 }
 

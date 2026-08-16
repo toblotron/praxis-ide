@@ -32,60 +32,64 @@ praxis.ProjectSettings = Class.extend({
         // Exports ----------------------------
         // we can only export non-built-in predicates in the "root" (no prefix)
         var rootLibrary = app.libraries.find(lib=>lib.name=="");
+        var showExports = false;
         if(rootLibrary != undefined) // we may not have any rules, yet
         {
+            
             var exports = 
             "<fieldset class='settingsSection'>"+
                 "<legend class='settingsSection'>Exported predicates</legend>";
             rootLibrary.predicates.filter(p=>p.external == undefined).forEach(predicate => {
                 var predicateId = predicate.name + "/" + predicate.arity;
                 var predicateCode = 
-                "<div class='listedLibrary'>" +
+                "<div class='listedLibrary'>"; /* +
                     "<input type='checkbox' id='predicate:" + predicateId + "' name='predicates'  onclick='app.projectSettings.handlePredicateClick(this)' value='" + predicateId + "'";
-                
-                if(Model.settings.exports.includes(predicateId))
-                    predicateCode += " checked";
-        
-                predicateCode += "><label for='" + predicateId + "'>" + predicateId +"</label>"+
-                "</div>";
-
+                */
+                if(Model.settings.exports.includes(predicateId)){
+                    predicateCode += "<label for='" + predicateId + "'>" + predicateId +"</label>"+
+                    "</div>";
+                    showExports = true;
+                }
                 exports += predicateCode;
             });
             exports += "</fieldset>";
 
-            prj += exports;
+            if(showExports == true)
+                prj += exports;
+
 
             // Dynamic ----------------------------
-            var dynamic = 
-            "<fieldset class='settingsSection'>"+
-                "<legend class='settingsSection'>Dynamic predicates</legend>";
-            rootLibrary.predicates.filter(p=>p.external == undefined).forEach(predicate => {
-                var predicateId = predicate.name + "/" + predicate.arity;
-                var predicateCode = 
-                "<div class='listedLibrary'>" +
-                    "<input type='checkbox' id='dyn_predicate:" + predicateId + "' name='dyn_predicates'  onclick='app.projectSettings.handleDynPredicateClick(this)' value='" + predicateId + "'";
-                
-                if(Model.settings.dynamic.includes(predicateId))
-                    predicateCode += " checked";
-        
-                predicateCode += "><label for='" + predicateId + "'>" + predicateId +"</label>"+
-                "</div>";
 
-                dynamic += predicateCode;
-            });
-            dynamic += "</fieldset>";
+            if(Model.settings.dynamic != undefined && Model.settings.dynamic.length > 0)
+            {
+                var dynamic = 
+                "<fieldset class='settingsSection'>"+
+                    "<legend class='settingsSection'>Dynamic predicates</legend>";
+                rootLibrary.predicates.filter(p=>p.external == undefined).forEach(predicate => {
+                    var predicateId = predicate.name + "/" + predicate.arity;
+                    var predicateCode = 
+                    "<div class='listedLibrary'>"; /* +
+                        "<input type='checkbox' id='dyn_predicate:" + predicateId + "' name='dyn_predicates'  onclick='app.projectSettings.handleDynPredicateClick(this)' value='" + predicateId + "'";
+                    */
+                    if(Model.settings.dynamic.includes(predicateId))
+                        predicateCode += "<label for='" + predicateId + "'>" + predicateId +"</label></div>";
 
-            prj += dynamic;
+                    dynamic += predicateCode;
+                });
+                dynamic += "</fieldset>";
+
+                prj += dynamic;
+            }
         }
         // Libraries --------------------------
         var tauLibraries = getTauPrologLibraries();
 
         var lib = 
         "<h2>Libraries</h2>";
-        // go through the libraries available for Tau Prolog 
+        // go through the libraries available for Trealla Prolog 
         var libCheckHTML = 
         "<fieldset class='settingsSection'>"+
-            "<legend class='settingsSection'>Standard Tau-Prolog libraries</legend>";
+            "<legend class='settingsSection'>Standard Trealla-Prolog libraries</legend>";
 
         for(library of tauLibraries.filter(l => l.external == true)){
             var libraryCode = 
@@ -178,7 +182,7 @@ praxis.ProjectSettings = Class.extend({
     },
 
     // selecting/ deselecting a predicate for export
-    handlePredicateClick:function(event){
+    /*handlePredicateClick:function(event){
         var predicateId = event.id.split(":")[1]; // pickout "name/arity" from "predicateName:name/arity"
         if(event.checked){
             Model.settings.exports.push(predicateId);
@@ -198,7 +202,7 @@ praxis.ProjectSettings = Class.extend({
         }
         
     },
-
+*/
     connectPage:function(){
         this.settingsProjectName = $("#settingsProjectName");
 		this.settingsProjectName.change($.proxy(this.onModelNameChanged, this));
