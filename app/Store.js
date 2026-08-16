@@ -1277,7 +1277,199 @@ function getTauPrologLibraries(){
                 ],
                 description: "Check if a future finished."
             },
-            
+
+        ]}
+    ]
+
+}
+
+// Equivalent of getTauPrologLibraries(), for the Trealla engine.
+// Sourced from https://github.com/trealla-prolog/trealla/tree/main/library (module export
+// lists + doc comments / :- help(...) directives), checked against the WASI build flags in
+// GNUmakefile (WASI=1 sets NOFFI=1, NOSSL=1, NOTHREADS=1).
+//
+// Deliberately NOT included, since they depend on things the WASM/WASI build (and a browser
+// sandbox) doesn't have: concurrent (threads), sockets/curl/http (native networking),
+// sqlite3/raylib/gsl (native C libraries).
+//
+// Libraries that exist and are pure Prolog, but whose predicates aren't enumerated below
+// (kept as name-only stubs, same as "clpz" already was in getTauPrologLibraries): clpb,
+// atts, abnf, arithmetic, builtins, debug, freeze, gensym, iso_ext, pio, quads, rbtrees,
+// reif, si, tabling, ugraphs.
+function getTreallaLibraries(){
+    return [
+        {name:"", external: false, predicates:[
+            // built-ins are intentionally left out here too - see getTauPrologLibraries()
+        ]},
+        /*
+        {name:"clpz", external: true, predicates:[]},
+        {name:"clpb", external: true, predicates:[]},
+        {name:"atts", external: true, predicates:[]},
+        {name:"abnf", external: true, predicates:[]},
+        {name:"arithmetic", external: true, predicates:[]},
+        {name:"builtins", external: true, predicates:[
+            // commented out for now - these are core/always-loaded builtins (library/builtins.pl
+            // uses ":- pragma(builtins, ...)", not ":- module(...)"), so listing them here would
+            // offer them for import even though they're never actually "missing". Left in place
+            // as sourced reference in case a predicate picker wants them later.
+            /*
+            {name:"term_variables", arity: 2, arguments:[{name:"Term", mode:"+"},{name:"Vars", mode:"-"}], description:"Vars is the list of free variables in Term."},
+            {name:"length", arity: 2, arguments:[{name:"List", mode:"?"},{name:"N", mode:"?"}], description:"Number of elements in List."},
+            {name:"predicate_property", arity: 2, arguments:[{name:"Callable", mode:"+"},{name:"Property", mode:"?"}], description:"True if Property holds for the predicate matching Callable."},
+            {name:"read_from_chars", arity: 2, arguments:[{name:"Chars", mode:"+"},{name:"Term", mode:"-"}], description:"Parse Term from a list of characters."},
+            {name:"current_prolog_flag", arity: 2, arguments:[{name:"Flag", mode:"+"},{name:"Value", mode:"-"}], description:"Value is the current setting of Flag."},
+            {name:"flatten", arity: 2, arguments:[{name:"List", mode:"?"},{name:"Flat", mode:"?"}], description:"Flatten a nested list into a single list."},
+            {name:"sort", arity: 2, arguments:[{name:"List", mode:"+"},{name:"Sorted", mode:"-"}], description:"Sort List, removing duplicates."},
+            {name:"msort", arity: 2, arguments:[{name:"List", mode:"+"},{name:"Sorted", mode:"-"}], description:"Sort List, keeping duplicates."},
+            {name:"keysort", arity: 2, arguments:[{name:"Pairs", mode:"+"},{name:"Sorted", mode:"-"}], description:"Sort a list of Key-Value pairs by Key, stably."},
+            {name:"sort", arity: 4, arguments:[{name:"Key", mode:"+"},{name:"Order", mode:"+"},{name:"List", mode:"+"},{name:"Sorted", mode:"-"}], description:"Sort List by Key according to Order (@</@=</@>/@>=)."},
+            {name:"bagof", arity: 3, arguments:[{name:"Template", mode:"+"},{name:"Goal", mode:":"},{name:"Bag", mode:"-"}], description:"Bag is the list of Template for each solution of Goal (fails if none)."},
+            {name:"setof", arity: 3, arguments:[{name:"Template", mode:"+"},{name:"Goal", mode:"+"},{name:"Set", mode:"-"}], description:"Like bagof/3, but Set is sorted and duplicate-free."},
+            {name:"print", arity: 1, arguments:[{name:"Term", mode:"+"}], description:"Print Term to standard output."},
+            {name:"atomic_list_concat", arity: 2, arguments:[{name:"List", mode:"+"},{name:"Atom", mode:"?"}], description:"Concatenate a list of atomics into a single atom."},
+            {name:"term_to_atom", arity: 2, arguments:[{name:"Term", mode:"+"},{name:"Atom", mode:"?"}], description:"Convert between a term and its atom (textual) representation."},
+            {name:"atom_number", arity: 2, arguments:[{name:"Atom", mode:"?"},{name:"Number", mode:"?"}], description:"Convert between an atom and a number."},
+            {name:"numbervars", arity: 3, arguments:[{name:"Term", mode:"+"},{name:"Start", mode:"+"},{name:"End", mode:"-"}], description:"Bind the free variables of Term to '$VAR'(N) terms, numbered from Start."},
+            {name:"current_op", arity: 3, arguments:[{name:"Priority", mode:"?"},{name:"Type", mode:"?"},{name:"Name", mode:"?"}], description:"True if Name is a currently defined operator."},
+            {name:"findnsols", arity: 4, arguments:[{name:"N", mode:"+"},{name:"Template", mode:"+"},{name:"Goal", mode:"+"},{name:"List", mode:"-"}], description:"Like findall/3, but collects at most N solutions per call (backtrackable)."}
+        ]},
+        {name:"debug", external: true, predicates:[]},
+        {name:"freeze", external: true, predicates:[]},
+        {name:"gensym", external: true, predicates:[]},
+        {name:"iso_ext", external: true, predicates:[]},
+        {name:"pio", external: true, predicates:[]},
+        {name:"quads", external: true, predicates:[]},
+        {name:"rbtrees", external: true, predicates:[]},
+        {name:"reif", external: true, predicates:[]},
+        {name:"si", external: true, predicates:[]},
+        {name:"tabling", external: true, predicates:[]},
+        {name:"ugraphs", external: true, predicates:[]},
+*/
+        {name:"lists", external: true, predicates:[
+            {name:"member", arity: 2, arguments:[{name:"Elem"},{name:"List"}], description:"Is Elem a member of List."},
+            {name:"memberchk", arity: 2, arguments:[{name:"Elem"},{name:"List"}], description:"Is Elem a member of List (deterministic)."},
+            {name:"select", arity: 3, arguments:[{name:"Elem"},{name:"List"},{name:"Rest"}], description:"Remove Elem from List, producing Rest."},
+            {name:"selectchk", arity: 3, arguments:[{name:"Elem"},{name:"List"},{name:"Rest"}], description:"Deterministically remove Elem from List, producing Rest."},
+            {name:"append", arity: 2, arguments:[{name:"ListOfLists"},{name:"List"}], description:"Concatenate a list of lists into one list."},
+            {name:"append", arity: 3, arguments:[{name:"A"},{name:"B"},{name:"AB"}], description:"The concatenation of two lists to make a third."},
+            {name:"subtract", arity: 3, arguments:[{name:"Set1", mode:"+"},{name:"Set2", mode:"+"},{name:"Diff", mode:"-"}], description:"Delete all elements of Set2 from Set1."},
+            {name:"union", arity: 3, arguments:[{name:"Set1", mode:"+"},{name:"Set2", mode:"+"},{name:"Union", mode:"-"}], description:"The union of two sets."},
+            {name:"intersection", arity: 3, arguments:[{name:"Set1", mode:"+"},{name:"Set2", mode:"+"},{name:"Intersection", mode:"-"}], description:"The intersection of two sets."},
+            {name:"is_set", arity: 1, arguments:[{name:"List"}], description:"True if List has no duplicate elements."},
+            {name:"nth0", arity: 3, arguments:[{name:"Index"},{name:"List"},{name:"Elem"}], description:"Indexed (from 0) element of List."},
+            {name:"nth1", arity: 3, arguments:[{name:"Index"},{name:"List"},{name:"Elem"}], description:"Indexed (from 1) element of List."},
+            {name:"last", arity: 2, arguments:[{name:"List", mode:"+"},{name:"Elem", mode:"-"}], description:"Last element of List."},
+            {name:"same_length", arity: 2, arguments:[{name:"List1"},{name:"List2"}], description:"True if List1 and List2 have the same length."},
+            {name:"reverse", arity: 2, arguments:[{name:"List"},{name:"Reversed"}], description:"Reverse one list to make another."},
+            {name:"transpose", arity: 2, arguments:[{name:"ListOfLists"},{name:"Transposed"}], description:"Transpose a list of lists."},
+            {name:"list_sum", arity: 2, arguments:[{name:"List", mode:"+"},{name:"Sum", mode:"?"}], description:"Sum all values of a list."},
+            {name:"list_max", arity: 2, arguments:[{name:"List", mode:"+"},{name:"Max", mode:"?"}], description:"Highest value in a list."},
+            {name:"list_min", arity: 2, arguments:[{name:"List", mode:"+"},{name:"Min", mode:"?"}], description:"Lowest value in a list."},
+            {name:"list_to_set", arity: 2, arguments:[{name:"List"},{name:"Set"}], description:"Remove duplicates from List, preserving order."},
+            {name:"permutation", arity: 2, arguments:[{name:"List1"},{name:"List2"}], description:"True if List2 is a permutation of List1."},
+            {name:"include", arity: 3, arguments:[{name:"Goal", mode:":"},{name:"List", mode:"+"},{name:"Included", mode:"-"}], description:"Included is List filtered to only the elements for which Goal succeeds."},
+            {name:"exclude", arity: 3, arguments:[{name:"Goal", mode:":"},{name:"List", mode:"+"},{name:"Excluded", mode:"-"}], description:"Excluded is List filtered to only the elements for which Goal fails."},
+            {name:"foldl", arity: 4, arguments:[{name:"Goal", mode:":"},{name:"List", mode:"+"},{name:"V0", mode:"+"},{name:"V", mode:"-"}], description:"Fold Goal over List, threading an accumulator from V0 to V."},
+            {name:"maplist", arity: 2, arguments:[{name:"Goal", mode:":"},{name:"List", mode:"+"}], description:"Apply Goal to every element of List."},
+            {name:"maplist", arity: 3, arguments:[{name:"Goal", mode:":"},{name:"List1", mode:"+"},{name:"List2", mode:"+"}], description:"Apply Goal pairwise to List1 and List2."},
+        ]},
+
+        {name:"format", external: true, predicates:[
+            {name:"format", arity: 2, arguments:[{name:"FormatString", mode:"+"},{name:"Arguments", mode:"+"}], description:"Write a formatted string to standard output."},
+            {name:"format", arity: 3, arguments:[{name:"Stream", mode:"+"},{name:"FormatString", mode:"+"},{name:"Arguments", mode:"+"}], description:"Write a formatted string to the given stream."},
+            {name:"portray_clause", arity: 1, arguments:[{name:"Term", mode:"+"}], description:"Print Term as a clause, suitable for re-reading."},
+            {name:"portray_clause", arity: 2, arguments:[{name:"Stream", mode:"+"},{name:"Term", mode:"+"}], description:"Print Term as a clause to the given stream."},
+            {name:"listing", arity: 1, arguments:[{name:"PredicateIndicator", mode:"+"}], description:"List the clauses of a predicate (Name/Arity)."}
+        ]},
+
+        {name:"charsio", external: true, predicates:[
+            {name:"char_type", arity: 2, arguments:[{name:"Char", mode:"?"},{name:"Type", mode:"?"}], description:"Type is one of the categories Char fits in (alpha, digit, space, ...)."},
+            {name:"get_line_to_chars", arity: 3, arguments:[{name:"Stream", mode:"+"},{name:"Chars", mode:"-"},{name:"Tail", mode:"-"}], description:"Read a line from Stream into a char list (as a difference list)."},
+            {name:"get_single_char", arity: 1, arguments:[{name:"Char", mode:"-"}], description:"Read a single, unbuffered character from standard input."},
+            {name:"get_n_chars", arity: 3, arguments:[{name:"Stream", mode:"+"},{name:"N", mode:"+"},{name:"Chars", mode:"-"}], description:"Read N characters from Stream into a char list."}
+        ]},
+
+        {name:"pairs", external: true, predicates:[
+            {name:"pairs_keys_values", arity: 3, arguments:[{name:"Pairs"},{name:"Keys"},{name:"Values"}], description:"Relate a list of Key-Value pairs to separate Keys and Values lists."},
+            {name:"pairs_keys", arity: 2, arguments:[{name:"Pairs"},{name:"Keys"}], description:"Keys is the list of keys from Pairs."},
+            {name:"pairs_values", arity: 2, arguments:[{name:"Pairs"},{name:"Values"}], description:"Values is the list of values from Pairs."},
+            {name:"group_pairs_by_key", arity: 2, arguments:[{name:"Pairs"},{name:"Grouped"}], description:"Group values that share the same (adjacent) key."},
+            {name:"map_list_to_pairs", arity: 3, arguments:[{name:"KeyFunction", mode:":"},{name:"List", mode:"+"},{name:"Pairs", mode:"-"}], description:"Pair each element of List with a key computed by KeyFunction."}
+        ]},
+
+        {name:"ordsets", external: true, predicates:[
+            {name:"is_ordset", arity: 1, arguments:[{name:"Term"}], description:"True if Term is an ordered set (sorted, no duplicates)."},
+            {name:"list_to_ord_set", arity: 2, arguments:[{name:"List", mode:"+"},{name:"OrdSet", mode:"-"}], description:"Transform a list into an ordered set."},
+            {name:"ord_empty", arity: 1, arguments:[{name:"Set"}], description:"True when Set is the empty ordered set."},
+            {name:"ord_add_element", arity: 3, arguments:[{name:"Set1", mode:"+"},{name:"Element", mode:"+"},{name:"Set2", mode:"-"}], description:"Insert an element into an ordered set."},
+            {name:"ord_del_element", arity: 3, arguments:[{name:"Set", mode:"+"},{name:"Element", mode:"+"},{name:"NewSet", mode:"-"}], description:"Delete an element from an ordered set."},
+            {name:"ord_memberchk", arity: 2, arguments:[{name:"Element", mode:"+"},{name:"OrdSet", mode:"+"}], description:"True if Element is a member of OrdSet."},
+            {name:"ord_subset", arity: 2, arguments:[{name:"Sub", mode:"+"},{name:"Super", mode:"+"}], description:"True if all elements of Sub are in Super."},
+            {name:"ord_union", arity: 3, arguments:[{name:"Set1", mode:"+"},{name:"Set2", mode:"+"},{name:"Union", mode:"?"}], description:"Union is the union of Set1 and Set2."},
+            {name:"ord_intersection", arity: 3, arguments:[{name:"Set1", mode:"+"},{name:"Set2", mode:"+"},{name:"Intersection", mode:"-"}], description:"Intersection holds the common elements of Set1 and Set2."},
+            {name:"ord_subtract", arity: 3, arguments:[{name:"InOSet", mode:"+"},{name:"NotInOSet", mode:"+"},{name:"Diff", mode:"-"}], description:"Diff is InOSet with all elements of NotInOSet removed."}
+        ]},
+
+        {name:"assoc", external: true, predicates:[
+            {name:"empty_assoc", arity: 1, arguments:[{name:"Assoc", mode:"-"}], description:"Is true if Assoc is the empty association list."},
+            {name:"is_assoc", arity: 1, arguments:[{name:"Assoc", mode:"+"}], description:"True if Assoc is an association list."},
+            {name:"get_assoc", arity: 3, arguments:[{name:"Key", mode:"+"},{name:"Assoc", mode:"+"},{name:"Value", mode:"-"}], description:"True if Key-Value is an association in Assoc."},
+            {name:"put_assoc", arity: 4, arguments:[{name:"Key", mode:"+"},{name:"Assoc0", mode:"+"},{name:"Value", mode:"+"},{name:"Assoc", mode:"-"}], description:"Assoc is Assoc0 with Key associated to Value."},
+            {name:"list_to_assoc", arity: 2, arguments:[{name:"Pairs", mode:"+"},{name:"Assoc", mode:"-"}], description:"Create an association from a list of Key-Value pairs."},
+            {name:"assoc_to_list", arity: 2, arguments:[{name:"Assoc", mode:"+"},{name:"Pairs", mode:"-"}], description:"Translate Assoc to a sorted list of Key-Value pairs."},
+            {name:"assoc_to_keys", arity: 2, arguments:[{name:"Assoc", mode:"+"},{name:"Keys", mode:"-"}], description:"Keys is the sorted list of keys in Assoc."},
+            {name:"assoc_to_values", arity: 2, arguments:[{name:"Assoc", mode:"+"},{name:"Values", mode:"-"}], description:"Values is the list of values in Assoc, sorted by key."},
+            {name:"del_assoc", arity: 4, arguments:[{name:"Key", mode:"+"},{name:"Assoc0", mode:"+"},{name:"Value", mode:"?"},{name:"Assoc", mode:"-"}], description:"True if Key-Value is in Assoc0; Assoc is Assoc0 without Key."}
+        ]},
+
+        {name:"random", external: true, predicates:[
+            {name:"maybe", arity: 0, arguments:[], description:"Succeed randomly with 50% probability."},
+            {name:"maybe", arity: 1, arguments:[{name:"P", mode:"+"}], description:"Succeed randomly with probability P (0.0-1.0)."},
+            {name:"maybe", arity: 2, arguments:[{name:"K", mode:"+"},{name:"N", mode:"+"}], description:"Succeed randomly with probability K/N."},
+            {name:"random_integer", arity: 3, arguments:[{name:"Lower", mode:"+"},{name:"Upper", mode:"+"},{name:"R", mode:"-"}], description:"R is a random integer in [Lower, Upper)."},
+            {name:"set_random", arity: 1, arguments:[{name:"Seed", mode:"+"}], description:"Seed the random number generator; use seed(random) for a time-based seed."}
+        ]},
+
+        {name:"error", external: true, predicates:[
+            {name:"must_be", arity: 2, arguments:[{name:"Type", mode:"+"},{name:"Term", mode:"+"}], description:"Type-check Term; throws the appropriate ISO error if it doesn't conform."},
+            {name:"can_be", arity: 2, arguments:[{name:"Type", mode:"+"},{name:"Term", mode:"+"}], description:"Like must_be/2, but succeeds silently if Term is unbound."},
+            {name:"instantiation_error", arity: 1, arguments:[{name:"Culprit", mode:"+"}], description:"Throw error(instantiation_error, _)."},
+            {name:"domain_error", arity: 2, arguments:[{name:"Domain", mode:"+"},{name:"Culprit", mode:"+"}], description:"Throw error(domain_error(Domain, Culprit), _)."},
+            {name:"type_error", arity: 2, arguments:[{name:"Type", mode:"+"},{name:"Culprit", mode:"+"}], description:"Throw error(type_error(Type, Culprit), _)."}
+        ]},
+
+        {name:"dif", external: true, predicates:[
+            {name:"dif", arity: 2, arguments:[{name:"X", mode:"?"},{name:"Y", mode:"?"}], description:"True as long as X and Y are, or remain, different terms (co-routines until decidable)."}
+        ]},
+
+        {name:"when", external: true, predicates:[
+            {name:"when", arity: 2, arguments:[{name:"Condition", mode:"+"},{name:"Goal", mode:"+"}], description:"Execute Goal once Condition becomes true (e.g. nonvar(X))."}
+        ]},
+
+        {name:"yall", external: true, predicates:[
+            {name:">>", arity: 2, arguments:[{name:"Parameters", mode:"+"},{name:"Body", mode:"+"}], description:"Lambda expression Parameters>>Body, callable with extra arguments via call/N."}
+        ]},
+
+        {name:"lambda", external: true, predicates:[]},
+
+        {name:"aggregate", external: true, predicates:[
+            {name:"aggregate_all", arity: 3, arguments:[{name:"Spec", mode:"+"},{name:"Goal", mode:"+"},{name:"Result", mode:"-"}], description:"Aggregate (count/sum(X)/max(X)/min(X)/bag(X)/set(X)) over all solutions of Goal, like findall/3."},
+            {name:"aggregate", arity: 3, arguments:[{name:"Spec", mode:"+"},{name:"Goal", mode:"+"},{name:"Result", mode:"-"}], description:"Like aggregate_all/3, but groups by the free variables of Goal, like bagof/3."}
+        ]},
+
+        {name:"time", external: true, predicates:[
+            {name:"current_time", arity: 1, arguments:[{name:"TimeStamp", mode:"-"}], description:"Get the current system time as an opaque timestamp."},
+            {name:"format_time", arity: 2, arguments:[{name:"FormatString", mode:"+"},{name:"TimeStamp", mode:"+"}], description:"Describe a char list formatted from TimeStamp (use via phrase/2), e.g. \"%Y-%m-%d\"."}
+        ]},
+
+        {name:"uuid", external: true, predicates:[
+            {name:"uuidv4", arity: 1, arguments:[{name:"Uuid", mode:"-"}], description:"Generate a new random UUID v4, as a list of bytes."},
+            {name:"uuidv4_string", arity: 1, arguments:[{name:"UuidString", mode:"-"}], description:"Generate a new random UUID v4, as a string."},
+            {name:"uuid_string", arity: 2, arguments:[{name:"UuidBytes", mode:"?"},{name:"UuidString", mode:"?"}], description:"Translate between the byte and string representations of a UUID."}
+        ]},
+
+        {name:"json", external: true, predicates:[
+            {name:"json_chars", arity: 2, arguments:[{name:"Term", mode:"?"},{name:"Chars", mode:"?"}], description:"Parse/generate JSON as a char list. Use via phrase/2, e.g. phrase(json_chars(Term), Chars)."}
         ]}
     ]
 

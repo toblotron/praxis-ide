@@ -82,7 +82,7 @@ praxis.ProjectSettings = Class.extend({
             }
         }
         // Libraries --------------------------
-        var tauLibraries = getTauPrologLibraries();
+        var tauLibraries = getTreallaLibraries(); //getTauPrologLibraries();
 
         var lib = 
         "<h2>Libraries</h2>";
