@@ -69,22 +69,37 @@ praxis.View = Class.extend({
             }
         };
 
-        function getMenuForObject(obj) {
+        function getMenuForObject(shapeData, obj) {
             if (!obj) {
                 return [];
             }
 
+            var actions = [];
             switch (obj.type) {
                 case "commentShape":
                 case "straightConnector":
                 case "port":
                     return [];
                 case "ruleShape":
-                    return ["exclude", "include", "definitions"];
+                    actions = ["definitions"];
+                    if(shapeData.data.isExcluded == true)
+                        actions.push("include");
+                    else 
+                        actions.push("exclude");
+                    return actions;
                 case "dcgShape":
-                    return ["exclude", "include", "dcg_definitions"];
+                    actions = ["dcg_definitions"];
+                    if(shapeData.data.isExcluded == true)
+                        actions.push("include");
+                    else 
+                        actions.push("exclude");
+                    return actions;
                 default:
-                    return ["exclude", "include"];
+                    if(shapeData.data.isExcluded == true)
+                        actions.push("include");
+                    else 
+                        actions.push("exclude");
+                    return actions;
             }
         }
 
@@ -97,7 +112,8 @@ praxis.View = Class.extend({
             const pointer = canvas.getPointer(e);
             selectedObject = canvas.findTarget(e);
 
-            const actionIds = getMenuForObject(selectedObject);
+            var shapeData = app.view.getShapeModel(selectedObject.id)
+            const actionIds = getMenuForObject(shapeData, selectedObject);
 
             if (!selectedObject) {
                 menu.style.display = "none";
