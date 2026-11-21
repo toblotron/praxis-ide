@@ -1,7 +1,37 @@
-praxis_array_update(Value,[_ | OldRest],0,[Value | OldRest]).
+:- module(atts, [
+		praxis_array_update/3,
+		praxis_array_update_2/4,
+		praxis_array_in/3,
+		praxis_field_in/2,
+		praxis_type_in/2,
+		praxis_match_class/2,
+		praxis_field_update/3,
+		praxis_find_subclass/2,
+		praxis_array_update_in/3,
+		praxis_class_update/3,
+		praxis_field_update_in/2,
+		close_list/1,
+		close_list/2
+	]).
+
+:- use_module(library(lists)).
+
+praxis_array_update(Value,Old,Index,New):-
+	(
+		nonvar(Index),
+		praxis_array_update_2(Value,Old,Index,New),
+		write(nonvar : New)
+		-> true ;
+		(
+			append(Old,[Value],New),
+			write(var : New)
+			-> true ; false
+		)
+	).
+praxis_array_update_2(Value,[_ | OldRest],0,[Value | OldRest]).
 praxis_array_in(Value,Index,List):-
 	nth0(Index,List,Value).
-praxis_array_update(Value,OldList,Index,[Value]):-
+praxis_array_update_2(Value,OldList,Index,[Value]):-
 	(
 		OldList = []
 		;
@@ -14,9 +44,9 @@ praxis_field_in(Key : Value,List):-
 praxis_type_in(SuperClass,Object):-
 	praxis_match_class(SuperClass,ClassName),
 	praxis_field_in(type : ClassName,Object).
-praxis_array_update(Value,[Old | OldRest],Index,[Old | NewRest]):-
+praxis_array_update_2(Value,[Old | OldRest],Index,[Old | NewRest]):-
 	Index2 is Index - 1,
-	praxis_array_update(Value,OldRest,Index2,NewRest).
+	praxis_array_update_2(Value,OldRest,Index2,NewRest).
 praxis_match_class(Superclass,Response):-
 	once((
 		(
@@ -41,12 +71,14 @@ praxis_find_subclass(Superclass,Subclass):-
 		;
 		praxis_find_subclass(Foundclass,Subclass)
 	).
+
+praxis_array_update_in([],Index,_):-
+	var(Index).
 praxis_array_update_in(Value,Index,List):-
+	write(var_in : Value : Index : List),
 	nth0(Index,List,Value).
-praxis_array_update_in([],_,_).
-log(What):-
-	write(What),
-	nl.
+praxis_class_update(ClassName,[],[type : ClassName]).
+
 praxis_field_update_in(Key : Value,List):-
 	member(Key : TValue,List),
 	!,

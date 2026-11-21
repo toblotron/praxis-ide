@@ -348,7 +348,7 @@ praxis.BottomBar = Class.extend({
 				await app.pl.consult("/tmp/" + cache.name + ".pl");
 			}
 		});
-			
+		
 		// 3. compile if needed - only done when reset has been done, or first time
 		if(shouldRecompile){
 			
