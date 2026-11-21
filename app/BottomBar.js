@@ -129,12 +129,13 @@ praxis.BottomBar = Class.extend({
 		this.nextButton.click($.proxy(this.onNextButtonClick,this));
 		this.nextButton[0].disabled = true;
 
-		this.executionLimitField = $("#executionLimit");
-		this.executionLimitField.change($.proxy(this.onExecutionLimitChanged, this));
+		this.stopButton = $("#stopButton");
+		this.stopButton.click(function(){ stopQuery(); }); // defined in index.html
+
+		this.timeLimitField = $("#timeLimit");
+		this.timeLimitField.change($.proxy(this.onTimeLimitChanged, this));
 
 		this.executionTimer = document.getElementById("executionTimer");
-
-		//this.executionLimitField[0].innerText = "300";
 
 		//this.codeConsole  = $("#codeConsole");
 		/*codeConsole = CodeMirror.fromTextArea(document.getElementById("codeConsole"), {
@@ -284,17 +285,17 @@ praxis.BottomBar = Class.extend({
 		nextAnswer();
 	},
 	
-	onExecutionLimitChanged:function(event){
-		var newLimit = this.executionLimitField.val();
-		var newNumber = parseInt(newLimit);
+	// seconds a query may run before it is stopped - 0 means no limit
+	onTimeLimitChanged:function(event){
+		var newNumber = parseFloat(this.timeLimitField.val());
 
-		if(newNumber == undefined || newNumber < 1)
+		if(isNaN(newNumber) || newNumber < 0)
 		{
-			this.executionLimitField.value = model.settings.executionLimit;
+			this.timeLimitField.val(Model.settings.timeLimit);
 		}
 		else
 		{
-			Model.settings.executionLimit = newNumber;
+			Model.settings.timeLimit = newNumber;
 		}
 	},
 
@@ -315,7 +316,13 @@ praxis.BottomBar = Class.extend({
 		var self = app.bottombar;
 		self.errorList = [];
 
-		var code = await self.preparePrologRuntime(); // may return null, if no compile demanded
+		var code;
+		try {
+			code = await self.preparePrologRuntime(); // may return null, if no compile demanded
+		} catch(error) {
+			handlePrologError(error); // defined in index.html
+			return;
+		}
 
 		self.updateErrorTable();
 
@@ -339,15 +346,15 @@ praxis.BottomBar = Class.extend({
 		}
 
 		// 2. check if possible cached external modules are loaded into the prolog. - once we get here they should already have been cached
-		app.projectSettings.runtimeCachedPackageFiles.forEach(async cache => {
+		for(const cache of app.projectSettings.runtimeCachedPackageFiles){
 			if(!app.pl.cachedExternalModuleURLs.includes(cache.url)){
 				// load it into virtual filesystem of prolog
-				app.pl.fs.open("/tmp/" + cache.name + ".pl", { write: true, create: true }).writeString(cache.text);
+				await app.pl.writeFile("/tmp/" + cache.name + ".pl", cache.text);
 				app.pl.cachedExternalModuleURLs.push(cache.url);
 				shouldRecompile = true;
 				await app.pl.consult("/tmp/" + cache.name + ".pl");
 			}
-		});
+		}
 		
 		// 3. compile if needed - only done when reset has been done, or first time
 		if(shouldRecompile){

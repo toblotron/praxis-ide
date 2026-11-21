@@ -121,17 +121,18 @@ praxis.Application = Class.extend({
             model.settings.exports = [];
         if(model.settings.dynamic == undefined)
             model.settings.dynamic = [];
-        if(model.settings.executionLimit == undefined)
-            model.settings.executionLimit = 500;
+        // seconds a query may run before it is stopped (replaces the old Tau Prolog executionLimit)
+        if(model.settings.timeLimit == undefined)
+            model.settings.timeLimit = 5;
+        delete model.settings.executionLimit;
 
         ruleDefSetupOnModelLoad();
 
         // rebuild model tree
         app.treemenu.rebuildTree();
 			
-        // display executionLimit
-        var executionLimitField = document.getElementById("executionLimit");
-        executionLimitField.value = model.settings.executionLimit;
+        // display timeLimit
+        document.getElementById("timeLimit").value = model.settings.timeLimit;
 
         // show first page
         app.enterSettings();
@@ -453,7 +454,7 @@ Model =
         ],
         exports:[],
         dynamic:[],
-        executionLimit:300
+        timeLimit:5
     },
     formatVersion: 0.2,
     pageIndexTree: 

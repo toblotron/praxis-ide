@@ -84,6 +84,7 @@
 <script src="./app/Store.js"></script>
 <script src="./app/View.js"></script>
 <script src="./app/PrologBuilder.js"></script>
+<script src="./app/PrologWorker.js"></script>
 <script src="./app/Lexer.js"></script>
 <script src="./app/PrattParser.js"></script>
 <script src="./app/Expressions.js"></script>
@@ -256,9 +257,10 @@
                             <button id='queryButton'  class="action_button" z-index="999" tabindex="101">Query</button>
                             <button id='nextButton' class="action_button" z-index="999"  tabindex="102">Next</button>
                             <button id='resetButton' class="action_button" z-index="999"  tabindex="103">Reset</button>
+                            <button id='stopButton' class="action_button" z-index="999"  tabindex="104" title="Stop the running query (resets the Prolog engine)" disabled>Stop</button>
 
-                            <label style='color: #000000;'>Execution limit</label>
-                            <input id='executionLimit' tabindex="-1" type='text' value='500'/>
+                            <label style='color: #000000;' for='timeLimit' title='Seconds a query may run before it is stopped. 0 = no limit.'>Time limit (s)</label>
+                            <input id='timeLimit' tabindex="-1" type='number' min='0' step='any' value='5' title='Seconds a query may run before it is stopped. 0 = no limit.'/>
                         </div>
                         <div id='queryField' tabindex="100" onfocus="app.bottombar.setQueryFieldFocus()" style="flex:1 1 auto; min-height:0;"></div>
                         <div id="executionTimer" style="color:white; font-style: italic; flex:0 0 auto;"></div>
@@ -351,232 +353,195 @@
     </div>
     <!--<div class="ui-layout-west">West</div>-->
     <script type="module">
-        import { load, Prolog, toJSON, FORMATS } from 'https://esm.sh/trealla@0.30.0?target=es2022';
-        
-        try {
-            load().then(init);
-        } catch(err) {
-            alert(err);
-        }
-        
-        let pl = null;
-        
-        function init() {
-            try {
-                pl = new Prolog();
-                pl.cachedExternalModuleURLs = []; // to keep track of what external modules have actually been loaded into the prolog engine
-                return pl;
-            } catch(err) {
-                alert(err);
-                throw err;
-            }           
-        }
-        
-        window.consultPrologFile = async function (path){
-            pl.consult("/" + cache.name + ".pl");
-        }
+        // Prolog runs in a Web Worker (see app/PrologWorker.js), so a query that runs past the
+        // time limit can be stopped by terminating the worker.
+        const TREALLA_URL = 'https://esm.sh/trealla@0.30.0?target=es2022';
+        const DEFAULT_TIME_LIMIT = 5; // seconds
 
-                
-        window.resetProlog = function() {
-            prevSrc = undefined;
-            return init();
-        }
-        
-        window.runner = async function runner(query,code){
-            const format = "prolog";
-            const toplevel = format == "prolog" ? new Toplevel(1) : format;
-    
-            let n = 0;
-            const encode = format == "prolog" ? {dot: false} : undefined;
-            const q = pl.query(query, {program: code === prevSrc ? undefined : code, format: toplevel, encode: encode});
-            QUERIES[1] = q;
-        
-            await next(1);
-            prevSrc = code;
-        }
-
-        window.nextAnswer = async function nextAnswer(){
-            await next(1);
-        }
-
-        window.testProlog = async function testProlog(){
-            // test retrieval of prolog json format answers
-            const pl = new Prolog();
-
-            const result = await pl.queryOnce('User = {"id": 123,"name": "Alice","active": true,"tags": ["prolog", "logic"]}.',{ format: "prolog" });
-            
-            var res = result.substring(result.indexOf('{'),result.lastIndexOf('.'));
-            var jsss = JSON.parse(res);
-
-        }
-
-        window.ask = async function ask() {
-            try {
-                await run();
-            } catch(error) {
-                alert(error);
-                console.error(error);
+        class TimeLimitError extends Error {
+            constructor(seconds) {
+                super("Time limit exceeded (" + seconds + " s)");
+                this.name = "TimeLimitError";
+                this.seconds = seconds;
             }
         }
-        
-        class Toplevel {
-            id;
-            dec;
-            constructor(id) {
-                this.id = id;
-                this.dec = new TextDecoder();
+
+        class StoppedError extends Error {
+            constructor() {
+                super("Query stopped");
+                this.name = "StoppedError";
             }
-            query(_, goal, bind) {
-                return FORMATS.prolog.query(null, goal, bind);
-            }
-            parse(pl, status, stdout, stderr, options) {
-                return {
-                    '$format': 'custom',
-                    id: this.id,
-                    status,
-                    stdout: FORMATS.prolog.parse(pl, status, stdout, stderr, options),
-                    stderr: this.dec.decode(stderr)
+        }
+
+        // the time limit for running Prolog, in seconds - 0 means no limit
+        function getTimeLimit() {
+            const value = Number(window.Model && Model.settings ? Model.settings.timeLimit : undefined);
+            return Number.isFinite(value) && value >= 0 ? value : DEFAULT_TIME_LIMIT;
+        }
+
+        class PrologEngine {
+            constructor() {
+                this.cachedExternalModuleURLs = []; // external modules that have been loaded into this engine
+                this.pending = new Map();
+                this.lastId = 0;
+                this.stopped = false;
+
+                const source = "(" + window.prologWorkerMain.toString() + ")(" + JSON.stringify(TREALLA_URL) + ");";
+                this.workerUrl = URL.createObjectURL(new Blob([source], { type: "text/javascript" }));
+                this.worker = new Worker(this.workerUrl, { type: "module" });
+                this.worker.onmessage = (event) => this.onMessage(event.data);
+                this.worker.onerror = (event) => {
+                    event.preventDefault();
+                    this.stop(new Error("Prolog worker failed: " + (event.message || "unknown error")));
                 };
+
+                this.ready = this.post("init", {}, 0);
             }
-            truth(pl, status, stderr, options) {
-                return {'$format': 'custom', id: this.id, status, stdout: status ? "true" : "false", stderr: this.dec.decode(stderr)};
+
+            onMessage({ id, ok, result, error }) {
+                const request = this.pending.get(id);
+                if (!request)
+                    return;
+                this.pending.delete(id);
+                clearTimeout(request.timer);
+                updateStopButton();
+                if (ok)
+                    request.resolve(result);
+                else
+                    request.reject(new Error(error));
+            }
+
+            post(type, payload, timeLimit, runsUserCode) {
+                if (this.stopped)
+                    return Promise.reject(new Error("The Prolog engine has been stopped"));
+                const id = ++this.lastId;
+                return new Promise((resolve, reject) => {
+                    const request = { resolve, reject, timer: null, runsUserCode };
+                    if (timeLimit > 0) {
+                        request.timer = setTimeout(() => {
+                            this.pending.delete(id);
+                            this.stop(new Error("The Prolog engine was reset"));
+                            reject(new TimeLimitError(timeLimit));
+                        }, timeLimit * 1000);
+                    }
+                    this.pending.set(id, request);
+                    updateStopButton();
+                    this.worker.postMessage({ id, type, payload });
+                });
+            }
+
+            // wait for the engine to start, then run a request - running user code gets the time limit
+            async request(type, payload, runsUserCode) {
+                await this.ready;
+                return this.post(type, payload, runsUserCode ? getTimeLimit() : 0, runsUserCode);
+            }
+
+            // true while a query (or anything else that runs user code) is executing
+            isRunningUserCode() {
+                for (const request of this.pending.values())
+                    if (request.runsUserCode)
+                        return true;
+                return false;
+            }
+
+            writeFile(path, text) { return this.request("writeFile", { path, text }, false); }
+            consult(path) { return this.request("consult", { path }, true); }
+            query(qid, goal, program) { return this.request("query", { qid, goal, program }, true); }
+            next(qid) { return this.request("next", { qid }, true); }
+
+            // kill the worker - fails every request that is still waiting for an answer
+            stop(reason) {
+                if (this.stopped)
+                    return;
+                this.stopped = true;
+                this.worker.terminate();
+                URL.revokeObjectURL(this.workerUrl);
+                for (const request of this.pending.values()) {
+                    clearTimeout(request.timer);
+                    request.reject(reason);
+                }
+                this.pending.clear();
+                updateStopButton();
             }
         }
-        
-        let ID = 0;
-        let prevSrc;
-        async function run() {
-            const id = ++ID;
-            //const query = "asserta(app(a)),findall(A,app(A),AS),length(AS,L)."; //getQuery();
-            //const src = ":- dynamic app/1."; // document.getElementById("src").value;
-            //const format = document.getElementById("format").value;
 
-            pl.fs.open("/greeting.pl", { write: true, create: true }).writeString(`
-  :- module(greeting, [hello/1]).
-  hello(world).
-  hello(w).
-`);
-
-// consult file
-await pl.consult("/greeting.pl");
-
-// use the file we added
-
-//const query = pl.query("use_module(greeting), hello(X)");
-
-            const format = "prolog";
-            const toplevel = format == "prolog" ? new Toplevel(id) : format;
-            //const src = "";
-            /*const elem = document.getElementById("query-tmpl").content.cloneNode(true);
-            const box = elem.querySelector(".query-box");
-            box.id = `query-${id}`;
-            box.dataset.id = id;
-            box.dataset.format = format;
-            elem.querySelector(".query-result").textContent = "?- " + query + "\n";
-            elem.querySelector(".query-next").onmousedown = next.bind(elem, id);
-            elem.querySelector(".query-all").onmousedown = all.bind(elem, id);
-            elem.querySelector(".query-stop").onmousedown = stop.bind(elem, id);
-            document.getElementById("queries").prepend(elem);
-        */
-            //let text = "?- " + query + "\n";
-            let n = 0;
-            const encode = format == "prolog" ? {dot: false} : undefined;
-            const q = pl.query("hellow(I)", {program: ":-use_module(greeting). hellow(I):-hello(I).", format: toplevel, encode: encode});
-            QUERIES[id] = q;
-        
-            await next(id);
-            prevSrc = "src";
+        function updateStopButton() {
+            const button = document.getElementById("stopButton");
+            if (button)
+                button.disabled = !(engine && !engine.stopped && engine.isRunningUserCode());
         }
-        
-        function getQuery() {
-            return document.getElementById("query").value.replaceAll(`“`, `"`).replaceAll(`”`, `"`).replaceAll(`‘`, `'`).replaceAll(`’`, `'`);
-        }
-        
-        const QUERIES = {};
-        
-        async function next(id) {
-            //const elem = document.getElementById("query-" + id);
-            //if (!elem) return;
-            const ok = await redo(id, null);
-            if (!ok) {
-                //elem.dataset.state = "done";
-            }
-        }
-        
-        async function all(id) {
-            const elem = document.getElementById("query-" + id);
-            if (!elem) return;
-            const limit = 10000;
-            for (var i = 0; i <= limit && await redo(id, elem); i++) {};
-            if (i > limit) {
-                elem.querySelector(".query-result").textContent += `\n% paused after ${limit} results`
+
+        // the Stop button - kill the running query; the next query starts a fresh engine
+        window.stopQuery = function() {
+            if (engine && engine.isRunningUserCode())
+                engine.stop(new StoppedError());
+        };
+
+        let engine = null;
+        let prevSrc;     // the program that was last sent to the engine
+        let queryId = 0;
+        let activeQuery = null; // id of the query that "Next" asks for more answers from
+
+        window.resetProlog = function() {
+            if (engine)
+                engine.stop(new Error("The Prolog engine was reset"));
+            prevSrc = undefined;
+            activeQuery = null;
+            engine = new PrologEngine();
+            return engine;
+        };
+
+        // report an error from running Prolog - a time limit also means the engine is gone,
+        // so make sure the next query starts a new one and recompiles the model
+        window.handlePrologError = function(error) {
+            if (error instanceof TimeLimitError || error instanceof StoppedError) {
+                const reason = error instanceof TimeLimitError ? error.message + " - the query was stopped" : "Query stopped";
+                app.bottombar.addToConsole(reason + " and the Prolog engine reset\n");
+                app.pl = null;
+                prevSrc = undefined;
+                activeQuery = null;
+                app.bottombar.nextButton[0].disabled = true;
             } else {
-                elem.dataset.state = "done";
-            }
-        }
-        
-        async function redo(id, elem) {
-            const q = QUERIES[id];
-            if (!q) return false;
-            let result;
-            try {
-                console.time("query");
-                result = (await q.next()).value;
-            } catch(error) {
-                alert(error);
                 console.error(error);
+                alert(error);
+            }
+        };
+
+        async function runStep(step) {
+            const started = Date.now();
+            try {
+                const answer = await step();
+                app.bottombar.executionTimer.innerHTML = "execution-time: " + (Date.now() - started) + " ms";
+                if (answer.done) {
+                    activeQuery = null;
+                    return false;
+                }
+                app.bottombar.addToConsole(answer.text + '\n');
+                return true;
+            } catch (error) {
+                app.bottombar.executionTimer.innerHTML = "";
+                handlePrologError(error);
                 return false;
-            } finally {
-                console.timeEnd("query");
             }
-            var res = ""; //const stdout = elem.querySelector(".query-result");
-            if (!result) {
-                delete QUERIES[id];
-                //if (elem.dataset.format !== "json")
-                    res += ".";
-                return false;
-            }
-            const n = 0; //Number(elem.dataset.n ?? 0);
-            if (typeof result === "string")
-                res += (n > 0 ? "\n;  " : "   ") + result;
-            else if ('$format' in result) {
-                res += `${(n > 0 ? "\n" : "") + result.stderr.trim()}${(!!result.stderr ? "\n" : "") + (n > 0 ? ";  " : "   ") + result.stdout.trim()}`;
-            } else {
-                res += toJSON(result, " ") + "\n";
-            }
-            console.log(res);
-            app.bottombar.addToConsole(res + '\n');
-            //elem.dataset.n = n+1;
-            return true;
         }
-        
-        function stop(id) {
-            const elem = document.getElementById("query-" + id);
-            if (!elem) return;
-            const q = QUERIES[id];
-            if (!q) return false;
-            delete QUERIES[id];
-            q.return();
-            elem.querySelector(".query-result").textContent += ".\n% stopped"
-            elem.dataset.state = "done";
-        }
-        
-        window.updateURL = function() {
-            const query = document.getElementById("query");
-            const src = document.getElementById("src");
-            const url = new URL(document.URL);
-            if (src.value.length < 10 * 1024) {
-                url.searchParams.set("src", src.value);
-            } else {
-                url.searchParams.delete("src");
-            }
-            url.searchParams.set("q", query.value);
-            url.searchParams.set("v", "0");
-            history.replaceState(query.value, "", url.toString());
-        }
-        
-        
-        </script>
+
+        window.runner = async function runner(query, code) {
+            if (!engine)
+                resetProlog();
+            const program = code === prevSrc ? undefined : code;
+            const qid = ++queryId;
+            activeQuery = qid;
+            await runStep(() => engine.query(qid, query, program));
+            prevSrc = code;
+        };
+
+        window.nextAnswer = async function nextAnswer() {
+            if (!engine || activeQuery == null)
+                return;
+            const qid = activeQuery;
+            await runStep(() => engine.next(qid));
+        };
+    </script>
         <ul id="ctxMenu" class="context-menu" ></ul>
         <!--<ul id="contextMenu" style="position:absolute;display:none;list-style:none;padding:10px;background:#fff;border:1px solid #ccc;">
             <li data-action="exclude">Toggle Exclude</li>
