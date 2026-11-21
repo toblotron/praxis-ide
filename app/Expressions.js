@@ -222,11 +222,13 @@ class ClassExpression {
 
         if(i<this.pathRows.length-1)
             PC.res.push(",\n");
-    }  
+    }
   }
 
+  // go through printNormalShape like the other shapes, so shapes connected after this one
+  // (and else-connections) are printed too - also when this is a branch of an OR/1ST/NOT shape
   print(PC) {
-    this.printContent(PC);
+    ShapeParsing.printNormalShape(this, PC);
   }
 }
 
